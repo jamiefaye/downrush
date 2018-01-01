@@ -1,0 +1,100 @@
+<!doctype html>
+	<html>
+		<head>
+			<title>Downrush Filer</title>
+			<meta name="viewport" content="width=device-width">
+			<meta charset="UTF-8">
+			<script type="text/javascript" src="/SD_WLAN/jquery-3.2.1.min.js"></script>
+			<script type="text/javascript" src="/SD_WLAN/FTF/main.js"></script>
+		</head>
+		<style type="text/css">
+			a { text-decoration: none; }
+			table {
+				/*border-collapse: collapse;*/
+				border-collapse:separate;
+			    width: 100%;
+			}
+			td {
+				background-color: #F0F0F0;
+				border: solid 1px #888888;
+			}
+			body {
+ 			   	margin: 0;
+			}
+			.table_name {
+				/*width: 100px;*/
+				position:relative;
+				margin-left: 50px;
+				/* margin:0px auto 20px 50px; */
+				color: #0000FF
+			}
+			.table_name a{
+				position:absolute;
+				top:0;
+				left:0;
+				width:100%;
+				height:100%;
+			}
+			.table_bts {
+				width: 50px;
+				position:relative;
+				/*margin:0px auto 20px;*/
+			    text-align: center;
+			}
+			.table_bts a{
+				position:absolute;
+				top:0;
+				left:0;
+				width:100%;
+				height:100%;
+			}
+			@media (max-width: 800px) {
+				.wrapper {
+					margin: 0 0 0 2px;
+					width: 100%;
+					word-wrap: break-word;
+				}
+			}
+			@media (min-width: 800px) {
+				.wrapper {
+					margin: 0 0 0 2px;
+					width: 800px;
+					word-wrap: break-word;
+				}
+			}
+ 
+		</style>
+		<body>
+			<div>
+				<h2>Downrush Filer</h2>
+			</div>
+			<div id="header">
+				<h2>/</h2>
+			</div>
+			<hr>
+			<div class="wrapper">
+				<table id="filetable"></table>
+			</div>
+			<hr>
+			<div id="reloadtime">
+			</div>
+			<a href="javascript:reload_list()">[Reload]</a><br>
+			<input type="checkbox" id="FullFileList" value="0">Show Hidden Files</input>
+			<hr>
+			<div id="uploader">
+				<form action="/upload.cgi" method="post" enctype="multipart/form-data" target="hogehogeFrame" >
+					<input name="file "type="file" />
+					<input type="submit" value="upload" onclick="return upload();" />
+					<iframe src="about:blank" id="hogehogeFrame" name="hogehogeFrame" style="display:none;"></iframe>
+				</form>
+			</div>			
+			<hr>
+			<input type="button" value="Create File" onclick="CreateFile()">
+			<input type="button" value="New Directory" onclick="NewDirectory()">
+			<input type="button" value="Remove All Files in Directoy" onclick="RemoveAllFiles()">
+			<hr>
+			<div id="footer">
+				<a href="/~/Set.htm">FlashAir Settings</a><br>
+			</div>
+	</body>
+</html>
