@@ -93,7 +93,6 @@ print([[<p><input type="button" class="main"onclick="location.href='/DR/edit.htm
 		document.getElementById( "verinfo" ).innerHTML = s;
 	}
 </script>
-<script src="https://sabowl.sakura.ne.jp/gpsnmeajp/app/ftlever.js"></script>
 
 </body></html>]])
 collectgarbage()
