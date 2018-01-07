@@ -21,9 +21,13 @@ vi /Volumes/NO\ NAME/SD_WLAN/CONFIG
 UPLOAD=1
 ```
 
-1. Copy the files named List.htm and jquery-3.2.1.min.js from the distribution directory and put them into the SD_WLAN directory. There is no need to copy LICENSE or README.md.
-1. Copy the directory named FTF from the distribution directory and put it into the SD_WLAN directory.
-1. Copy the four directories from your backup copy of the Deluge SD card into the root directory of your FlashAir card. This is one directory up from the SD_WLAN directory we have been working with so far. The directory names to copy should be KITS, SAMPLES, SONGS, and SYNTHS.
+1. Copy the files named List.htm and jquery-3.2.1.min.js from the SD_WLAN distribution directory and put them into the SD_WLAN directory on the SD Card.
+1. Copy the directory named FTF from the SD_WLAN distribution directory and put it into the SD_WLAN directory on the SD Card.
+1. For the next steps, we will copy stuff into the root directory. This is one directory up from the SD_WLAN directory. 
+1. Copy the file named Downrush.laua from  the distribution directory and put them into the root directory on the SD Card.
+1. Copy the Directory named DR from the distribution directory and put it into the root directory on the SD Card.
+1. There is no need to copy LICENSE or README.md.
+1. Copy the four directories from your backup copy of the Deluge SD card into the root directory of your FlashAir card. The directory names to copy should be KITS, SAMPLES, SONGS, and SYNTHS.
 1. Eject the FlashAir card from your computer and put it into the Deluge and power the Deluge up.
 1. Connect to the card in your browser (Chrome recommended) This can present its own set of headaches.
   1. If you are connecting to the card by using it as an access point (AP), then change your computer's wifi
@@ -39,6 +43,29 @@ Change the CONFIG line: `APPAUTOTIME=300000` to instead be: `APPAUTOTIME=0`
 More information on the contents of the CONFIG file:
 https://flashair-developers.com/en/documents/api/config/
 
+
+Jamie's CONFIG file is set up to run in station mode on a local WiFi network. Here is what is in it:
+
+```
+CIPATH=/DCIM/100__TSB/FA000001.JPG
+APPMODE=5
+APPSSID=CALICO KATIE_EXT
+APPNETWORKKEY=********
+APPNAME=synth2
+VERSION=F15DBW3BW4.00.02
+CID=02544d535731364754d108467b011601
+PRODUCT=FlashAir
+VENDOR=TOSHIBA
+MASTERCODE=***********
+UPLOAD=1
+LOCK=1
+WEBDAV=2
+IFMODE=1
+DNSMODE=0
+TELNET=1
+REDIRECT=0
+APPINFO=0000000000000000
+```
 ## Credits
 
 Downrush is based on a project by Junichi Kitano called the FlashTools Lua Editor (FTLE). See https://sites.google.com/site/gpsnmeajp/tools/flashair_tiny_lua_editer

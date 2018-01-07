@@ -1,0 +1,54 @@
+.CodeMirror {
+  border: 1px solid #AAAAAA;
+  height: auto;
+}
+.CodeMirror-scroll {
+  overflow-y: hidden;
+  overflow-x: auto;
+}
+.error-line {
+  background-color:#FFDDDD;
+}
+.fullbox {
+  width: 90vw;
+  height: 80vh;
+}
+.minibox {
+  width: 90vw;
+}
+.toolbox{
+  margin-left: 5px;
+  width:auto;
+  float:left;
+}
+input[type="checkbox"] {
+	width:30px;
+	height:30px;
+	-moz-transform: scale( 2 , 2 );
+}
+input[type="button"] {
+	width:120px;
+	height:30px;
+	-webkit-appearance: none;
+	padding:0%;
+	margin-top: 5px;
+
+    text-decoration:none;
+    display:inline;
+    color:#000;
+    background-color:#EEEEEE;
+    border-radius:2px;
+    box-shadow:1px 1px 1px #7F7F7F;
+}
+table {
+	border-collapse: collapse;
+	text-align: center;
+}
+td {
+	border: solid 1px;
+	padding: 0.5em;
+}
+th {
+	border: solid 1px;
+	padding: 0.5em;
+}

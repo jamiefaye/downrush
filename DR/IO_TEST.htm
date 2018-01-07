@@ -1,0 +1,204 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width">
+		<title>FlashTools GPIO Tester &amp; Checker</title>
+	</head>
+<body>
+	<p>FlashTools GPIO Tester &amp; Checker ver 0.3</p>
+	
+<link rel="stylesheet" href="IO_TEST.css">
+	<div>
+		<form name="tris">
+			<table>
+				<caption>入出力制御[Tristate Control] (☑=OUTPUT □=INPUT)</caption>
+				<tr>
+					<th>0 (SDI)</th>
+					<th>1 (SDO)</th>
+					<th>2 (DAT1)</th>
+					<th>3 (DAT2)</th>
+					<th>4 (CS)</th>
+				</tr>
+				<tr>
+					<td><input type="checkbox" name="T0" value="1" onClick="renew()"></td>
+					<td><input type="checkbox" name="T1"  value="2" onClick="renew()"></td>
+					<td><input type="checkbox" name="T2"  value="4" onClick="renew()"></td>
+					<td><input type="checkbox" name="T3"  value="8" onClick="renew()"></td>
+					<td><input type="checkbox" name="T4"  value="16" onClick="renew()"></td>
+				</tr>
+			</table>
+		</form>
+	</div>
+
+	<div>
+		<form name="stat">
+			<table>
+				<caption>ポート状態[Port Status] (☑=HIGH □=LOW)</caption>
+				<tr>
+					<th>0 (SDI)</th>
+					<th>1 (SDO)</th>
+					<th>2 (DAT1)</th>
+					<th>3 (DAT2)</th>
+					<th>4 (CS)</th>
+				</tr>
+				<tr>
+					<td><input type="checkbox" name="S0" value="1" onClick="renew()"></td>
+					<td><input type="checkbox" name="S1"  value="2" onClick="renew()"></td>
+					<td><input type="checkbox" name="S2"  value="4" onClick="renew()"></td>
+					<td><input type="checkbox" name="S3"  value="8" onClick="renew()"></td>
+					<td><input type="checkbox" name="S4"  value="16" onClick="renew()"></td>
+				</tr>
+			</table>
+		</form>
+	</div>
+
+	<div><DIV id="status" style="height:24pt">ステータス表示 [Status info]</DIV></div>
+	
+	<div>
+		<form name="ctrl">
+			<input type="Button"  value="更新・反映 [Renew]" onClick="renew()"><br><br>
+			<input type="checkbox" name="en" value="1" onClick="renew_get_2()" checked>自動取得を有効にする [Auto reload Enable]<br>
+		</form>
+	</div>
+<div  id="readme"  style="display:none">
+	<p>取扱い上の注意</p>
+	<p>・このツールはFlashAir公式のものではありません。<br>　東芝およびフィックスターズへの問い合わせは禁止します。<br>
+	・出力は即時、入力はおよそ100ms～500msで更新していますが、必ずしも適用される保証はありません。<br>
+	・本ツールは起動時、全ピンを入力に設定します。<br>フロート状態となるのが不都合場な場合、プルアップおよびプルダウンを行ってください。<br>
+	・<font color=#FF0000><b>このツールはFlashAirを物理的に破壊する可能性のあるツールです。</b><br>　使い方を誤り、出力短絡等で破壊した場合、責任は一切負いません。十分注意して取り扱ってください。<br></font>
+	・<font color=#FF0000><b>ホスト機器に差し込んだまま、本ツールを利用することを禁止します。<br>　十中八九、ホスト機器が破壊されるためです。</font></b><br>
+<!---	・W-03をご利用の場合は、下のボタンより自動セットアップを利用できます。<br>　W-02をお使いの場合、手動でCONFIGを編集してください。<br>---->
+</p>
+	<p>Note</p>
+	<p>・This is not offical tool. Please do not contact for TOSHIBA and fixstars.<br>
+	・This try to get Output and Input status by 100-500[ms] cycle. But it may also fail or be late.<br>
+	・when you loaded This tool , it resets tristate control and Port status.<br>
+	・<font color=#FF0000><b>if you mistake operation, This tool would be break your flashair.</b><br>　Use at your own risk.<br></font>
+	・<font color=#FF0000><b>DO NOT INSERT FLASHAIR TO SD-HOSTS WHILE USING THIS TOOL. <br>　SD-HOSTS MAY CRASH IF YOU DO IT.</font></b><br>
+<!---	・if you using W-03, you can use Auto setup.<br>　Not available in W-02. Please manual setup.<br>---->
+</p>
+</div>
+<div  id="pi_ass"  style="display:none">
+	<table>
+		<caption>ピン対応表 [Pin Assignment]</caption>
+		<tr>
+			<th>Pin</th>
+			<th>fa.pio</th>
+			<th>pioduino</th>
+			<th>SD</th>
+			<th>SD Pin</th>
+			<th>Airio</th>
+			<th>MTO-EV101</th>
+			<th>AirioRP</th>
+			<th>SPI-1</th>
+			<th>SPI-2</th>
+			<th>AKI K-05818</th>
+			<th>fa.spi</th>
+		</tr>
+		<tr>
+			<td>PIN 0</td>
+			<td>0x01</td>
+			<td>0</td>
+			<td>CMD</td>
+			<td>2</td>
+			<td>SW1</td>
+			<td>MISO</td>
+			<td>CMD</td>
+			<td>DI</td>
+			<td>MOSI</td>
+			<td>SDI</td>
+			<td>MOSI(out)</td>
+		</tr>
+		<tr>
+			<td>PIN 1</td>
+			<td>0x02</td>
+			<td>1</td>
+			<td>DAT0</td>
+			<td>7</td>
+			<td>Red</td>
+			<td>MOSI</td>
+			<td>DAT0</td>
+			<td>DO</td>
+			<td>MISO</td>
+			<td>SDO</td>
+			<td>SCLK(out)</td>
+		</tr>
+		<tr>
+			<td>PIN 2</td>
+			<td>0x04</td>
+			<td>2</td>
+			<td>DAT1</td>
+			<td>8</td>
+			<td>Blue</td>
+			<td>DAT1</td>
+			<td>DAT1</td>
+			<td>DAT1</td>
+			<td>NC</td>
+			<td>DAT1(↓NC)</td>
+			<td>/SS(out)</td>
+		</tr>
+		<tr>
+			<td>PIN 3</td>
+			<td>0x08</td>
+			<td>3</td>
+			<td>DAT2</td>
+			<td>9</td>
+			<td>Green</td>
+			<td>DAT2</td>
+			<td>DAT2</td>
+			<td>DAT2</td>
+			<td>NC</td>
+			<td>DAT2(↑NC)</td>
+			<td>MISO(in)</td>
+		</tr>
+		<tr>
+			<td>PIN 4</td>
+			<td>0x10</td>
+			<td>4</td>
+			<td>CD/DAT3</td>
+			<td>1</td>
+			<td>NC</td>
+			<td>CS</td>
+			<td>DAT3</td>
+			<td>CS</td>
+			<td>CS</td>
+			<td>CS</td>
+			<td>INT(in)</td>
+		</tr>
+	</table>
+</div>
+	<br>
+	<form name="dr">
+		<input type="Button" value="説明書を表示[View Readme]"  onclick="view_read()"><br>
+		<input type="Button" value="ピン対応表を表示[View Pin Assignment]"  onclick="view_pin()"><br>
+		<input type="Button" value="Licenseを表示[View License]"  onclick="view_ls()"><br>
+		<br>
+		<input type="Button" value="DR"  onclick="location.href='edit.htm'"><br>
+		<input type="Button" value="Menu"  onclick="location.href='/FlashTools.lua'">
+	</form>
+
+<!---
+	<br>
+	<form name="setup">
+		<input type="Button" value="セットアップ(W-03用) [Setup (W-03 only)]"  onclick="location.href='setup.lua'">
+	</form>
+---->
+<div  id="license" style="display:none">
+Copyright (c) 2015, GPS_NMEA<br>
+All rights reserved.<br>
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:<br>
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.<br>
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.<br>
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.<br>
+<br>
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, <br>
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.<br> 
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, <br>
+OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; <br>
+OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) <br>
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<br>
+</div>
+<script src="IO_TEST.js"></script>
+</script>
+</body>
+</html>
