@@ -40,6 +40,8 @@ UPLOAD=1
 The FlashAir card comes with a timeout feature which shuts down the WiFi AP functionality after 5 minutes of inactivity. If you want to disable this feature, set the timeout value to 0.
 Change the CONFIG line: `APPAUTOTIME=300000` to instead be: `APPAUTOTIME=0` 
 
+If you are updating downrush from a previous version and things seem strange, you may have to clear the browsers cache. The time stamps on SD Card directory entries are not always valid and this can cause stale files to linger unwanted in the cache.
+
 More information on the contents of the CONFIG file:
 https://flashair-developers.com/en/documents/api/config/
 
