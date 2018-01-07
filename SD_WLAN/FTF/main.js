@@ -9,6 +9,9 @@
  *   http://flashair-developers.com/documents/license.html
  */
 // JavaScript Document
+//
+// Set follwoing flag=true to allow Lua IDE access as well as general CodeMirror
+var INCLUDE_FTLE = false;
 
 // Convert data format from V1 to V2.
 function convertFileList() {
@@ -128,7 +131,7 @@ function delfile(file)
 
 function rename(file)
 {
-	var path = window.prompt(""+file+"\nMove for ?(full path with filename)\nEg. /FTLE/test.lua", file);
+	var path = window.prompt(""+file+"\nMove for ?(full path with filename)\nEg. /DR/test.lua", file);
 	if(path)
 	{
 		path = path.replace(/ /g , "|" ) ;
@@ -142,15 +145,18 @@ function rename(file)
 
 function opensp(file,conf)
 {
-	window.open(file);
-/* (until we build an XML view capabiligy).
 	if(!conf)
 	{
 		window.open(file);	
 	}else{
-		window.open("/FTLE/edit.htm?"+file);
+		// Open editor based on file type:
+		var ext = file.split('.').pop().toLowerCase();
+		if (ext === 'lua' && INCLUDE_FTLE) {
+			window.open("/FTLE/edit.htm?"+file);
+		} else {
+			window.open("/DR/edit.htm?"+file);
+		}
 	}
-*/
 }
 
 //Making Path

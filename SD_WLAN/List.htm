@@ -1,7 +1,7 @@
 <!doctype html>
 	<html>
 		<head>
-			<title>Downrush Filer</title>
+			<title>FlashTools Filer</title>
 			<meta name="viewport" content="width=device-width">
 			<meta charset="UTF-8">
 			<script type="text/javascript" src="/SD_WLAN/jquery-3.2.1.min.js"></script>
@@ -79,7 +79,7 @@
 			<div id="reloadtime">
 			</div>
 			<a href="javascript:reload_list()">[Reload]</a><br>
-			<input type="checkbox" id="FullFileList" value="0">Show Hidden Files</input>
+			<input type="checkbox" id="FullFileList" value="0">Full File List(use Lua)</input>
 			<hr>
 			<div id="uploader">
 				<form action="/upload.cgi" method="post" enctype="multipart/form-data" target="hogehogeFrame" >
@@ -91,10 +91,13 @@
 			<hr>
 			<input type="button" value="Create File" onclick="CreateFile()">
 			<input type="button" value="New Directory" onclick="NewDirectory()">
-			<input type="button" value="Remove All Files in Directoy" onclick="RemoveAllFiles()">
+			<input type="button" value="Remove All Files" onclick="RemoveAllFiles()">
 			<hr>
 			<div id="footer">
 				<a href="/~/Set.htm">FlashAir Settings</a><br>
+				<a href="/FTLE/edit.htm">FlashTools Lua Editor</a><br>
+				<a href="/DR/edit.htm">Downrush Editor</a><br>
+				<a href="/Downrush.lua">Downrush Main Menu</a>
 			</div>
 	</body>
 </html>
