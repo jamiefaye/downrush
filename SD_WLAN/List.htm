@@ -6,6 +6,7 @@
 			<meta charset="UTF-8">
 			<script type="text/javascript" src="/SD_WLAN/jquery-3.2.1.min.js"></script>
 			<script type="text/javascript" src="/SD_WLAN/FTF/main.js"></script>
+			<script type="text/javascript" src="/SD_WLAN/FTF/uppie.js"></script>
 		</head>
 		<style type="text/css">
 			a { text-decoration: none; }
@@ -48,6 +49,14 @@
 				width:100%;
 				height:100%;
 			}
+
+			#uploader {
+				background-color: #FFFFF0;
+			}
+			.bigger {
+				font-size: 100%;
+			}
+	
 			@media (max-width: 800px) {
 				.wrapper {
 					margin: 0 0 0 2px;
@@ -83,15 +92,66 @@
 			<hr>
 			<div id="uploader">
 				<form action="/upload.cgi" method="post" enctype="multipart/form-data" target="hogehogeFrame" >
-					<input name="file "type="file" />
-					<input type="submit" value="upload" onclick="return upload();" />
+					<input class='bigger' name="file" type="file" />
+					<input class='bigger' type="submit" value="upload" onclick="return upload();" />
 					<iframe src="about:blank" id="hogehogeFrame" name="hogehogeFrame" style="display:none;"></iframe>
 				</form>
-			</div>			
+			<p>Drag and drop files and folders to upload here.<br><div id="statind"></div>
+			</div>	
 			<hr>
-			<input type="button" value="Create File" onclick="CreateFile()">
-			<input type="button" value="New Directory" onclick="NewDirectory()">
-			<input type="button" value="Remove All Files" onclick="RemoveAllFiles()">
+			<input class='bigger' type="button" value="Create File" onclick="CreateFile()">
+			<input class='bigger' type="button" value="New Directory" onclick="NewDirectory()">
+			<input class='bigger' type="button" value="Remove All Files" onclick="RemoveAllFiles()">
+			<hr>
+			<script>
+var uppie = new Uppie();
+// Since upload.cgi can only handle one file at a time, do things one at a time.
+var uploadNext = function(flist) {
+	if (!flist.length) {
+		$("#statind").text('Upload done.');
+		upload(200); // trigger refresh when done.
+		return;
+	}
+	f = flist[0];
+    var fd = new FormData();
+    fd.append('file', f);
+    fd.append("upload_file", true);
+    var fName = f.name;
+    $.ajax({
+     url         : '/upload.cgi',
+     data        : fd,
+     cache       : false,
+     contentType : false,
+     processData : false,
+     type        : 'post',
+     success     : function(data, textStatus, jqXHR){
+    	flist.shift();
+        uploadNext(flist);
+        },
+     xhr: function() {
+        var xhr = new window.XMLHttpRequest();
+
+        // Upload progress
+        xhr.upload.addEventListener("progress", function(evt){
+            if (evt.lengthComputable) {
+                var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
+                //Do something with upload progress
+                $("#statind").text(fName + " " + percentComplete + "%");
+            }
+       }, false);
+       return xhr;
+    },
+       
+    });
+};
+
+uppie(document.querySelector('#uploader'), function (event, formData, files) {
+	var flist = [];
+	for (var [key, value] of formData.entries()) { if(key === 'files[]') flist.push(value); }
+	uploadNext(flist);
+});
+
+</script>
 			<hr>
 			<div id="footer">
 				<a href="/~/Set.htm">FlashAir Settings</a><br>

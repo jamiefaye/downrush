@@ -123,7 +123,7 @@ function delfile(file)
 	if(result){
 	    var url = "/upload.cgi?DEL=" + file;
 		$.get(url).done(function(data, textStatus, jqXHR){
-			alert("upload.cgi: "+data);
+			//alert("upload.cgi: "+data);
 			upload_after();
 		});
 	}
@@ -290,9 +290,9 @@ function reload_list()
     $("#reloadtime").html("<font color=blue>"+(new Date()).toLocaleString())+"</font>";
 }
 
-function upload()
+function upload(t)
 {
-	setTimeout(upload_after, 3000);
+	setTimeout(upload_after, t ? t : 3000);
 	return true;
 }
 
@@ -352,4 +352,10 @@ function RemoveAllFiles()
 		window.open(url, '_blank');
 		upload_after();
 	}
+}
+
+
+function handleUpload() {
+	
+	alert("Meow");
 }
