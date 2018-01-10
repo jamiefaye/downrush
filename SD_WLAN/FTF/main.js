@@ -70,6 +70,7 @@ function showFileList(path) {
         row.append($("<td></td>").append($("<b><font color='#AAAAAA'>Edit</font></b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
         row.append($("<td></td>").append($("<font color='#AAAAAA'>Del</font><a href='javascript:void(0)'></a>")).addClass("table_bts"));
         row.append($("<td></td>").append($("<font color='#AAAAAA'>Mov</font><a href='javascript:void(0)'></a>")).addClass("table_bts"));
+        row.append($("<td></td>").append($("<font color='#AAAAAA'>V</font><a href='javascript:void(0)'></a>")).addClass("table_bts"));
         $("#filetable").append(row);
     }
     $.each(wlansd, function() {
@@ -83,11 +84,13 @@ function showFileList(path) {
 		var filelink2 = $('<a href="javascript:void(0)"></a>');
 		var filelink3 = $('<a href="javascript:void(0)"></a>');
 		var filelink4 = $('<a href="javascript:void(0)"></a>');
+		var filelink5 = $('<a href="javascript:void(0)"></a>');
 		//var fileobj = $("<div></div>");
 
 		var caption;
 		var caption2;
 		var caption3;
+		var caption5;
 		var filesize;
 		var dateTime;
 		
@@ -95,7 +98,7 @@ function showFileList(path) {
         filelink4.addClass("file").attr('href', "javascript:rename('"+file["r_uri"] + '/' + file["fname"]+"')");
 		caption3 = "<font color='#FF0000'>Del</font>";
 		caption4 = "<font color='#0000FF'>Mov</font>";
-		
+		caption5 = "";
         if ( file["attr"] & 0x10 ) {
 			caption = "<b>"+file["fname"]+"</b>";
 			caption2 = "<b><font color='#AAAAAA'>Edit</font></b>";
@@ -110,6 +113,8 @@ function showFileList(path) {
 			caption2 = "<b><font color='#FF0000'>Edit</font></b>";
             filelink.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',false)");
             filelink2.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',true)");
+            caption5 = "<font color='#0000FF'>&#x1f441</font>"
+            filelink5.addClass("file").attr('href', "javascript:openspx('"+file["r_uri"] + '/' + file["fname"]+"')");
         }
 		// Append a file entry or directory to the end of the list.
         var row = $("<tr></tr>");
@@ -141,6 +146,11 @@ function showFileList(path) {
         row.append(
         	$("<td></td>").append(caption4).append(
 				filelink4.append()
+			).addClass("table_bts")
+        );
+        row.append(
+        	$("<td></td>").append(caption5).append(
+				filelink5.append()
 			).addClass("table_bts")
         );
 
@@ -190,6 +200,11 @@ function opensp(file,conf)
 		}
 	}
 }
+
+function openspx(file) {
+	window.open("/DR/xmlEd/editXML.htm?"+file);
+}
+
 
 //Making Path
 function makePath(dir) {

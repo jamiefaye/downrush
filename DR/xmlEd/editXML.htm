@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1, maximum-scale=1, user-scalable=no">
+		<meta charset="UTF-8">
+
+		<title>Downrush Editor</title>
+<script type="text/javascript" src="js/ext/jquery-1.4.js"></script>
+<script type="text/javascript" src="js/ext/jquery-color.js"></script>
+<script type="text/javascript" src="js/ext/GLR/GLR.js"></script>
+<script type="text/javascript" src="js/ext/GLR/GLR.messenger.js"></script>
+<script type="text/javascript" src="js/loc/xmlEditor.js"></script>
+<link rel="stylesheet" href="edit.css">
+<link href="css/main.css" type="text/css" rel="stylesheet"/>
+
+	</head>
+
+	<body>
+		<a href="readme.htm">
+			Downrush XML Editor
+		</a>&nbsp;
+		<span style="font-size: xx-small" id="extmode">
+			XML editor
+		</span>
+		<div style="margin-top: 5px;overflow: hidden;">
+			<div class="toolbox">
+				File:<input id="fname" type="text" size="24" value="/DR/run.lua">
+				<input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()">
+				<input type="button" value="Load(F12)" style="width:55pt" onclick="btn_load()" >
+			</div>
+			
+			<div class="toolbox">
+				<input type="button" value="#" id="showbtn" style="width:25pt" onclick="showTool()">
+			</div>
+			<span id="ToolButtons1" style="display:none">
+				<div class="toolbox">
+					<input type="button" value="Unlock(F7)" style="width:60pt" onclick="btn_unlock()" id="UnlockButton">
+				</div>
+				<div class="toolbox">
+					<input type="button" value="Menu" style="width:40pt" onclick="btn_menu()">
+					<input type="button" value="CONFIG" style="width:50pt" onclick='btn_config()'>
+				</div>
+				<div style="margin-left: 5px;width:auto;float:left;display:inline-block;width: 30px;vertical-align: middle;font-size: x-small;text-align: center;">
+					<input type="checkbox" id="chk" name="pre_en" value="1" checked="checked">
+					&lt;pre&gt;
+				</div>
+			</span>
+		</div>
+
+		<div>
+			Status
+			<br>
+			<textarea id="status" rows="2"  class="minibox" readonly></textarea>
+		</div>
+
+		<div id="xml" style="display:none;"></div>
+
+
+		<div id="nodePath"></div>
+
+
+		<script src="editXML.js"></script>
+	</body>
+</html>

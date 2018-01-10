@@ -1,0 +1,15 @@
+
+#messenger                    {position:fixed; top:0; width:100%; z-index:1001;}
+#messenger #msg               {margin:0 auto; border-collapse:collapse;}
+#messenger #msg #msgBody      {background:url(http://www.gallerama.com/global/images/messenger/msgBgSprite.png) no-repeat 0 1px; float:left; height:18px; padding:4px 0 6px 8px; color:#fff; font:bold 12px trebuchet ms,arial;}
+#messenger #msg #msgRightEdge {background:url(http://www.gallerama.com/global/images/messenger/msgBgSprite.png) no-repeat 100% 1px; float:left; height:25px; width:10px;}
+#messenger #msg #msgBody div  {padding:0 80px 0 85px; background:none; text-align:center;}
+
+#messenger.warning #msg #msgBody      {background-position:0 -27px;}
+#messenger.warning #msg #msgRightEdge {background-position:100% -27px;}
+#messenger.error   #msg #msgBody      {background-position:0 -55px;}
+#messenger.error   #msg #msgRightEdge {background-position:100% -55px;}
+
+* html #messenger                    {position:absolute;}
+* html #messenger #msg #msgBody      {background-image:url(http://www.gallerama.com/global/images/messenger/msgBgSprite.gif);}
+* html #messenger #msg #msgRightEdge {background-image:url(http://www.gallerama.com/global/images/messenger/msgBgSprite.gif);}

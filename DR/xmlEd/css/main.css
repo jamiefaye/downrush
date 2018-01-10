@@ -1,0 +1,131 @@
+body {margin:0; padding:0; background-color:#e3e3e3;}
+
+body, 
+div#xml input, 
+div#xml textarea {font:bold 12px consolas,courier new,monospace;}
+
+h2            {font:15px helvetica neue,microsoft sans serif,arial; color:#666;}
+hr            {height:1px; border:0; background-color:#999;}
+button        {background-color:#f30; color:#fff; border:1px outset #333; font:bold 10px tahoma,helvetica neue,arial; cursor:pointer; -moz-border-radius:3px; -webkit-border-radius:3px;}
+button.cancel {background-color:#999; color:#fff; border:1px outset #666; margin-left:2px;}
+button.icon   {width:14px; height:14px; border:none; padding:0; margin:0; background:transparent url(../img/icons.png) no-repeat;}
+.msg          {font-weight:normal; font-style:italic;}
+
+
+/* page structure */
+div#header        {background:#000 url(/sublog/wp-content/themes/Fire_Wind_1_0_1945/images/backgroundImg.jpg) no-repeat; padding:10px;}
+div#header a#home {display:block; background-image:url(../img/liveXmlEdit.png); height:53px; width:300px;}
+
+form#uploadForm       {
+	padding:10px; margin:10px; 
+	background-color:#424c53;
+	background-image:-moz-linear-gradient(top, #5e676d, #424c53); /* FF3.6 */
+	background-image:-webkit-gradient(linear,left top,left bottom,color-stop(0, #5e676d),color-stop(1, #424c53)); /* Saf4+, Chrome */
+						filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#5e676d', EndColorStr='#424c53'); /* IE6,IE7 */
+				-ms-filter:"progid:DXImageTransform.Microsoft.gradient(startColorStr='#5e676d', EndColorStr='#424c53')"; /* IE8 */	
+	border-radius:5px; -moz-border-radius:5px; -webkit-border-radius:5px;
+}
+form#uploadForm label {font:bold 14px helvetica neue,microsoft sans serif; color:#fff;}
+
+div#xml  {padding:14px 10px 10px 10px; margin:10px 10px 0 10px; background-color:#fff; -moz-border-radius-topleft:5px; -moz-border-radius-topright:5px; -webkit-border-top-left-radius:5px; -webkit-border-top-right-radius:5px;}
+
+div#actionButtons        {
+	padding:10px; margin:0 10px; 
+	border-top:2px solid #c66; 
+	width:auto; overflow:hidden; 
+	background-color:#424c53;
+	background-image:-moz-linear-gradient(top, #5e676d, #424c53); /* FF3.6 */
+	background-image:-webkit-gradient(linear,left top,left bottom,color-stop(0, #5e676d),color-stop(1, #424c53)); /* Saf4+, Chrome */
+						filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#5e676d', EndColorStr='#424c53'); /* IE6,IE7 */
+				-ms-filter:"progid:DXImageTransform.Microsoft.gradient(startColorStr='#5e676d', EndColorStr='#424c53')"; /* IE8 */	
+	-moz-border-radius-bottomleft:5px; -moz-border-radius-bottomright:5px; -webkit-border-bottom-left-radius:5px; -webkit-border-bottom-right-radius:5px;
+}
+div#actionButtons div    {float:left; font:italic 11px helvetica neue,arial; color:#999;}
+div#actionButtons div a  {color:#f30; font:bold 10px tahoma,helvetica neue,arial;}
+div#actionButtons button {
+	padding:4px 8px; 
+	font:bold 12px tahoma,helvetica neue,arial; 
+	background-image:-moz-linear-gradient(top, #ff8161, #ff3300); /* FF3.6 */
+	background-image:-webkit-gradient(linear,left top,left bottom,color-stop(0, #ff8161),color-stop(1, #ff3300)); /* Saf4+, Chrome */
+						filter:progid:DXImageTransform.Microsoft.gradient(startColorStr='#ff8161', EndColorStr='#ff3300'); /* IE6,IE7 */
+				-ms-filter:"progid:DXImageTransform.Microsoft.gradient(startColorStr='#ff8161', EndColorStr='#ff3300')"; /* IE8 */	
+	border-radius:5px; -moz-border-radius:5px; -webkit-border-radius:5px; border:1px outset #ccc;
+}
+div#actionButtons button#saveFile {display:none; float:right;}
+
+div#nodePath {position:absolute; top:98px; right:30px; font:11px consolas, courier new; color:#999;}
+
+div#footer       {margin:10px;}
+div#footer div   {float:left; padding:10px; width:275px; margin:0 10px 10px 0; /* background-color:#ccc; -moz-border-radius:5px; -webkit-border-radius:5px; */}
+div#footer h3    {font:bold 12px helvetica neue,microsoft sans serif,arial; color:#666; margin:5px 0;}
+div#footer p     {font:10px helvetica neue,arial; color:#777; margin:0 0 5px 0;}
+div#footer p a   {color:#900; text-decoration:none;}
+div#footer ul    {margin:0 0 0 14px; padding:0;}
+div#footer ul li {font:10px helvetica neue,arial; color:#777;}
+div#footer #about {width:400px;}
+
+
+/* xml structure */
+div#xml ul li                     {margin-bottom:0; padding-bottom:0;}
+div#xml ul li a                   {color:#9cc; font:normal 10px tahoma,helvetica,arial;}
+div#xml ul li input,
+div#xml ul li textarea,
+div#xml ul li ul.nodeCore input   {background-color:#eefffa; color:#000;}
+div#xml ul li ul.nodeCore input.newChild {color:#900;}
+
+div#xml ul li span.nodeName             {padding:1px; font-weight:bold; color:#900; cursor:pointer;}
+div#xml ul li.comment span.nodeName     {color:#999; font-style:italic;}
+
+div#xml ul li span.nodeAttrs                      {padding:1px; color:#666; font-weight:normal;}
+div#xml ul li span.nodeAttrs span.singleAttr      {margin-left:8px;}
+div#xml ul li span.nodeAttrs span.attrValue       {font:italic 11px georgia,serif; color:#000;}
+div#xml ul li span.nodeAttrs span.attrValue:hover {color:#090; cursor:pointer;}
+div#xml ul li span.nodeAttrs button.killAttr      {background-position:-34px -194px;}
+div#xml ul li span.nodeAttrs form                 {display:inline; margin:0; padding:0;}
+div#xml ul li span.nodeAttrs input                {font:italic 11px georgia,serif; border:0; padding:0; margin:0; border-bottom:1px dotted #066;}
+div#xml ul li span.nodeAttrs input.newAttrName    {width:80px; margin-left:8px;}
+div#xml ul li span.nodeAttrs input.newAttrValue   {width:120px; margin-right:8px;}
+div#xml ul li span.nodeAttrs button.addAttr       {margin-left:6px; background-position:0 -194px;}
+
+div#xml ul li span.nodeValue        {color:#666;}
+div#xml ul li span.nodeValue strong {color:#333;}
+
+div#xml ul li ul.nodeCore li p.nodeValue                    {font:italic 11px georgia,serif; width:400px; padding:0; margin:0; margin-left:4px; color:#000;}
+div#xml ul li ul.nodeCore li p.nodeValue:hover              {color:#090; cursor:pointer;}
+div#xml ul li ul.nodeCore li p.nodeValue span.noValue       {color:#999;}
+div#xml ul li ul.nodeCore li p.nodeValue:hover span.noValue {color:#090; cursor:pointer;}
+div#xml ul li ul.nodeCore li a.addChild                     {margin-left:4px;}
+div#xml ul li ul.nodeCore li textarea                       {font:italic 11px georgia,serif; width:400px; height:26px; padding:0 2px 2px 2px; margin:0 1px 2px 1px; border:none; border-bottom:1px dotted #066;}
+div#xml ul li ul.nodeCore li div.editTextValueButtons       {width:404px; height:15px;}
+div#xml ul li ul.nodeCore input {border:0; padding:0; margin:0 6px 0 4px; border-bottom:1px dotted #066;}
+
+div#xml ul li button.killNode,
+div#xml ul li button.killChild {background-position:-34px -194px; margin-left:2px;}
+
+div#xml span.comment {font:italic 11px consolas,courier new,monospace; color:#999;}
+
+/* xml tree support */
+.treeview    {padding:0; margin:0; list-style:none;}
+.treeview ul {padding:0; margin:4px 0 0 0; list-style:none;}
+.treeview li {margin:0; padding:3px 0pt 3px 16px; background:url(../img/treeview-default-line.gif) 0 0 no-repeat;}
+
+.treeview div.hitarea {background:url(../img/treeview-default.gif) -64px -25px no-repeat; height:16px; width:16px; margin-left:-16px; float:left;cursor:pointer;}
+
+.treeview li.collapsable,
+.treeview li.expandable   {background-position:0 -176px;}
+
+.treeview li.collapsable ul {display:block;}
+.treeview li.expandable  ul {display:none;}
+
+.treeview li.collapsable div.hitarea {background-position:-64px -25px;}
+.treeview li.expandable  div.hitarea {background-position:-80px -3px;}
+
+.treeview li.last              {background-position:0 -1766px;}
+.treeview li.last.collapsable  {background:url(../img/treeview-default.gif) 0 -111px no-repeat;}
+.treeview li.last.expandable   {background:url(../img/treeview-default.gif) -32px -67px no-repeat;}
+
+.treeview li.last.collapsable div.hitarea.last {background-position:0;}
+.treeview li.last.expandable  div.hitarea.last {background-position:0;}
+
+/* fix for IE6 */
+* html .hitarea {display:inline; float:none;}
