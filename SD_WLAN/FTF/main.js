@@ -26,6 +26,23 @@ function convertFileList() {
 		wlansd[i]["ftime"] = Number(elements[5]);
 	}
 }
+
+function zeroPad(num, places) {
+  var zero = places - num.toString().length + 1;
+  return Array(+(zero > 0 && zero)).join("0") + num;
+}
+
+function makeDT(fdate, ftime) {
+	let seconds = (ftime & 31) * 2;
+	let minutes = (ftime >> 5) & 63;
+	let hours   = (ftime >> 11) & 31;
+	let day   = fdate & 31;
+	let month = (fdate >> 5) & 15;
+	let year  = ((fdate >> 9) & 127) + 1980;
+	if (year < 2000) return "";
+	return "" + month + '/' + day + '&nbsp;' + zeroPad(hours,2) + ':' + zeroPad(minutes,2);
+
+}
 // Callback Function for sort()
 function cmptime(a, b) {
     if( a["fdate"] == b["fdate"] ) {
@@ -47,6 +64,9 @@ function showFileList(path) {
 				$('<a href="javascript:dir(\'..\')" class="dir"></a>')
 			).addClass("table_name")
         );
+
+        row.append($("<td></td>").append($("<b><font color='#AAAAAA'>Time</font></b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
+        row.append($("<td></td>").append($("<b><font color='#AAAAAA'>Size</font></b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
         row.append($("<td></td>").append($("<b><font color='#AAAAAA'>Edit</font></b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
         row.append($("<td></td>").append($("<font color='#AAAAAA'>Del</font><a href='javascript:void(0)'></a>")).addClass("table_bts"));
         row.append($("<td></td>").append($("<font color='#AAAAAA'>Mov</font><a href='javascript:void(0)'></a>")).addClass("table_bts"));
@@ -68,6 +88,8 @@ function showFileList(path) {
 		var caption;
 		var caption2;
 		var caption3;
+		var filesize;
+		var dateTime;
 		
         filelink3.addClass("file").attr('href', "javascript:delfile('"+file["r_uri"] + '/' + file["fname"]+"')");
         filelink4.addClass("file").attr('href', "javascript:rename('"+file["r_uri"] + '/' + file["fname"]+"')");
@@ -82,11 +104,12 @@ function showFileList(path) {
         } else {
 			var f = file["fname"].split('.');
 			var ext = f[f.length-1].toLowerCase();
-			
+			filesize = file["fsize"];
+			dateTime = makeDT(file["fdate"], file["ftime"]);
 			caption = file["fname"];
 			caption2 = "<b><font color='#FF0000'>Edit</font></b>";
-            filelink.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',false)");			
-            filelink2.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',true)");			
+            filelink.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',false)");
+            filelink2.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',true)");
         }
 		// Append a file entry or directory to the end of the list.
         var row = $("<tr></tr>");
@@ -96,6 +119,15 @@ function showFileList(path) {
 				filelink.append()
 			).addClass("table_name")
         );
+        row.append(
+        	$("<td></td>").append(dateTime)
+			.addClass("table_dts")
+        );
+        row.append(
+        	$("<td></td>").append(filesize)
+			.addClass("table_dts")
+        );
+
         row.append(
         	$("<td></td>").append(caption2).append(
 				filelink2.append()

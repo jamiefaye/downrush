@@ -42,6 +42,11 @@
 				/*margin:0px auto 20px;*/
 			    text-align: center;
 			}
+			.table_dts {
+				width: 50px;
+				position:relative;
+			    text-align: right;
+			}
 			.table_bts a{
 				position:absolute;
 				top:0;
@@ -116,33 +121,46 @@ var uploadNext = function(flist) {
     var fd = new FormData();
     fd.append('file', f);
     fd.append("upload_file", true);
-    var fName = f.name;
-    $.ajax({
-     url         : '/upload.cgi',
-     data        : fd,
-     cache       : false,
-     contentType : false,
-     processData : false,
-     type        : 'post',
-     success     : function(data, textStatus, jqXHR){
-    	flist.shift();
-        uploadNext(flist);
-        },
-     xhr: function() {
-        var xhr = new window.XMLHttpRequest();
 
-        // Upload progress
-        xhr.upload.addEventListener("progress", function(evt){
-            if (evt.lengthComputable) {
-                var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
-                //Do something with upload progress
-                $("#statind").text(fName + " " + percentComplete + "%");
-            }
-       }, false);
-       return xhr;
-    },
+    var timestring;
+    var dt = new Date();
+    var year = (dt.getFullYear() - 1980) << 9;
+    var month = (dt.getMonth() + 1) << 5;
+    var date = dt.getDate();
+    var hours = dt.getHours() << 11;
+    var minutes = dt.getMinutes() << 5;
+    var seconds = Math.floor(dt.getSeconds() / 2);
+    var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
+    var urlDateSet = '/upload.cgi?FTIME=' + timestring;
+    var fName = f.name;
+    $.get(urlDateSet, function() {
+     $.ajax({
+       url         : '/upload.cgi',
+       data        : fd,
+       cache       : false,
+       contentType : false,
+       processData : false,
+       type        : 'post',
+       success     : function(data, textStatus, jqXHR){
+      	flist.shift();
+          uploadNext(flist);
+          },
+       xhr: function() {
+          var xhr = new window.XMLHttpRequest();
+   
+          // Upload progress
+          xhr.upload.addEventListener("progress", function(evt){
+              if (evt.lengthComputable) {
+                  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
+                  //Do something with upload progress
+                  $("#statind").text(fName + " " + percentComplete + "%");
+              }
+         }, false);
+         return xhr;
+      },
        
     });
+   });
 };
 
 uppie(document.querySelector('#uploader'), function (event, formData, files) {
