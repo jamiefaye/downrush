@@ -16,12 +16,15 @@ var fname = "";
 //----- Enrich editor -----
 CodeMirror.modeURL = "codemirror-5.30.0/mode/%N/%N.js"; // For automatic mode call
 var jsEditor = CodeMirror.fromTextArea(code_edit, {
-    mode: "lua",
+    mode: "xml",
     lineNumbers: true,
     indentUnit: 4,
     autoCloseBrackets: true,
+    foldGutter: true,
+    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
     extraKeys: {"Ctrl-Space": "autocomplete"}
 });
+
 jsEditor.setSize("100%","100%");
 
 CodeMirror.commands.autocomplete = function(cm) {
@@ -105,7 +108,9 @@ function onLoad()
 	modeChanger(filename_input.value);
 	postWorker("load");
 	fname = filename_input.value;
+
 	jsEditor.markClean();
+
 }
 window.onload = onLoad;
 
@@ -311,7 +316,7 @@ function setRes(text)
 // Set Eva
 function setEva(text)
 {
-	eva_output.innerHTML = "<pre>"+text + "</pre>";
+//	eva_output.innerHTML = "<pre>"+text + "</pre>";
 }
 
 //editorにセットする
