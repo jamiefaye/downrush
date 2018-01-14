@@ -27,10 +27,6 @@ if(e.data.mode == "unlock")
 //		callFunction("console.log","load");
 		callFunction("clearStatus","");
 		load(e.data);
-		eva(e.data);
-	}else if(e.data.mode == "eva")
-	{
-		eva(e.data);
 	}else{
 		callFunction("console.log","unknown");
 	}
@@ -242,54 +238,6 @@ function unlock(msg)
 	return 0;
 }
 
-function eva()
-{
-	callFunction("clrLineHighlight","");
-
-	var xhr = new XMLHttpRequest();
-	xhr.open("GET" , "/eva.cgi", false);//同期Request
-	xhr.setRequestHeader("If-Modified-Since", "Thu, 01 Jan 1970 00:00:00 GMT");
-	xhr.timeout = xhr_timeout;
-	try {
-		xhr.send();
-	}catch (e) {
-		callFunction("addStatus","Exception!(Worker): "+e.message);
-	}
-	
-	//---return stat---
-	if(xhr.readyState != 4)
-	{
-		callFunction("addStatus","eva read failed.");
-		return -1;
-	}
-	if(xhr.status == 0){
-		callFunction("addStatus","internal Error (EMPTY RESPONSE / CONNECTION REFUSED / etc...)");
-		return -1;
-	}
-	if((xhr.status < 200) || (xhr.status > 300)){ //!=2XX
-		callFunction("addStatus","Server Error. CODE:"+xhr.status);
-		return -1;
-	}
-	callFunction("setEva","--------- eva.cgi ---------\n"+xhr.responseText);
-	
-	var evaText = xhr.responseText;
-	var matchError   = evaText.match(/^:(\d+): /gm);
-	var matchErrorAt = evaText.match(/ at line (\d+)\) near/gm);
-	
-	if(matchError){
-		matchError.forEach(function(matchStr) {
-			var lineno = matchStr.match(/\d+/);
-			callFunction("setLineHighlight",Number(lineno));
-		});
-	}
-	if(matchErrorAt){
-		matchErrorAt.forEach(function(matchStr) {
-			var lineno = matchStr.match(/\d+/);
-			callFunction("setLineHighlight",Number(lineno));
-		});
-	}
-	return 0;
-}
 /*
 	console.log
 	clearStatus
