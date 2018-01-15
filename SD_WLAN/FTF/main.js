@@ -202,7 +202,8 @@ function opensp(file,conf)
 }
 
 function openspx(file) {
-	window.open("/DR/xmlEd/editXML.htm?"+file);
+//	window.open("/DR/xmlView/viewXML.htm?"+file);
+ 	window.open("/DR/xmlEd/editXML.htm?"+file);
 }
 
 
@@ -271,7 +272,7 @@ $(function() {
 	//HTTPアクセスの設定を行います
 	$.ajaxSetup({
 		//cache: false,	//キャッシュ禁止するとなぜかロードできなくなる
-		timeout: 30000	//30秒でタイムアウト。0で無効。単位はms
+		timeout: 300000	// Increased timeout value so as to not interfere with uploads.
 	});
 
     // Iniialize global variables.
@@ -315,9 +316,21 @@ function dir(fname)
 
 //Callback Function for Polling
 var last_update_time = 0;
+
+// During long uploads, polling requests were stacking up behind the upload
+// We add an active flag. The flag prevents new requests from going
+// out while one is active.
+var polling_active = false;
+
 function polling() {
+	if(polling_active) {
+		return;
+	}
+	polling_active = true;
     var url="/command.cgi?op=121&TIME="+(Date.now());
+
     $.get(url).done(function(data, textStatus, jqXHR){
+    	polling_active = false;
         if(last_update_time < Number(data)) {
         	last_update_time = Number(data);
 			getFileList(last_dirpath);
@@ -326,6 +339,7 @@ function polling() {
         	$("#reloadtime").html((new Date()).toLocaleString());
         }
     }).fail(function(jqXHR, textStatus, errorThrown){
+    	polling_active = false;
 		//失敗した場合:エラー内容を表示
 		$("#reloadtime").html("<font color=red>Error:"+textStatus+"</font>");
 	});
