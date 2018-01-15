@@ -16,9 +16,10 @@ open /Volumes/NO\ NAME/SD_WLAN/
 ```
 vi /Volumes/NO\ NAME/SD_WLAN/CONFIG
 ```
-1. Add one line at the bottom that enables the uploading feature:
+1. Add two lines at the bottom to enable the uploading features:
 ```
 UPLOAD=1
+WEBDAV=2
 ```
 
 1. Copy the files named List.htm and jquery-3.2.1.min.js from the SD_WLAN distribution directory and put them into the SD_WLAN directory on the FlashAir Card.
