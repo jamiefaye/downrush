@@ -420,3 +420,57 @@ function handleUpload() {
 	
 	alert("Meow");
 }
+
+var uppie = new Uppie();
+// Since upload.cgi can only handle one file at a time, do things one at a time.
+var uploadNext = function(flist) {
+	if (!flist.length) {
+		$("#statind").text('Upload done.');
+		upload(200); // trigger refresh when done.
+		return;
+	}
+	f = flist[0];
+    var fd = new FormData();
+    fd.append('file', f);
+    fd.append("upload_file", true);
+
+    var timestring;
+    var dt = new Date();
+    var year = (dt.getFullYear() - 1980) << 9;
+    var month = (dt.getMonth() + 1) << 5;
+    var date = dt.getDate();
+    var hours = dt.getHours() << 11;
+    var minutes = dt.getMinutes() << 5;
+    var seconds = Math.floor(dt.getSeconds() / 2);
+    var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
+    var urlDateSet = '/upload.cgi?FTIME=' + timestring;
+    var fName = f.name;
+    $.get(urlDateSet, function() {
+     $.ajax({
+       url         : '/upload.cgi',
+       data        : fd,
+       cache       : false,
+       contentType : false,
+       processData : false,
+       type        : 'post',
+       success     : function(data, textStatus, jqXHR){
+      	flist.shift();
+          uploadNext(flist);
+          },
+       xhr: function() {
+          var xhr = new window.XMLHttpRequest();
+   
+          // Upload progress
+          xhr.upload.addEventListener("progress", function(evt){
+              if (evt.lengthComputable) {
+                  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
+                  //Do something with upload progress
+                  $("#statind").text(fName + " " + percentComplete + "%");
+              }
+         }, false);
+         return xhr;
+      },
+       
+    });
+   });
+};
