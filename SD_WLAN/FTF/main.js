@@ -202,8 +202,8 @@ function opensp(file,conf)
 }
 
 function openspx(file) {
-//	window.open("/DR/xmlView/viewXML.htm?"+file);
- 	window.open("/DR/xmlEd/editXML.htm?"+file);
+	window.open("/DR/xmlView/viewXML.htm?"+file);
+// 	window.open("/DR/xmlEd/editXML.htm?"+file);
 }
 
 

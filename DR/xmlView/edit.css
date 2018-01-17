@@ -40,6 +40,9 @@ input[type="button"] {
     border-radius:2px;
     box-shadow:1px 1px 1px #7F7F7F;
 }
+body {
+	background-color:#f8f8f8;
+}
 table {
 	border-collapse: collapse;
 	text-align: center;
@@ -48,7 +51,37 @@ td {
 	border: solid 1px;
 	padding: 0.5em;
 }
+
 th {
 	border: solid 1px;
 	padding: 0.5em;
+}
+
+.tabval td {
+	text-align: left;
+	padding: 0.5em;
+}
+
+.keyval {
+	font-weight: 600;
+	background-color:#f0f0f0;
+}
+
+.tabval {
+	font-weight: 500;
+	background-color:#f8f8f8;
+}
+
+div.trgrid {
+	position: relative;
+	// border: solid 1px;
+	background-color:#f8f8f8;
+	padding: 4px;
+	margin: 4px;
+}
+
+div.trnote {
+	position: absolute;
+	height: 4px;
+	background-color:#202020;
 }
