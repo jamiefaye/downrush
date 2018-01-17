@@ -43,37 +43,70 @@ function makeDT(fdate, ftime) {
 	return "" + month + '/' + day + '&nbsp;' + zeroPad(hours,2) + ':' + zeroPad(minutes,2);
 
 }
+
+var sortOrder = 1;
+
 // Callback Function for sort()
 function cmptime(a, b) {
-    if( a["fdate"] == b["fdate"] ) {
-        return a["ftime"] - b["ftime"];
-    }else{
-        return a["fdate"] - b["fdate"];
-    }
+	if( a["fdate"] == b["fdate"] ) {
+		return Math.sign(a["ftime"] - b["ftime"]) * sortOrder;
+	}else {
+		return Math.sign(a["fdate"] - b["fdate"]) * sortOrder;
+	}
 }
+
+// Callback Function for sort by name
+function cmpfname(a, b) {
+	return a["fname"].localeCompare(b["fname"]) * sortOrder;
+
+}
+
+// Callback Function for sort by size
+function cmpfsize(a, b) {
+	return Math.sign(a["fsize"] - b["fsize"]) * sortOrder;
+
+}
+
+
+var sortFunction = cmpfname;
+
+var sortFunctionTab = [cmpfname, cmptime, cmpfsize];
+
+function setSortFunction(fieldNum) {
+	let sf = sortFunctionTab[fieldNum];
+	if(sortFunction === sf) { sortOrder = -sortOrder; }
+	else sortFunction = sf;
+	wlansd.sort(sortFunction);
+	showFileList(currentPath);
+}
+
 // Show file list
 function showFileList(path) {
 	// Clear box.
 	//$("#list").html('');
 	$("#filetable tr").remove();
-    // Output a link to the parent directory if it is not the root directory.
-    if( path != "/" ) {
-        var row = $("<tr></tr>");
-        row.append(
-        	$("<td></td>").append($("<span>..</span>")).append(
+
+	var row = $("<tr></tr>");
+	row.append($("<td></td>").append($("<b>Name</b><a href='javascript:setSortFunction(0)'></a>")).addClass("table_bts"));
+	row.append($("<td></td>").append($("<b>Time</b><a href='javascript:setSortFunction(1)'></a>")).addClass("table_bts"));
+	row.append($("<td></td>").append($("<b>Size</b><a href='javascript:setSortFunction(2)'></a>")).addClass("table_bts"));
+	row.append($("<td></td>").append($("<div>Edit</div><a href='javascript:void(0)'></a>")).addClass("table_cmd"));
+	row.append($("<td></td>").append($("<div>Del</div><a href='javascript:void(0)'></a>")).addClass("table_cmd"));
+	row.append($("<td></td>").append($("<div>Mov</div><a href='javascript:void(0)'></a>")).addClass("table_cmd"));
+	row.append($("<td></td>").append($("<div>&#x1f441</div><a href='javascript:void(0)'></a>")).addClass("table_eye"));
+	$("#filetable").append(row);
+	// Output a link to the parent directory if it is not the root directory.
+	if( path != "/" ) {
+		var row = $("<tr></tr>");
+		row.append(
+			$("<td></td>").append($("<span>..</span>")).append(
 				$('<a href="javascript:dir(\'..\')" class="dir"></a>')
 			).addClass("table_name")
-        );
-
-        row.append($("<td></td>").append($("<b><font color='#AAAAAA'>Time</font></b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
-        row.append($("<td></td>").append($("<b><font color='#AAAAAA'>Size</font></b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
-        row.append($("<td></td>").append($("<b><font color='#AAAAAA'>Edit</font></b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
-        row.append($("<td></td>").append($("<font color='#AAAAAA'>Del</font><a href='javascript:void(0)'></a>")).addClass("table_bts"));
-        row.append($("<td></td>").append($("<font color='#AAAAAA'>Mov</font><a href='javascript:void(0)'></a>")).addClass("table_bts"));
-        row.append($("<td></td>").append($("<font color='#AAAAAA'>V</font><a href='javascript:void(0)'></a>")).addClass("table_bts"));
-        $("#filetable").append(row);
-    }
-    $.each(wlansd, function() {
+		);
+		row.append($("<td colspan='6'></td>").append($("<b> </b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
+		$("#filetable").append(row);
+	}
+	$.each(wlansd, function() {
 		var file = this;
 		// Skip hidden file.
 		//if ( file["attr"] & 0x02 ) {
@@ -85,7 +118,6 @@ function showFileList(path) {
 		var filelink3 = $('<a href="javascript:void(0)"></a>');
 		var filelink4 = $('<a href="javascript:void(0)"></a>');
 		var filelink5 = $('<a href="javascript:void(0)"></a>');
-		//var fileobj = $("<div></div>");
 
 		var caption;
 		var caption2;
@@ -94,68 +126,76 @@ function showFileList(path) {
 		var filesize;
 		var dateTime;
 		
-        filelink3.addClass("file").attr('href', "javascript:delfile('"+file["r_uri"] + '/' + file["fname"]+"')");
-        filelink4.addClass("file").attr('href', "javascript:rename('"+file["r_uri"] + '/' + file["fname"]+"')");
-		caption3 = "<font color='#FF0000'>Del</font>";
-		caption4 = "<font color='#0000FF'>Mov</font>";
+		filelink3.addClass("file").attr('href', "javascript:delfile('"+file["r_uri"] + '/' + file["fname"]+"')");
+		filelink4.addClass("file").attr('href', "javascript:rename('"+file["r_uri"] + '/' + file["fname"]+"')");
+		caption3 = "<font color='#FF0000'>Del";
+		caption4 = "<font color='#0000FF'>Mov";
 		caption5 = "";
-        if ( file["attr"] & 0x10 ) {
+		if ( file["attr"] & 0x10 ) {
 			caption = "<b>"+file["fname"]+"</b>";
-			caption2 = "<b><font color='#AAAAAA'>Edit</font></b>";
-            filelink.addClass("dir").attr('href', "javascript:dir('"+file["fname"]+"')");			
-            filelink.addClass("dir");
-        } else {
+			caption2 = "Edit";
+			filelink.addClass("dir").attr('href', "javascript:dir('"+file["fname"]+"')");			
+			filelink.addClass("dir");
+		} else {
 			var f = file["fname"].split('.');
 			var ext = f[f.length-1].toLowerCase();
 			filesize = file["fsize"];
 			dateTime = makeDT(file["fdate"], file["ftime"]);
 			caption = file["fname"];
-			caption2 = "<b><font color='#FF0000'>Edit</font></b>";
-            filelink.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',false)");
-            filelink2.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',true)");
-            caption5 = "<font color='#0000FF'>&#x1f441</font>"
-            filelink5.addClass("file").attr('href', "javascript:openspx('"+file["r_uri"] + '/' + file["fname"]+"')");
-        }
-		// Append a file entry or directory to the end of the list.
-        var row = $("<tr></tr>");
 
-        row.append(
-        	$("<td></td>").append(caption).append(
+			filelink.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',false)");
+		   
+			if (ext === 'lua' && INCLUDE_FTLE) {
+				caption2 = "<font color='#FF0000'>Edit Lua</font>";
+				filelink2.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',true)");
+			}
+			if(ext === 'xml') {
+				 caption2 = "<font color='#FF0000'>Edit</font>";
+				filelink2.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',true)");
+				caption5 = "<font color='#0000FF'>&#x1f441"
+				filelink5.addClass("file").attr('href', "javascript:openspx('"+file["r_uri"] + '/' + file["fname"]+"')");
+			}
+		}
+		// Append a file entry or directory to the end of the list.
+		var row = $("<tr></tr>");
+
+		row.append(
+			$("<td></td>").append(caption).append(
 				filelink.append()
 			).addClass("table_name")
-        );
-        row.append(
-        	$("<td></td>").append(dateTime)
+		);
+		row.append(
+			$("<td></td>").append(dateTime)
 			.addClass("table_dts")
-        );
-        row.append(
-        	$("<td></td>").append(filesize)
+		);
+		row.append(
+			$("<td></td>").append(filesize)
 			.addClass("table_dts")
-        );
+		);
 
-        row.append(
-        	$("<td></td>").append(caption2).append(
+		row.append(
+			$("<td></td>").append(caption2).append(
 				filelink2.append()
-			).addClass("table_bts")
-        );
-        row.append(
-        	$("<td></td>").append(caption3).append(
+			).addClass("table_cmd")
+		);
+		row.append(
+			$("<td></td>").append(caption3).append(
 				filelink3.append()
-			).addClass("table_bts")
-        );
-        row.append(
-        	$("<td></td>").append(caption4).append(
+			).addClass("table_cmd")
+		);
+		row.append(
+			$("<td></td>").append(caption4).append(
 				filelink4.append()
-			).addClass("table_bts")
-        );
-        row.append(
-        	$("<td></td>").append(caption5).append(
+			).addClass("table_cmd")
+		);
+		row.append(
+			$("<td></td>").append(caption5).append(
 				filelink5.append()
-			).addClass("table_bts")
-        );
+			).addClass("table_eye")
+		);
 
-        $("#filetable").append(row);
-    });     
+		$("#filetable").append(row);
+	});     
 }
 
 function delfile(file)
@@ -163,7 +203,7 @@ function delfile(file)
 	var result = confirm( "delete "+ file+ "?" );
 
 	if(result){
-	    var url = "/upload.cgi?DEL=" + file;
+		var url = "/upload.cgi?DEL=" + file;
 		$.get(url).done(function(data, textStatus, jqXHR){
 			//alert("upload.cgi: "+data);
 			upload_after();
@@ -179,7 +219,7 @@ function rename(file)
 		path = path.replace(/ /g , "|" ) ;
 		file = file.replace(/ /g , "|" ) ;
 		var url = "/SD_WLAN/FTF/move.lua?"+file+"%20"+path
-	    $.get(url).done(function(data, textStatus, jqXHR){
+		$.get(url).done(function(data, textStatus, jqXHR){
 			upload_after();
 		});
 	}
@@ -195,7 +235,7 @@ function opensp(file,conf)
 		var ext = file.split('.').pop().toLowerCase();
 		if (ext === 'lua' && INCLUDE_FTLE) {
 			window.open("/FTLE/edit.htm?"+file);
-		} else {
+		} else if (ext === 'xml') {
 			window.open("/DR/edit.htm?"+file);
 		}
 	}
@@ -213,17 +253,17 @@ function makePath(dir) {
 	if ( currentPath == "/" ) {
 		arrPath.pop();
 	}
-    if ( dir == ".." ) {
+	if ( dir == ".." ) {
 		// Go to parent directory. Remove last fragment.
-        arrPath.pop();
-    } else if ( dir != "" && dir != "." ) {
+		arrPath.pop();
+	} else if ( dir != "" && dir != "." ) {
 		// Go to child directory. Append dir to the current path.
 		arrPath.push(dir);
-    }
+	}
 	if ( arrPath.length == 1 ) {
 		arrPath.push("");
 	}
-    return arrPath.join("/");
+	return arrPath.join("/");
 }
 // Get file list
 function getFileList(nextPath) { //dir
@@ -233,31 +273,31 @@ function getFileList(nextPath) { //dir
 	
 	var url = "";
 	if($("#FullFileList").prop('checked')) {
-	    url = "/SD_WLAN/FTF/command100emu.lua?DIR=" + nextPath+"&TIME="+(Date.now());
-   	}else{
-	    url = "/command.cgi?op=100&DIR=" + nextPath+"&TIME="+(Date.now());
+		url = "/SD_WLAN/FTF/command100emu.lua?DIR=" + nextPath+"&TIME="+(Date.now());
+	}else{
+		url = "/command.cgi?op=100&DIR=" + nextPath+"&TIME="+(Date.now());
 	}
 	// Issue CGI command.
-    $.get(url).done(function(data, textStatus, jqXHR){
-       // Save the current path.
-        currentPath = nextPath;
-        // Split lines by new line characters.
-        wlansd = data.split(/\n/g);
-        // Ignore the first line (title) and last line (blank).
-        wlansd.shift();
-        wlansd.pop();
+	$.get(url).done(function(data, textStatus, jqXHR){
+	   // Save the current path.
+		currentPath = nextPath;
+		// Split lines by new line characters.
+		wlansd = data.split(/\n/g);
+		// Ignore the first line (title) and last line (blank).
+		wlansd.shift();
+		wlansd.pop();
 		// Convert to V2 format.
 		convertFileList(wlansd);
 		// Sort by date and time.
-        wlansd.sort(cmptime);
+		wlansd.sort(sortFunction);
 		
 		// Show
 		showFileList(currentPath);
-	    var url = "/upload.cgi?UPDIR=" + nextPath+"&TIME="+(Date.now());
+		var url = "/upload.cgi?UPDIR=" + nextPath+"&TIME="+(Date.now());
 		$.get(url);
 	}).fail(function(jqXHR, textStatus, errorThrown){
 		//失敗した場合:エラー内容を表示
-        var row = $("<tr></tr>");
+		var row = $("<tr></tr>");
 		$("#filetable tr").remove();
 		row.append(
 			$("<td></td>").append($("<font color=red>Error:"+textStatus+"</font>")).addClass("table_name")
@@ -275,32 +315,32 @@ $(function() {
 		timeout: 300000	// Increased timeout value so as to not interfere with uploads.
 	});
 
-    // Iniialize global variables.
-    currentPath = location.pathname;
-    last_dirpath = currentPath
-    $("#header").html("<h1><a href='"+currentPath+"'>"+currentPath+"</a></h1>");
-    
+	// Iniialize global variables.
+	currentPath = location.pathname;
+	last_dirpath = currentPath
+	$("#header").html("<h1><a href='"+currentPath+"'>"+currentPath+"</a></h1>");
+	
 	wlansd = new Array();
 	// Show the root directory.
-    getFileList(makePath(''));
-    // Register onClick handler for <a class="dir">
+	getFileList(makePath(''));
+	// Register onClick handler for <a class="dir">
 /*
-    $(document).on("click","a.dir",function() {
-    	var dirpath = makePath(this.text);
-        $("#header").html("<h1>"+dirpath+"</h1>");
-        $("#list").html("Loading...");
-        getFileList(dirpath);
-        
-        last_dirpath = dirpath;
-    }); 
+	$(document).on("click","a.dir",function() {
+		var dirpath = makePath(this.text);
+		$("#header").html("<h1>"+dirpath+"</h1>");
+		$("#list").html("Loading...");
+		getFileList(dirpath);
+		
+		last_dirpath = dirpath;
+	}); 
 */
-    polling();
-    setInterval(polling, 5000);
+	polling();
+	setInterval(polling, 5000);
 });
 
 function dir(fname)
 {
-   	var dirpath = makePath(fname);
+	var dirpath = makePath(fname);
 	$("#header").html("<h1><a href='"+dirpath+"'>"+dirpath+"</a></h1>");
 
 	var row = $("<tr></tr>");
@@ -327,19 +367,19 @@ function polling() {
 		return;
 	}
 	polling_active = true;
-    var url="/command.cgi?op=121&TIME="+(Date.now());
+	var url="/command.cgi?op=121&TIME="+(Date.now());
 
-    $.get(url).done(function(data, textStatus, jqXHR){
-    	polling_active = false;
-        if(last_update_time < Number(data)) {
-        	last_update_time = Number(data);
+	$.get(url).done(function(data, textStatus, jqXHR){
+		polling_active = false;
+		if(last_update_time < Number(data)) {
+			last_update_time = Number(data);
 			getFileList(last_dirpath);
-        	$("#reloadtime").html("<font color=red>"+(new Date()).toLocaleString())+"</font>";
-        }else{
-        	$("#reloadtime").html((new Date()).toLocaleString());
-        }
-    }).fail(function(jqXHR, textStatus, errorThrown){
-    	polling_active = false;
+			$("#reloadtime").html("<font color=red>"+(new Date()).toLocaleString())+"</font>";
+		}else{
+			$("#reloadtime").html((new Date()).toLocaleString());
+		}
+	}).fail(function(jqXHR, textStatus, errorThrown){
+		polling_active = false;
 		//失敗した場合:エラー内容を表示
 		$("#reloadtime").html("<font color=red>Error:"+textStatus+"</font>");
 	});
@@ -347,8 +387,8 @@ function polling() {
 
 function reload_list()
 {
-    getFileList(last_dirpath);
-    $("#reloadtime").html("<font color=blue>"+(new Date()).toLocaleString())+"</font>";
+	getFileList(last_dirpath);
+	$("#reloadtime").html("<font color=blue>"+(new Date()).toLocaleString())+"</font>";
 }
 
 function upload(t)
@@ -359,8 +399,8 @@ function upload(t)
 
 function upload_after()
 {
-    getFileList(last_dirpath);
-    $("#reloadtime").html("<font color=blue>"+(new Date()).toLocaleString())+"</font>";
+	getFileList(last_dirpath);
+	$("#reloadtime").html("<font color=blue>"+(new Date()).toLocaleString())+"</font>";
 }
 
 function CreateFile()
@@ -377,7 +417,7 @@ function CreateFile()
 		}
 		url = url.replace(/ /g , "|" ) ;
 		
-	    $.get(url).done(function(data, textStatus, jqXHR){
+		$.get(url).done(function(data, textStatus, jqXHR){
 			alert("CreateFile: "+data);
 			upload_after();
 		});
@@ -397,7 +437,7 @@ function NewDirectory()
 		}
 		url = url.replace(/ /g , "|" ) ;
 				
-	    $.get(url).done(function(data, textStatus, jqXHR){
+		$.get(url).done(function(data, textStatus, jqXHR){
 			alert("NewDirectory: "+data);
 			upload_after();
 		});
@@ -430,47 +470,47 @@ var uploadNext = function(flist) {
 		return;
 	}
 	f = flist[0];
-    var fd = new FormData();
-    fd.append('file', f);
-    fd.append("upload_file", true);
+	var fd = new FormData();
+	fd.append('file', f);
+	fd.append("upload_file", true);
 
-    var timestring;
-    var dt = new Date();
-    var year = (dt.getFullYear() - 1980) << 9;
-    var month = (dt.getMonth() + 1) << 5;
-    var date = dt.getDate();
-    var hours = dt.getHours() << 11;
-    var minutes = dt.getMinutes() << 5;
-    var seconds = Math.floor(dt.getSeconds() / 2);
-    var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
-    var urlDateSet = '/upload.cgi?FTIME=' + timestring;
-    var fName = f.name;
-    $.get(urlDateSet, function() {
-     $.ajax({
-       url         : '/upload.cgi',
-       data        : fd,
-       cache       : false,
-       contentType : false,
-       processData : false,
-       type        : 'post',
-       success     : function(data, textStatus, jqXHR){
-      	flist.shift();
-          uploadNext(flist);
-          },
-       xhr: function() {
-          var xhr = new window.XMLHttpRequest();
+	var timestring;
+	var dt = new Date();
+	var year = (dt.getFullYear() - 1980) << 9;
+	var month = (dt.getMonth() + 1) << 5;
+	var date = dt.getDate();
+	var hours = dt.getHours() << 11;
+	var minutes = dt.getMinutes() << 5;
+	var seconds = Math.floor(dt.getSeconds() / 2);
+	var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
+	var urlDateSet = '/upload.cgi?FTIME=' + timestring;
+	var fName = f.name;
+	$.get(urlDateSet, function() {
+	 $.ajax({
+	   url         : '/upload.cgi',
+	   data        : fd,
+	   cache       : false,
+	   contentType : false,
+	   processData : false,
+	   type        : 'post',
+	   success     : function(data, textStatus, jqXHR){
+		flist.shift();
+		  uploadNext(flist);
+		  },
+	   xhr: function() {
+		  var xhr = new window.XMLHttpRequest();
    
-          // Upload progress
-          xhr.upload.addEventListener("progress", function(evt){
-              if (evt.lengthComputable) {
-                  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
-                  //Do something with upload progress
-                  $("#statind").text(fName + " " + percentComplete + "%");
-              }
-         }, false);
-         return xhr;
-      },
-       
-    });
+		  // Upload progress
+		  xhr.upload.addEventListener("progress", function(evt){
+			  if (evt.lengthComputable) {
+				  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
+				  //Do something with upload progress
+				  $("#statind").text(fName + " " + percentComplete + "%");
+			  }
+		 }, false);
+		 return xhr;
+	  },
+	   
+	});
    });
 };
