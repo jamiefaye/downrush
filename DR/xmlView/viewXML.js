@@ -317,7 +317,7 @@ function songHead(jsong, obj) {
 	delete songS.preview;
 	delete songS.previewNumPads;
 	delete songS.timerTickFraction;
-	delete songS.timerTickFraction;
+	delete songS.timePerTimerTick;
 	
 	let formaters = {
 		"modeNotes": function(source, keyV, wobj) {
