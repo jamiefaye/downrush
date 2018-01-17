@@ -351,7 +351,7 @@ function formatSong(jsong, obj) {
 		for(var i = 0; i < trax.length; ++i) {
 			obj.append($("<h3/>").text("Track number " + (i + 1)));
 			trackHeader(trax[trax.length - i- 1], obj);
-			plotTrack(trax[i], obj);
+			plotTrack(trax[trax.length - i- 1], obj);
 		}
 	  }
 	}
