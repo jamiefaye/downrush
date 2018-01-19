@@ -213,7 +213,7 @@ function delfile(file)
 
 function rename(file)
 {
-	var path = window.prompt(""+file+"\nMove for ?(full path with filename)\nEg. /DR/test.lua", file);
+	var path = window.prompt(""+file+"\nMove (or rename) this file/directory to have the following full pathname:", file);
 	if(path)
 	{
 		path = path.replace(/ /g , "|" ) ;
@@ -403,26 +403,7 @@ function upload_after()
 	$("#reloadtime").html("<font color=blue>"+(new Date()).toLocaleString())+"</font>";
 }
 
-function CreateFile()
-{
-	var path = window.prompt("File name?\n"+last_dirpath, "NewFile01");
-	if(path)
-	{
-		var url = "";
-		if(last_dirpath != "/")
-		{
-			url = "/SD_WLAN/FTF/new.lua?"+last_dirpath+"/"+path;
-		}else{
-			url = "/SD_WLAN/FTF/new.lua?"+"/"+path;		
-		}
-		url = url.replace(/ /g , "|" ) ;
-		
-		$.get(url).done(function(data, textStatus, jqXHR){
-			alert("CreateFile: "+data);
-			upload_after();
-		});
-	}
-}
+
 function NewDirectory()
 {
 	var path = window.prompt("Directory name?\n"+last_dirpath, "NewDirectory01");
@@ -472,7 +453,7 @@ var uploadNext = function(flist) {
 	f = flist[0];
 	var fd = new FormData();
 	fd.append('file', f);
-	fd.append("upload_file", true);
+	// fd.append("upload_file", true);
 
 	var timestring;
 	var dt = new Date();
@@ -492,7 +473,8 @@ var uploadNext = function(flist) {
 	   cache       : false,
 	   contentType : false,
 	   processData : false,
-	   type        : 'post',
+	   method:		'POST',
+	   type        : 'POST',
 	   success     : function(data, textStatus, jqXHR){
 		flist.shift();
 		  uploadNext(flist);
