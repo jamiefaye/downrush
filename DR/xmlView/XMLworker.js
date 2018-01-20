@@ -1,7 +1,7 @@
 "use strict";
 
 var xhr_timeout = 5*60*1000;
-//--------------- our variation of the worker for our XML editor --------------------
+//--------------- our variation of the worker for our XML viewer --------------------
 
 /*
 
@@ -38,10 +38,10 @@ function load(msg)
 {
 	var filepath = msg.filepath;
 	filepath = filepath.replace(/ /g , "|" ) ;
-	callFunction("addStatus","Load Request to read.lua :"+filepath);
+	callFunction("addStatus","Load Request:"+filepath);
 
 	var xhr = new XMLHttpRequest();
-	xhr.open("GET" , "read.lua?"+filepath, false);//Request
+	xhr.open("GET" , filepath, false);//Request
 	xhr.setRequestHeader("If-Modified-Since", "Thu, 01 Jan 1970 00:00:00 GMT");
 	xhr.timeout = xhr_timeout;
 	try {
@@ -49,7 +49,7 @@ function load(msg)
 	}catch (e) {
 		callFunction("addStatus","Exception!(Worker): "+e.message);
 	}
-	
+
 	//---return stat---
 	if(xhr.readyState != 4)
 	{
@@ -71,6 +71,7 @@ function load(msg)
 	return 0;
 }
 
+
 function save(msg)
 {
 	var filepath = msg.filepath;
@@ -78,10 +79,6 @@ function save(msg)
 	var edit = msg.edit;
 
 	callFunction("addStatus","upload Start : "+filepath);
-
-//	callFunction("console.log",filepath);
-//	callFunction("console.log",arg);
-//	callFunction("console.log",edit);
 
 	var xhr = new XMLHttpRequest();
 	xhr.open("PUT", filepath, false);//同期Request
@@ -110,6 +107,7 @@ function save(msg)
 		return -1;
 	}
 	callFunction("addStatus","save success.("+xhr.status+")");
+	unlock();
 	return 0;
 }
 

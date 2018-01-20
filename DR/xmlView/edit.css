@@ -16,6 +16,10 @@
 .minibox {
   width: 90vw;
 }
+.tinybox {
+  width: 30vw;
+}
+
 .toolbox{
   margin-left: 5px;
   width:auto;
@@ -40,6 +44,7 @@ input[type="button"] {
     border-radius:2px;
     box-shadow:1px 1px 1px #7F7F7F;
 }
+
 body {
 	background-color:#f8f8f8;
 }

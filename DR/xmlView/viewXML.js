@@ -1,6 +1,6 @@
 "use strict";
-//-------------定数初期化-----------------
-var code_edit = document.getElementById ("code_edit");
+// while this program is called viewXML, in reality we use JSON internally
+// and convert from XML to JSON on load, from JSON to XML on save.
 
 var filename_input = document.getElementById ("fname");//.value
 // var arg_input = document.getElementById ("line");//.value
@@ -12,6 +12,7 @@ var ckh = document.getElementById ("chk");
 
 var fname = "";
 
+var jsonDocument;
 
 	
 /**
@@ -41,40 +42,151 @@ function xmlToJson(xml) {
   let obj = {};
 
   if (xml.nodeType === 1) { // element
-    // do attributes
-    if (xml.attributes.length > 0) {
-      obj['@attributes'] = {};
-      for (let j = 0; j < xml.attributes.length; j += 1) {
-        const attribute = xml.attributes.item(j);
-        obj['@attributes'][attribute.nodeName] = attribute.nodeValue;
-      }
-    }
+	// do attributes
+	if (xml.attributes.length > 0) {
+	  obj['@attributes'] = {};
+	  for (let j = 0; j < xml.attributes.length; j += 1) {
+		const attribute = xml.attributes.item(j);
+		obj['@attributes'][attribute.nodeName] = attribute.nodeValue;
+	  }
+	}
   } else if (xml.nodeType === 3) { // text
-    obj = xml.nodeValue;
+	obj = xml.nodeValue;
   }
 
   // do children
   // If just one text node inside
   if (xml.hasChildNodes() && xml.childNodes.length === 1 && xml.childNodes[0].nodeType === 3) {
-    obj = xml.childNodes[0].nodeValue;
+	obj = xml.childNodes[0].nodeValue;
   } else if (xml.hasChildNodes()) {
-    for (let i = 0; i < xml.childNodes.length; i += 1) {
-      const item = xml.childNodes.item(i);
-      const nodeName = item.nodeName;
-      if (item.nodeType === 3) continue; // JFF don't bother with text nodes
-      if (typeof (obj[nodeName]) === 'undefined') {
-        obj[nodeName] = xmlToJson(item);
-      } else {
-        if (typeof (obj[nodeName].push) === 'undefined') {
-          const old = obj[nodeName];
-          obj[nodeName] = [];
-          obj[nodeName].push(old);
-        }
-        obj[nodeName].push(xmlToJson(item));
-      }
-    }
+	for (let i = 0; i < xml.childNodes.length; i += 1) {
+	  const item = xml.childNodes.item(i);
+	  const nodeName = item.nodeName;
+	  if (item.nodeType === 3) continue; // JFF don't bother with text nodes
+	  if (typeof (obj[nodeName]) === 'undefined') {
+		obj[nodeName] = xmlToJson(item);
+	  } else {
+		if (typeof (obj[nodeName].push) === 'undefined') {
+		  const old = obj[nodeName];
+		  obj[nodeName] = [];
+		  obj[nodeName].push(old);
+		}
+		obj[nodeName].push(xmlToJson(item));
+	  }
+	}
   }
   return obj;
+}
+
+function gentabs(d) {
+	var str = "";
+	for(var i = 0; i< d; ++i) str += '\t';
+	return str;
+}
+
+
+function jsonToXML(kv, j, d) {
+	if(j.constructor !== Object && j.constructor !== Array) {
+		return gentabs(d) + "<" + kv + ">" + j + "</" + kv + ">\n";
+	}
+	let atList = j["@attributes"];
+	let atStr = "";
+	if (atList) {
+		for (var ak in atList) {
+			if(atList.hasOwnProperty(ak)) {
+				atStr += ' ';
+				atStr += ak;
+				atStr += '="';
+				atStr += atList[ak];
+				atStr +='"';
+			}
+		}
+	}
+	let insides = "";
+	for(var ek in j) {
+		if(j.hasOwnProperty(ek) && ek != "@attributes") {
+			let v = j[ek];
+			if (v.constructor === Array) {
+				for(var i = 0; i < v.length; ++i) {
+					insides += jsonToXML(ek, v[i], d + 1);
+				}
+			} else if (v.constructor == Object) {
+				insides += jsonToXML(ek, v, d + 1);
+			} else {
+				// Simple k/v pair
+				if(typeof v === "string") v = v.trim();
+				insides += jsonToXML(ek, v, d);
+				// insides += gentabs(d) + "<" + ek + ">" + v + "</" + ek + ">\n";
+			}
+		}
+	}
+	let str = gentabs(d - 1) + "<" + kv + atStr;
+	
+	if (insides.length > 0) {
+		str += '>\n' + insides + gentabs(d - 1) + '</' + kv + '>\n';
+	} else {
+		str += "/>";
+	}
+	return str;
+}
+
+function jsonToXMLString(root, json) {
+	let depth = 0;
+	return jsonToXML(root, json, depth);
+}
+
+// Thanks to Dr. White for the jsonequals function.
+// https://stackoverflow.com/users/2215072/drwhite
+// https://stackoverflow.com/questions/26049303/how-to-compare-two-json-have-the-same-properties-without-order
+function jsonequals(x, y) {
+	// If both x and y are null or undefined and exactly the same
+	if ( x === y ) {
+		return true;
+	}
+
+	// If they are not strictly equal, they both need to be Objects
+	if ( ! ( x instanceof Object ) || ! ( y instanceof Object ) ) {
+		return false;
+	}
+
+	// They must have the exact same prototype chain, the closest we can do is
+	// test the constructor.
+	if ( x.constructor !== y.constructor ) {
+		return false;
+	}
+
+	for ( var p in x ) {
+		// Inherited properties were tested using x.constructor === y.constructor
+		if ( x.hasOwnProperty( p ) ) {
+			// Allows comparing x[ p ] and y[ p ] when set to undefined
+			if ( ! y.hasOwnProperty( p ) ) {
+				return false;
+			}
+
+			// If they have the same strict value or identity then they are equal
+			if ( x[ p ] === y[ p ] ) {
+				continue;
+			}
+
+			// Numbers, Strings, Functions, Booleans must be strictly equal
+			if ( typeof( x[ p ] ) !== "object" ) {
+				return false;
+			}
+
+			// Objects and Arrays must be tested recursively
+			if ( !jsonequals( x[ p ],  y[ p ] ) ) {
+				return false;
+			}
+		}
+	}
+
+	for ( p in y ) {
+		// allows x[ p ] to be set to undefined
+		if ( y.hasOwnProperty( p ) && ! x.hasOwnProperty( p ) ) {
+			return false;
+		}
+	}
+	return true;
 }
 
 function sizeLimitScalar(v)
@@ -239,44 +351,166 @@ function plotTrack(track, obj) {
 	obj.append(lowNote);
 }
 
+function trackKind(track) {
+	if(track['kit']) return 'kit';
+	if(track['sound']) return 'sound';
+	if(track['midiChannel']) return 'midi';
+	// deal with indirect refs
+	if(track['kitParams']) return 'kit';
+	if(track['soundParams']) return 'sound';
+	return 'unknown';
+}
+
+var trackKindNames = {"kit": "Kit",
+					"sound": "Synth",
+					"midi": "Midi",
+					"cv": "CV",
+					"unknown": "?",
+					};
+
 function trackHeader(track,obj) {
 	let section = track.section;
-	let ttype = 'Synth';
-	if (track.midiChannel) {
-		ttype = 'Midi';
-	}
-	if (track.kit) {
-		ttype = 'Kit';
-	}
-	let len = track.trackLength;
+	let kind = trackKind(track);
 	let patch = Number(track.instrumentPresetSlot);
-	let colourOffset = track.colourOffset;
-	//let subpatch = Number(track.instrumentPresetSubSlot);
+	let source;
+	if (track.soundMidiCommand) {
+		source = "Midi in: " + track.soundMidiCommand.channel;
+	}
 	var patchName;
-	if (ttype === 'Kit') {
+	if (kind === 'kit') {
 		patchName = kitNames[patch];
-	} else if (ttype === 'Midi') {
+	} else if (kind === 'midi') {
 		patch = Number(track.midiChannel) + 1;
 		patchName = '';
-		
-	} else {
+	} else if (kind === 'sound') {
 		patchName = patchNames[patch];
 	}
-//	if(subpatch >= 0) {
-//		patch = patch + String.fromCharCode(97 + subpatch);
-//	}
-	let trtab = $('<table/>');
-	trtab.append($("<tr><th>Section</th><th>Type</th><th>Preset #</th><th>Name</th><th>Length</th><th>color</th></tr>"));
-	let tr = $("<tr/>");
-	tr.append($("<td/>").html(section));
-	tr.append($("<td/>").html(ttype));
-	tr.append($("<td/>").html(patch));
-	tr.append($("<td/>").html(patchName));
-	tr.append($("<td/>").html(len));
-	tr.append($("<td/>").html(colourOffset));
-	trtab.append(tr);
-	obj.append(trtab);
 
+	let context = {
+		len:			track.trackLength,
+		patch: 			patch,
+		colourOffset: 	track.colourOffset,
+		patchName:		patchName,
+		kindName: 		trackKindNames[kind],
+		section: 		section,
+		source:			source,
+	}
+	let trtab = Mustache.to_html(track_head_template, context);
+
+	obj.append(trtab);
+}
+
+function getTrackText(trackNum)
+{
+	let songJ = jsonDocument.song;
+	if (!songJ) return;
+
+	let trackA = forceArray(songJ.tracks.track);
+	let trackIX = trackA.length - trackNum - 1;
+	let trackJ = trackA[trackIX];
+	// Dereference referToTrackId if needed.
+	var trackD;
+	if (trackJ.instrument && trackJ.instrument.referToTrackId !== undefined) {
+		let fromID = Number(trackJ.instrument.referToTrackId);
+		trackD = Object.assign({}, trackJ); // working copy
+		delete trackD.instrument; // zonk reference
+		let sourceT = trackA[fromID];
+		// patch in data from source (depending on what type).
+		let kind = trackKind(sourceT);
+		if (kind === 'kit') {
+			trackD["kit"] = sourceT["kit"];
+		} else if (kind === 'sound') {
+			trackD["sound"] = sourceT["sound"];
+		} else {
+			alert("Dangling reference to trackID: " + fromID + " kind: " + kind);
+		}
+	} else {
+		trackD = trackJ;
+	}
+	// let asText = jsonToXMLString("track", trackD);
+	let trackWrap = {"track": trackD};
+	let asText = JSON.stringify(trackWrap, null, 1);
+	return asText;
+}
+
+function trackCopyButton(trackNum, obj) {
+	obj.append(Mustache.to_html(track_copy_template, {trackNum: trackNum}));
+}
+
+
+function pasteTrackText(text) {
+	
+	let pastedJSON = JSON.parse(text);
+	// Clear the pasted-into-area
+	setTimeout( function() {
+		let ta =$("#paster")[0];
+		ta.value = ta.defaultValue;
+	}, 100);
+	if (!pastedJSON || !pastedJSON.track) {
+		alert("Invalid data on clipboard.");
+		return;
+	}
+	// Place the new track at the beginning of the track array
+	let songJ = jsonDocument.song;
+	if (!songJ) return;
+
+	let trackA = forceArray(songJ.tracks.track);
+	// The beginning of the track array shows up at the screen bottom.
+	trackA.unshift(pastedJSON.track);
+
+	// Iterate thru the remaining tracks, updating the referToTrackId fields.
+	for(var i = 1; i < trackA.length; ++i) {
+		let aTrack = trackA[i];
+		if (aTrack.instrument && aTrack.instrument.referToTrackId !== undefined) {
+			aTrack.instrument.referToTrackId++;
+		}
+	}
+
+	// Now we try and element duplicate sound or kit elements
+	// Since our new item was inserted at the front of the list, we search the remmaining tracks
+	// for those that are equal to our element. We then replace their sound or kit with a referToTrackId of 0
+	let track0 = trackA[0];
+	let trackType;
+	if (track0['sound']) trackType = 'sound';
+	else if (track0['kit']) trackType = 'kit';
+	if (trackType !== undefined) {
+		for(var i = 1; i < trackA.length; ++i) {
+			let aTrack = trackA[i];
+			if (jsonequals(track0[trackType], aTrack[trackType])) {
+				delete aTrack[trackType];
+				aTrack.instrument = {"referToTrackId": 0};
+			}
+		}
+	}
+	triggerRedraw();
+}
+
+function pasteTrackios(e) {
+	
+	let pasteel = $("#paster");
+	if(pasteel && pasteel.length > 0) {
+		let t = pasteel[0].value;
+		pasteTrackText(t);
+	}
+}
+
+function pasteTrack(e) {
+	let clipboardData = e.clipboardData || e.originalEvent.clipboardData || window.clipboardData;
+
+	let pastedData = clipboardData.getData('text');
+	pasteTrackText(pastedData);
+}
+
+function trackPasteField(obj) {
+	let iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
+	let paster = Mustache.to_html(paster_template, {iOSDevice: iOSDevice});
+	obj.append($(paster));
+
+	if(iOSDevice) {
+		$('#iosSubmit').on('click', pasteTrackios);
+	} else {
+		$('#paster').on('paste', pasteTrack);
+	}
 }
 
 function horizontalArray(arr, obj, title) {
@@ -350,13 +584,21 @@ function formatSong(jsong, obj) {
 	  if (trax) {
 		for(var i = 0; i < trax.length; ++i) {
 			obj.append($("<h3/>").text("Track number " + (i + 1)));
+			trackCopyButton(i, obj);
 			trackHeader(trax[trax.length - i- 1], obj);
 			plotTrack(trax[trax.length - i- 1], obj);
 		}
 	  }
 	}
+	trackPasteField(obj);
 	songHead(jsong, obj);
-
+	// Populate copy to clippers.
+	new Clipboard('.clipbtn', {
+	   text: function(trigger) {
+		let asText = getTrackText(trigger.getAttribute('trackno'));
+		return asText;
+	}
+	});
 }
 
 function jsonToTopTable(json, obj)
@@ -367,6 +609,13 @@ function jsonToTopTable(json, obj)
 	} else {
 		jsonToTable(json, obj);
 	}
+}
+
+
+// Trigger redraw of song
+function triggerRedraw() {
+	$('#jtab').empty();
+	jsonToTopTable(jsonDocument, $('#jtab'));
 }
 
 // Returns short cut pathways for populating the value display table
@@ -490,7 +739,7 @@ function btn_load()
 //Save
 
 function btn_save(){
-/*
+
 	if(fname != filename_input.value)
 	{
 		if(!window.confirm('Are you sure you want to save it? \n(Target file name has changed !)'))
@@ -502,7 +751,6 @@ function btn_save(){
 
 	postWorker("save");
 	// jsEditor.markClean();
-*/
 }
 
 // Unlock
@@ -573,35 +821,15 @@ function setRes(text)
 //editor
 function setEditText(text)
 {
-//	$("#textPlace").text(text);
-	// jsEditor.doc.setValue(text);
 	var fixedText = text.replace(/<firmwareVersion>1.3.\d<.firmwareVersion>/i,"");
 	var asDOM = getXmlDOMFromString(fixedText);
 	var asJSON = xmlToJson(asDOM);
+	jsonDocument = asJSON;
 
-	let h = jsonToTopTable(asJSON, $('#jtab'));
-	//$('#jtab').append(h);
-	// buildHtmlTable([asJSON]);
-/*
-  	xmlEditor.loadXmlFromString(fixedText, "#xml", function(){
-  	    $("#xml").show();
-		xmlEditor.renderTree();
-	});
-*/
-
+	jsonToTopTable(asJSON, $('#jtab'));
 }
 
-//editorのハイライトを消去する
-function clrLineHighlight()
-{
-	/*
-	var h = jsEditor.eachLine(function(h){ //全ラインに対して処理
-		jsEditor.removeLineClass(h, "background", "error-line");
-	});
-	*/
-}
-
-//editorのハイライトを設定する
+// Set editor highlight
 function setLineHighlight(lineno)
 {// and removeLineClass, 
 //	var h = jsEditor.getLineHandle(lineno - 1);
@@ -611,18 +839,19 @@ function setLineHighlight(lineno)
 //Workerに投げる
 function postWorker(mode)
 {
-	// jsEditor.save();
-	
-	var code_body = "";
-	if(mode === 'save') { code_body = xmlEditor.getXmlAsString(); }
-	//CRLFをLFにしてから、CRLFにする。(LFもCRLFになる)
-	var code_body_lf = code_body.replace(/\r\n/g,"\n").replace(/\n/g,"\r\n");
+	var saveText  = "";
+	if(mode === 'save') {
+		let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
+		saveText = headerStr + jsonToXMLString("song", jsonDocument.song);
+	}
+	// Set CRLF to LF and then to CRLF. (LF also becomes CRLF)
+	//var code_body_lf = code_body.replace(/\r\n/g,"\n").replace(/\n/g,"\r\n");
 
 	var msg = {
 		filepath: filename_input.value,
 		arg: "", // arg_input.value,
 		mode: mode,
-		edit: code_body_lf
+		edit: saveText,
 	};
 	worker.postMessage(msg);
 }
@@ -639,9 +868,9 @@ try {
 	addStat("Exception!(UI): "+e.message);
 }
 worker.onmessage = function(e) {
-	//RPC的実装
+	// RPC outfitting
 
-	//debug用
+	//debug
 	if(e.data.func == "console.log")
 	{
 		console.log(e.data.arg);
@@ -665,10 +894,6 @@ worker.onmessage = function(e) {
 	if(e.data.func == "setEditor")
 	{
 		setEditText(e.data.arg);
-	}
-	if(e.data.func == "clrLineHighlight")
-	{
-		clrLineHighlight();
 	}
 	if(e.data.func == "setLineHighlight")
 	{

@@ -29,7 +29,7 @@ if(fa.serial)then
 		end
 	end
 	if(buf ~= "")then
-		print(buf:sub(1,-2)) --最後の余計なLFを削る
+		print(buf:sub(1,-2)) -- Cut out the last extra LF
 	end
 else
 	--W-03

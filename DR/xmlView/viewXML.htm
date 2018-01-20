@@ -3,22 +3,21 @@
 	<head>
 		<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1, maximum-scale=1, user-scalable=no">
 		<meta charset="UTF-8">
-
 		<title>Downrush XML Viewer</title>
 <script type="text/javascript" src="js/ext/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="js/ext/handlebars.min.js"></script>
+<script type="text/javascript" src="js/ext/mustache.min.js"></script>
+<script type="text/javascript" src="js/ext/clipboard.min.js"></script>
 <script type="text/javascript" src="js/loc/delugepatches.js"></script>
-<script type="text/javascript" src="js/loc/xmlEditor.js"></script>
+<script type="text/javascript" src="templates.js"></script>
+
 <link rel="stylesheet" href="edit.css">
 	</head>
-
 	<body>
-
 		Downrush Deluge Object Viewer
 		<div style="margin-top: 5px;overflow: hidden;">
 			<div class="toolbox">
-				File:<input id="fname" type="text" size="24" value="/DR/run.lua">
-		<!--		<input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"> -->
+				File:<input id="fname" type="text" size="24" value="">
+				<input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()">
 				<input type="button" value="Reload(F12)" style="width:55pt" onclick="btn_load()" >
 			</div>
 			
@@ -52,11 +51,7 @@
 		<p/>
 		<div id='jtab'> </div>
 		<div id="xml" style="display:none;"></div>
-
-
 		<div id="nodePath"></div>
-
-
 		<script src="viewXML.js"></script>
 	</body>
 </html>
