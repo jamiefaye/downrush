@@ -69,7 +69,7 @@ If you create a mismatched XML element tag, the offending text will be highlight
 
 To save a file back to the FlashAir card, press the save button. If you change the file name before you save, it will work as a "Save As" and not overstore the original file. This is a handy way of creating a copy somewhere.
 
-Editing an XML file and storing it back can create a corrupted file that the Deluge might trip-out over. In particular, cutting and pasting <track> elements is tricky because some <track> elements contain references to other <track> elements to avoid duplicating data. For this reason, we recommend you use the "Eye Editor", which has a special feature for making this easier.
+Editing an XML file and storing it back can create a corrupted file that the Deluge might trip-out over. In particular, cutting and pasting &lt;track&gt; elements is tricky because some &lt;track&gt;  elements contain references to other &lt;track&gt; elements to avoid duplicating data. For this reason, we recommend you use the "Eye Editor", which has a special feature for making this easier.
 
 ## The "Eye Editor"
 
