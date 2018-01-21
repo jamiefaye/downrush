@@ -372,9 +372,13 @@ function trackHeader(track,obj) {
 	let section = track.section;
 	let kind = trackKind(track);
 	let patch = Number(track.instrumentPresetSlot);
-	let source;
+	let info = "";
 	if (track.soundMidiCommand) {
-		source = "Midi in: " + track.soundMidiCommand.channel;
+		info += "Midi in: " + track.soundMidiCommand.channel;
+	}
+	if (track.midiPGM) {
+		if(info) info += ', ';
+		info += "Midi program: " + (Number(track.midiPGM) + 1);
 	}
 	var patchName;
 	if (kind === 'kit') {
@@ -393,7 +397,7 @@ function trackHeader(track,obj) {
 		patchName:		patchName,
 		kindName: 		trackKindNames[kind],
 		section: 		section,
-		source:			source,
+		info:			info,
 	}
 	let trtab = Mustache.to_html(track_head_template, context);
 

@@ -6,7 +6,7 @@ var track_head_template = `<table>
 <th>Name</th>
 <th>Length</th>
 <th>Colour</th>
-<th>Source</th>
+<th>Info</th>
 </tr>
 <tr>
 <td>{{section}}</td>
@@ -15,7 +15,7 @@ var track_head_template = `<table>
 <td>{{patchName}}</td>
 <td>{{len}}</td>
 <td>{{colourOffset}}</td>
-<td>{{source}}</td>
+<td>{{info}}</td>
 </tr>
 </table>`;
 
