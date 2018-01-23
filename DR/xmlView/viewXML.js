@@ -552,7 +552,7 @@ function sectionRepeats(arr, obj) {
 }
 
 function songTail(jsong, obj) {
-	// formatSound(obj, jsong, jsong.songParams, jsong.defaultParams, jsong.soundParams);
+	formatSound(obj, jsong, jsong.songParams, jsong.defaultParams, jsong.soundParams);
 }
 
 // Return song tempo calculated from timePerTimerTick and timerTickFraction
