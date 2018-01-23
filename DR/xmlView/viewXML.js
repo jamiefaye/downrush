@@ -368,7 +368,7 @@ var trackKindNames = {"kit": "Kit",
 					"unknown": "?",
 					};
 
-function trackHeader(track,obj) {
+function trackHeader(track, inx, obj) {
 	let section = track.section;
 	let kind = trackKind(track);
 	let patch = Number(track.instrumentPresetSlot);
@@ -398,6 +398,7 @@ function trackHeader(track,obj) {
 		kindName: 		trackKindNames[kind],
 		section: 		section,
 		info:			info,
+		trackNum:		inx,
 	}
 	let trtab = Mustache.to_html(track_head_template, context);
 
@@ -441,7 +442,9 @@ function trackCopyButton(trackNum, obj) {
 	obj.append(Mustache.to_html(track_copy_template, {trackNum: trackNum}));
 }
 
-
+function soundViewButton(trackNum, obj) {
+	obj.append(Mustache.to_html(sound_view_template, {trackNum: trackNum}));
+}
 function pasteTrackText(text) {
 	
 	let pastedJSON = JSON.parse(text);
@@ -548,24 +551,10 @@ function sectionRepeats(arr, obj) {
 	horizontalArray(repL, obj, "Section Repeats");
 }
 
-function songHead(jsong, obj) {
-	let songS = Object.assign({}, jsong);
-
-	delete songS.tracks;
-	delete songS.preview;
-	delete songS.previewNumPads;
-	delete songS.timerTickFraction;
-	delete songS.timePerTimerTick;
-	
-	let formaters = {
-		"modeNotes": function(source, keyV, wobj) {
-			horizontalArray(source.modeNotes.modeNote, wobj, "Mode Notes");
-		},
-		"sections": function(source, keyV, wobj) {
-			sectionRepeats(source.sections.section, wobj);
-		},
-	};
-	jsonToTable(songS, obj, formaters);
+function songTail(jsong, obj) {
+	if(jsong.songParams) {
+		formatSound(jsong, obj, false);
+	}
 }
 
 // Return song tempo calculated from timePerTimerTick and timerTickFraction
@@ -582,20 +571,22 @@ function formatSong(jsong, obj) {
 	let ctab = genColorTab(jsong.preview);
 	obj.append(ctab);
 	obj.append("Tempo = " + convertTempo(jsong) + " bpm");
-
+	if(jsong.sections) {
+		sectionRepeats(jsong.sections.section, obj);
+	}
 	if(jsong.tracks) {
 	  let trax = forceArray(jsong.tracks.track);
 	  if (trax) {
 		for(var i = 0; i < trax.length; ++i) {
 			obj.append($("<h3/>").text("Track number " + (i + 1)));
 			trackCopyButton(i, obj);
-			trackHeader(trax[trax.length - i- 1], obj);
+			trackHeader(trax[trax.length - i- 1], i, obj);
 			plotTrack(trax[trax.length - i- 1], obj);
 		}
 	  }
 	}
 	trackPasteField(obj);
-	songHead(jsong, obj);
+	songTail(jsong, obj);
 	// Populate copy to clippers.
 	new Clipboard('.clipbtn', {
 	   text: function(trigger) {
@@ -603,6 +594,290 @@ function formatSong(jsong, obj) {
 		return asText;
 	}
 	});
+	$(".soundviewbtn").on('click', function(e) {
+		viewSound(e);
+	});
+}
+
+// Recur down a JSON object, replacing all string values that
+// contain hexidecimal constants with numbers 	
+function cleanUpParams(json, formatters) {
+	for (var k in json) {
+		if(json.hasOwnProperty(k)) {
+			if(formatters && formatters[k]) {
+				let v = formatters[k](json, k);
+				json[k] = v;
+				continue;
+			}
+
+			let v = json[k];
+			if (v.constructor === Array) {
+				for(var ix = 0; ix < v.length; ++ix) {
+					cleanUpParams(v[ix], formatters);
+				}
+
+			} else if(v.constructor === Object) {
+					cleanUpParams(v);
+			} else
+				if(typeof v === "string") {
+				if (v.startsWith('0x')) {
+					
+					let asInt= parseInt(v.substring(2, 18), 16);
+					// Convert to signed 32 bit.
+					if (asInt & 0x80000000) {
+						asInt -= 0x100000000;
+					}
+					let ranged = Math.round( ((asInt + 0x80000000) * 50) / 0x100000000) ;
+					json[k] = ranged;
+					//console.log(k + " converting: " + v + " to: " + ranged);
+				}
+			}
+		}
+	}
+}
+
+function fixRebParm(v) {
+
+	if(typeof v === "string" && v.startsWith('0x')) return v;
+	let vn = Number(v);
+	let ranged = Math.round( (vn * 50) / 0x7FFFFFFF);
+	return ranged;
+}
+
+function cleanUpReverb(json) {
+	let reverb = json.reverb;
+	if(reverb) {
+		reverb.roomSize = fixRebParm(reverb.roomSize);
+		reverb.dampening = fixRebParm(reverb.dampening);
+		reverb.width = fixRebParm(reverb.width);
+		let fpan = fixRebParm(reverb.pan);
+		reverb.pan = fpan; //  - 25;
+	}
+}
+
+function formatModKnobs(knobs, title, obj)
+{
+	let context = {title: title};
+	for(var i = 0; i < knobs.length; ++i) {
+		let kName = 'mk' + i;
+		context[kName] = knobs[i].controlsParam;
+	}
+	obj.append(Mustache.to_html(modKnobTemplate, context));
+}
+
+function formatTime(tv)
+{
+	let t = Number(tv) / 1000;
+	let v = t.toFixed(3);
+	return v;
+}
+function formatSampleEntry(sound, obj, ix)
+{
+	let context = {index: ix};
+	if (sound.name) context.sound_name = sound.name;
+	
+
+	if (sound.osc1) {
+		if (sound.osc1.fileName) context.fileName = sound.osc1.fileName;
+		if (sound.osc1.zone) {
+			if (sound.osc1.zone.startMilliseconds) context.startTime = formatTime(sound.osc1.zone.startMilliseconds);
+			if (sound.osc1.zone.endMilliseconds) context.endTime = formatTime(sound.osc1.zone.endMilliseconds);
+		}
+	}
+
+	// If Osc2 also has a sample, note that.
+	if (sound.osc2 && sound.osc2.fileName && sound.osc2.fileName.length > 0) {
+
+		context.fileName2 = sound.osc2.fileName;
+		if (sound.osc2.zone) {
+			if (sound.osc2.zone.startMilliseconds) context.startTime2 = formatTime(sound.osc2.zone.startMilliseconds);;
+			if (sound.osc2.zone.endMilliseconds) context.endTime2 = formatTime(sound.osc2.zone.endMilliseconds);
+		}
+	}
+
+	obj.append(Mustache.to_html(sample_entry_template, context));
+}
+
+function formatSound(json, obj, showJSON)
+{
+	let working = jQuery.extend(true, {}, json);
+	jQuery.extend(true, working, json.defaultParams);
+	// Override with soundParameters if present.
+	if(json.soundParamters) {
+		jQuery.extend(true, working, json.soundParams);
+	}
+	cleanUpReverb(working);
+	cleanUpParams(working);
+
+	let context = working;
+
+	if (working.midiKnobs && working.midiKnobs.midiKnob) {
+		formatModKnobs(working.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
+	}
+
+	if (working.modKnobs && working.modKnobs.modKnob) {
+		formatModKnobs(working.modKnobs.modKnob, "Parameter Knob Mapping", obj);
+	}
+
+	// Populate mod sources fields with specified destinations
+	if (working.patchCables) {
+		let destMap = {};
+		let patchA = forceArray(working.patchCables.patchCable);
+		for (var i = 0; i < patchA.length; ++i) {
+			let cable = patchA[i];
+			let sName = "m_" + cable.source;
+			let aDest = cable.destination;
+			let amount = cable.amount;
+			let info = aDest + "(" + amount + ")";
+			let val = destMap[sName];
+			if (val) val += ' ';
+				else val = "";
+			val += info;
+			destMap[sName]  = val;
+		}
+		jQuery.extend(true, working, destMap);
+	}
+	obj.append(Mustache.to_html(sound_template, context));
+
+	if (showJSON) {
+		jsonToTable(working, obj);
+	}
+}
+
+function viewSound(e) {
+	let target = e.target;
+	let trn =  Number(target.getAttribute('trackno'));
+	
+	let hideShow = target.textContent;
+	let songJ = jsonDocument.song;
+	if (!songJ) return;
+
+	let trackA = forceArray(songJ.tracks.track);
+	let trackIX = trackA.length - trn - 1;
+	let trackD = trackA[trackIX];
+	
+	// Follow any indirect reference
+	if (trackD.instrument && trackD.instrument.referToTrackId !== undefined) {
+		let fromID = Number(trackD.instrument.referToTrackId);
+		trackD = trackA[fromID];
+	}
+
+	let divID = '#snd_place' + trn;
+	let where = $(divID);
+
+	if (hideShow === "▼") {
+		target.textContent = "►";
+		$(where)[0].innerHTML = "";
+	} else {
+	   if (trackD.soundParams) {
+	   	target.textContent = "▼";
+		let sp = trackD.soundParams;
+		formatSound(sp, where);
+	  } else if (trackD.kit) {
+	   		target.textContent = "▼";
+			let kitroot = trackD.kit;
+			if (trackD['soundSources']) {
+				kitroot = trackD;
+			}
+			formatKit(kitroot, where);
+		}
+	 }
+}
+
+
+function formatKitSoundEntry(json, obj, showJSON)
+{
+	let working = jQuery.extend(true, {}, json);
+	jQuery.extend(true, working, json.defaultParams);
+	// Override with soundParameters if present.
+	if(json.soundParamters) {
+		jQuery.extend(true, working, json.soundParams);
+	}
+	cleanUpReverb(working);
+	cleanUpParams(working);
+//	for (var k in working) {
+//		console.log(k);
+//	}
+
+	let context = working;
+
+	if (working.midiKnobs && working.midiKnobs.midiKnob) {
+		formatModKnobs(working.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
+	}
+
+	if (working.modKnobs && working.modKnobs.modKnob) {
+		formatModKnobs(working.modKnobs.modKnob, "Parameter Knob Mapping", obj);
+	}
+
+	// Populate mod sources fields with specified destinations
+	if (working.patchCables) {
+		let destMap = {};
+		let patchA = forceArray(working.patchCables.patchCable);
+		for (var i = 0; i < patchA.length; ++i) {
+			let cable = patchA[i];
+			let sName = "m_" + cable.source;
+			let aDest = cable.destination;
+			let amount = cable.amount;
+			let info = aDest + "(" + amount + ")";
+			let val = destMap[sName];
+			if (val) val += ' ';
+				else val = "";
+			val += info;
+			destMap[sName]  = val;
+		}
+		jQuery.extend(true, working, destMap);
+	}
+	obj.append(Mustache.to_html(sound_template, context));
+
+	if (showJSON) {
+		jsonToTable(working, obj);
+	}
+}
+
+function openKitSound(e, kitTab) {
+	let target = e.target;
+	let ourX = Number(target.getAttribute('kitItem'));
+
+	let ourRow = target.parentNode;
+	let nextRow = ourRow.nextElementSibling;
+	let ourTab = ourRow.parentNode;
+	if (nextRow && nextRow.classList.contains('soundentry')) {
+		ourTab.removeChild(nextRow);
+		target.textContent = "►";
+		return;
+	}
+	var aKitSound = kitTab[ourX];
+	let newRow = $("<tr class='soundentry'/>");
+	let newData =$("<td  colspan='8'/>");
+	formatKitSoundEntry(aKitSound, newData, false);
+	newRow.append(newData);
+	if (nextRow) {
+		ourTab.insertBefore(newRow[0], nextRow); 
+	} else {
+		ourTab.appendChild(newRow[0]);
+	}
+	target.textContent = "▼";
+}
+
+function formatKit(json, obj) {
+	
+	let kitList = forceArray(json.soundSources.sound);
+	
+	let tab = $("<table class='kit_tab'/>");
+	tab.append(Mustache.to_html(sample_list_header));
+	
+	for(var i = 0; i < kitList.length; ++i) {
+		let kit = kitList[i];
+		formatSampleEntry(kit, tab, i);
+	}
+	
+	
+	obj.append(tab);
+
+	let opener = function (e) {
+		openKitSound(e, kitList);
+	};
+	$('.kit_opener').on('click', opener);
 }
 
 function jsonToTopTable(json, obj)
@@ -610,6 +885,10 @@ function jsonToTopTable(json, obj)
 	$('#fileTitle').html("<h3>" + fname + "</h3>");
 	if(json['song']) {
 		formatSong(json.song, obj);
+	} else if(json['sound']) {
+		formatSound(json.sound, obj, true);
+	} else if(json['kit']) {
+		formatKit(json.kit, obj, true);
 	} else {
 		jsonToTable(json, obj);
 	}
@@ -622,14 +901,10 @@ function triggerRedraw() {
 	jsonToTopTable(jsonDocument, $('#jtab'));
 }
 
-// Returns short cut pathways for populating the value display table
-var shortCutTab = Array(8);
-for(var i = 0; i < shortCutTab.length; ++i) shortCutTab[i] = Array(16);
+/**********************************************************************************
 
-function genValueArray(json)
-{
-	
-}
+*/
+
 
 function modeChanger(filename)
 {

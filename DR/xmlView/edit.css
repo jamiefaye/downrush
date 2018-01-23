@@ -90,3 +90,137 @@ div.trnote {
 	height: 4px;
 	background-color:#202020;
 }
+
+.mkhead {
+	background-color:  #F0F0D0;
+	font-size: 10pt;
+}
+
+.mkhdata {
+	background-color:  #FFFFE8;
+		font-size: 10pt;
+}
+
+
+.sound_grid th {
+		font-size: 6pt;
+		border: solid 1px #888888;
+		color: black;
+		width: 60px;
+}
+
+
+.unlab {
+	background-color:  #E8E8E8;
+}
+
+.textsm {
+	font-size: 7pt;
+}
+
+.sample1 {
+	background-color: #FFD2C2;
+}
+
+.sample2 {
+	background-color: #F8C8B8;
+}
+
+.osc1 {
+	background-color: #C0FFC0;
+}
+
+.osc2 {
+	background-color: #B8F8B8;
+}
+
+.noise {
+	background-color: #B8F0FF;
+}
+
+.fmmod1 {
+	background-color: #E8F8FF;
+}
+
+.fmmod2 {
+	background-color: #E0F0F0;
+}
+
+.distortion {
+	background-color: #C0ECEC;
+}
+
+.master {
+	background-color: #F8F8C0;
+}
+
+.voice {
+	background-color: #FFC8C8;
+}
+
+.unison {
+	background-color: #C8FFFF;
+}
+
+.env1 {
+	background-color: #C8FFC8;
+}
+
+.env2 {
+	background-color: #C0F8C0;
+}
+
+.sidechain {
+	background-color: #E8E8FF;
+}
+
+.arp {
+	background-color: #C0F0F0;	
+}
+
+.lfo1 {
+	background-color: #F0F0C0;
+}
+
+.lfo2 {
+	background-color: #E8E8C0;
+}
+
+.modfx {
+	background-color: #F0C0F0;	
+}
+
+.reverb {
+	background-color: #FFC0C0;	
+}
+
+.delay {
+	background-color: #E0E0FF;	
+}
+
+.modsources {
+	background-color: #F0F080;
+}
+
+.lpf {
+	background-color: #FFE0FF;
+}
+
+.hpf {
+	background-color: #F8D8F8;
+}
+
+
+.bass, .treble {
+	background-color: #E8FFE8;
+}
+
+.kit_tab td {
+	text-align: right;
+}
+.kitentry {
+	background-color: #FFFFE8;
+}
+.kithead {
+	background-color: #EFEFd8;
+}
