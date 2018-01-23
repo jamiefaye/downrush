@@ -104,11 +104,15 @@ div.trnote {
 
 .sound_grid th {
 		font-size: 6pt;
-		border: solid 1px #888888;
 		color: black;
 		width: 60px;
+		border-bottom-color: #A0A0A0;
 }
 
+.hleftb {
+	 border-left-width: 2px;
+
+}
 
 .unlab {
 	background-color:  #E8E8E8;

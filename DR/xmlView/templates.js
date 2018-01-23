@@ -179,39 +179,39 @@ var sound_template = `<table class='sound_grid'>
 <th class='unlab' style='border-bottom: hidden'> </th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
-<th class='unlab' style='border-bottom: hidden'> </th>
+<th class='unlab hleftb' style='border-bottom: hidden'> </th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 <th class='distortion'>Saturation</th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
-<th class='lpf frequency'>LPF freq</th>
+<th class='lpf frequency hleftb'>LPF freq</th>
 <th class='hpf frequency'>HPF freq</th>
 <th class='frequency bass'>Bass</th>
 <th class='frequency treble'>Treble</th>
 
-<th class='modfx'>Rate</th>
+<th class='modfx hleftb'>Rate</th>
 <th class='reverb'>Room Size</th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 </tr>
 
 <tr>
-<td class='zone start sample1'>{{osc1.startMilliseconds}}</td>
-<td class='zone start sample2'>{{osc2.startMilliseconds}}</td>
+<td class='zone start sample1'>{{osc1.zone.startMilliseconds}}</td>
+<td class='zone start sample2'>{{osc2.zone.startMilliseconds}}</td>
 <td class='unlab'>{{c03}}</td>
 <td class='unlab'>{{c04}}</td>
 
-<td class='unlab'>{{c05}}</td>
+<td class='unlab hleftb'>{{c05}}</td>
 <td class='unlab'>{{c06}}</td>
 <td class='distortion'>{{c07}}</td>
 <td class='unlab'>{{c08}}</td>
 
-<td class='lpf frequency'>{{lpfFrequency}}</td>
+<td class='lpf frequency hleftb'>{{lpfFrequency}}</td>
 <td class='hpf frequency'>{{hpfFrequency}}</td>
 <td class='frequency bass'>{{equalizer.bassFrequency}}</td>
 <td class='frequency treble'>{{equalizer.trebleFrequency}}</td>
 
-<td class='modfx'>{{modFXRate}}</td>
+<td class='modfx hleftb'>{{modFXRate}}</td>
 <td class='reverb'>{{reverb.roomSize}}</td>
 <td class='unlab'>{{c15}}</td>
 <td class='unlab'>{{c16}}</td>
@@ -225,39 +225,39 @@ var sound_template = `<table class='sound_grid'>
 <th class='noise'>Noise</th>
 <th class='osc2'>Osc Sync</th>
 
-<th class='destination fmmod1'>Mod1 Dest</th>
+<th class='destination fmmod1 hleftb'>Mod1 Dest</th>
 <th class='destination fmmod2'>Mod2 Dest</th>
 <th class='distortion'>Bitcrush</th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
-<th class='lpf resonance'>LPF res</th>
+<th class='lpf resonance hleftb'>LPF res</th>
 <th class='hpf resonance'>HPF res</th>
 <th class='bass adjust'>Adj Bass</th>
 <th class='treble adjust'>Adj Treble</th>
 
-<th class='modfx'>Depth</th>
+<th class='modfx hleftb'>Depth</th>
 <th class='reverb'>Dampening</th>
 <th class='modsources'>Env 1</th>
 <th class='modsources'>Env 2</th>
 </tr>
 
 <tr>
-<td class='zone end sample1'>{{osc1.endMilliseconds}}</td>
-<td class='zone end sample2'>{{osc2.endMilliseconds}}</td>
+<td class='zone end sample1'>{{osc1.zone.endMilliseconds}}</td>
+<td class='zone end sample2'>{{osc2.zone.endMilliseconds}}</td>
 <td class='noise'>{{noiseVolume}}</td>
 <td class='osc2'>{{c20}}</td>
 
-<td class='destination fmmod1'>{{c21}}</td>
+<td class='destination fmmod1 hleftb'>{{c21}}</td>
 <td class='destination fmmod2'>{{c22}}</td>
 <td class='distortion'>{{bitCrush}}</td>
 <td class='unlab'> </th>
 
-<td class='lpf resonance'>{{lpfResonance}}</td>
+<td class='lpf resonance hleftb'>{{lpfResonance}}</td>
 <td class='hpf resonance'>{{hpfResonance}}</td>
 <td class='bass adjust'>{{equalizer.bass}}</td>
 <td class='treble adjust'>{{equalizer.treble}}</td>
 
-<td class='modfx'>{{modFXDepth}}</td>
+<td class='modfx hleftb'>{{modFXDepth}}</td>
 <td class='reverb'>{{reverb.dampening}}</td>
 <td class='textsm modsources m_envelope1'>{{m_envelope1}}</td>
 <td class='textsm modsources m_envelope2'>{{m_envelope2}}</td>
@@ -270,17 +270,17 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 feedback'>Feedbk 1</th>
 <th class='osc2 feedback'>Feedbk 2</th>
 
-<th class='fmmod1 feedback'>Feedbk f1</th>
-<th class='fmmod2 feedback'>Feedbk f2</th>
+<th class='fmmod1 feedback hleftb'>Feedbk mod1</th>
+<th class='fmmod2 feedback'>Feedbk mod2</th>
 <th class='distortion'>Decimation</th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
-<th class='dboct lpf'>LPF dB/O</th>
+<th class='dboct lpf hleftb'>LPF dB/O</th>
 <th class='dboct hpf'>HPF dB/O</th>
 <th class='sidechain'>Send</th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
-<th class='modfx'>Feedback</th>
+<th class='modfx hleftb'>Feedback</th>
 <th class='reverb'>Width</th>
 <th class='modsources'>LFO 1</th>
 <th class='modsources'>LFO 2</th>
@@ -292,17 +292,17 @@ var sound_template = `<table class='sound_grid'>
 <td class='osc1 feedback'>{{carrier1Feedback}}</td>
 <td class='osc2 feedback'>{{carrier2Feedback}}</td>
               
-<td class='fmmod1 feedback'>{{modulator1Feedback}}</td>
+<td class='fmmod1 feedback hleftb'>{{modulator1Feedback}}</td>
 <td class='fmmod2 feedback'>{{modulator2Feedback}}</td>
 <td class='distortion'>{{c39}}</td>
 <th class='unlab' style='border-bottom: hidden'> </th>
-              
-<td class='dboct lpf'>{{lpfMode}}</td>
+
+<td class='dboct lpf hleftb'>{{lpfMode}}</td>
 <td class='dboct hpf'>{{hpfMode}}</td>
-<td class='sidechain'>{{c43}}</td>
+<td class='sidechain'>{{sideChainSend}}</td>
 <td class='unlab'>{{c44}}</td>
-              
-<td class='modfx'>{{modFXFeedback}}</td>
+
+<td class='modfx hleftb'>{{modFXFeedback}}</td>
 <td class='reverb'>{{reverb.width}}</td>
 <td class='textsm modsources m_lfo1'>{{m_lfo1}}</td>
 <td class='textsm modsources m_lfo2'>{{m_lfo2}}</td>
@@ -315,17 +315,17 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 retrigphase'>Retrig 1</th>
 <th class='osc2 retrigphase'>Retrig 2</th>
 
-<th class='fmmod1 retrigphase'>Retrig f1</th>
-<th class='fmmod2 retrigphase'>Retrig f2</th>
+<th class='fmmod1 hleftb retrigphase'>Retrig mod1</th>
+<th class='fmmod2 retrigphase'>Retrig mod2</th>
 <th class='master'>Synth Mode</th>
 <th class='unison'>Unison #</th>
 
-<th class='unlab' style='border-bottom: hidden'> </th>
+<th class='unlab hleftb' style='border-bottom: hidden'> </th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 <th class='sidechain'>Shape</th>
 <th class='arp'>Arp Mode</th>
 
-<th class='modfx'>Offset</th>
+<th class='modfx hleftb'>Offset</th>
 <th class='reverb'>Pan</th>
 <th class='delay'>Stereo</th>
 <th class='modsources'>Sidechain</th>
@@ -337,17 +337,17 @@ var sound_template = `<table class='sound_grid'>
 <td class='osc1 retrigphase'>{{c51}}</td>
 <td class='osc2 retrigphase'>{{c52}}</td>
               
-<td class='fmmod1 retrigphase'>{{c53}}</td>
-<td class='fmmod2 retrigphase'>{{c54}}</td>
+<td class='fmmod1 retrigphase hleftb'>{{modulator1.retrigPhase}}</td>
+<td class='fmmod2 retrigphase'>{{modulator2.retrigPhase}}</td>
 <td class='master textsm'>{{mode}}</td>
 <td class='unison'>{{unison.num}}</td>
               
-<td class='unlab'>{{c57}}</td>
+<td class='unlab hleftb'>{{c57}}</td>
 <td class='unlab'>{{c58}}</td>
-<td class='sidechain'>{{c59}}</td>
+<td class='sidechain'>{{compressorShape}}</td>
 <td class='arp'>{{c60}}</td>
               
-<td class='modfx'>{{modFXOffset}}</td>
+<td class='modfx hleftb'>{{modFXOffset}}</td>
 <td class='reverb'>{{reverb.pan}}</td>
 <td class='delay'>{{c63}}</td>
 <td class='textsm modsources m_sidechain'>{{m_sidechain}}</td>
@@ -360,17 +360,17 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 pw'>PW 1</th>
 <th class='osc2 pw'>PW 2</th>
 
-<th class='fmmod1 pw'>PW f1</th>
-<th class='fmmod2 pw'>PW f2</th>
+<th class='fmmod1 pw hleftb'>PW mod1</th>
+<th class='fmmod2 pw'>PW mod2</th>
 <th class='master'>Master Pan</th>
 <th class='unison'>Detune</th>
 
-<th class='attack env1'>Attack 1</th>
+<th class='attack env1 hleftb'>Attack 1</th>
 <th class='attack env2'>Attack 2</th>
 <th class='attack sidechain'>SC Attack</th>
 <th class='arp'>Arp Octs</th>
 
-<th class='modfx'>Type</th>
+<th class='modfx hleftb'>Type</th>
 <th class='reverb amount'>Rvrb Amt</th>
 <th class='delay amount'>Delay Amt</th>
 <th class='modsources'>Note</th>
@@ -378,22 +378,22 @@ var sound_template = `<table class='sound_grid'>
 
 
 <tr>
-<td class='sample1 pitchtime'>{{c65}}</td>
-<td class='sample2 pitchtime'>{{c66}}</td>
-<td class='osc1 pw'>{{c67}}</td>
-<td class='osc2 pw'>{{c68}}</td>
+<td class='sample1 pitchtime'>{{osc1.timeStretchEnable}}</td>
+<td class='sample2 pitchtime'>{{osc1.timeStretchEnable}}</td>
+<td class='osc1 pw'>{{oscAPulseWidth}}</td>
+<td class='osc2 pw'>{{oscBPulseWidth}}</td>
               
-<td class='fmmod1 pw'>{{c69}}</td>
+<td class='fmmod1 pw hleftb'>{{c69}}</td>
 <td class='fmmod2 pw'>{{c70}}</td>
 <td class='master'>{{pan}}</td>
 <td class='unison'>{{unison.detune}}</td>
               
-<td class='attack env1'>{{envelope1.attack}}</td>
+<td class='attack env1 hleftb'>{{envelope1.attack}}</td>
 <td class='attack env2'>{{envelope2.attack}}</td>
-<td class='attack sidechain'>{{c75}}</td>
+<td class='attack sidechain'>{{compressor.attack}}</td>
 <td class='arp'>{{c76}}</td>
               
-<td class='modfx'>{{modFXType}}</td>
+<td class='modfx hleftb'>{{modFXType}}</td>
 <td class='reverb amount'>{{reverbAmount}}</td>
 <td class='delay amount'>{{delayFeedback}}</td>
 <td class='textsm modsources m_note'>{{m_note}}</td>
@@ -406,39 +406,39 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 type'>Type 1</th>
 <th class='osc2 type'>Type 2</th>
 
-<th class='fmmod1 type'>Type f1</th>
-<th class='fmmod2 type'>Type f2</th>
+<th class='fmmod1 type hleftb'>Type mod1</th>
+<th class='fmmod2 type'>Type mod2</th>
 <th class='master'>Vibrato</th>
 <th class='voice'>Priority</th>
 
-<th class='env1 decay'>Decay 1</th>
+<th class='env1 decay hleftb'>Decay 1</th>
 <th class='env2 decay'>Decay 2</th>
 <th class='sidechain'>Vol Duck</th>
 <th class='arp'>Gate</th>
 
-<th class='lfo1 shape'>LFO1 Shape</th>
+<th class='lfo1 shape hleftb'>LFO1 Shape</th>
 <th class='lfo2 shape'>LFO2 Shape</th>
 <th class='delay'>Analog</th>
 <th class='modsources'>Random</th>
 </tr>
 
 <tr>
-<td class='sample1 speed'>{{c81}}</td>
-<td class='sample2 speed'>{{c82}}</td>
+<td class='sample1 speed'>{{osc1.timeStretchAmount}}</td>
+<td class='sample2 speed'>{{osc2.timeStretchAmount}}</td>
 <td class='osc1 type'>{{osc1.type}}</td>
 <td class='osc2 type'>{{osc2.type}}</td>
               
-<td class='fmmod1 type'>{{c85}}</td>
+<td class='fmmod1 type hleftb'>{{c85}}</td>
 <td class='fmmod2 type'>{{c86}}</td>
 <td class='master'>{{c87}}</td>
 <td class='voice'>{{voicePriority}}</td>
               
-<td class='env1 decay'>{{envelope1.decay}}</td>
+<td class='env1 decay hleftb'>{{envelope1.decay}}</td>
 <td class='env2 decay'>{{envelope2.decay}}</td>
-<td class='sidechain'>{{c91}}</td>
+<td class='sidechain'>{{compressor.decay}}</td>
 <td class='arp'>{{c92}}</td>
               
-<td class='lfo1 shape'>{{lfo1.type}}</td>
+<td class='lfo1 shape hleftb'>{{lfo1.type}}</td>
 <td class='lfo2 shape'>{{lfo2.type}}</td>
 <td class='delay'>{{delay.analog}}</td>
 <td class='textsm modsources m_random'>{{m_random}}</td>
@@ -451,41 +451,40 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 transpose'>Trans 1</th>
 <th class='osc2 transpose'>Trans 2</th>
 
-<th class='fmmod1 transpose'>Trans f1</th>
-<th class='fmmod2 transpose'>Trans f2</th>
+<th class='fmmod1 transpose hleftb'>Trans mod1</th>
+<th class='fmmod2 transpose'>Trans mod2</th>
 <th class='master transpose'>Trans Master</th>
 <th class='voice'>Poly</th>
 
-<th class='env1 sustain'>Sustain 1</th>
+<th class='env1 sustain hleftb'>Sustain 1</th>
 <th class='env2 sustain'>Sustain 2</th>
 <th class='sidechain'>SC Sync</th>
-
 <th class='arp sync'>Arp Sync</th>
 
-<th class='lfo1 sync'>LFO 1 Sync</th>
+<th class='lfo1 sync hleftb'>LFO 1 Sync</th>
 <th class='lfo2 sync'>LFO 2 Sync</th>
 <th class='delay sync'>Delay Sync</th>
 <th class='modsources'>Velocity</th>
 </tr>
 
 <tr>
-<td class='sample1 reverse'>{{c097}}</td>
-<td class='sample2 reverse'>{{c098}}</td>
+<td class='sample1 reverse'>{{osc1.reversed}}</td>
+<td class='sample2 reverse'>{{osc2.reversed}}</td>
 <td class='osc1 transpose'>{{osc1.transpose}}</td>
 <td class='osc2 transpose'>{{osc2.transpose}}</td>
               
-<td class='fmmod1 transpose'>{{c101}}</td>
-<td class='fmmod2 transpose'>{{c102}}</td>
+<td class='fmmod1 transpose hleftb'>{{modulator1.transpose}}</td>
+<td class='fmmod2 transpose'>{{modulator2.transpose}}</td>
 <td class='master transpose'>{{c103}}</td>
 <td class='voice'>{{polyphonic}}</td>
               
-<td class='env1 sustain'>{{envelope1.sustain}}</td>
+<td class='env1 sustain hleftb'>{{envelope1.sustain}}</td>
 <td class='env2 sustain'>{{envelope2.sustain}}</td>
-<td class='sidechain'>{{c107}}</td>
+<td class='sidechain'>{{compressor.syncLevel}}</td>
 <td class='arp sync'>{{c108}}</td>
               
-<td class='lfo1 sync '>{{lfo1.syncLevel}}</td>
-<td class='lfo2 sync '>{{lfo2.syncLevel}}</td>
+<td class='lfo1 sync hleftb'>{{lfo1.syncLevel}}</td>
+<td class='lfo2 sync'>{{lfo2.syncLevel}}</td>
 <td class='delay sync '>{{delay.syncLevel}}</td>
 <td class='textsm modsources m_velocity'>{{m_velocity}}</td>
 </tr>
@@ -497,39 +496,39 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 volume'>Vol 1</th>
 <th class='osc2 volume'>Vol 2</th>
 
-<th class='fmmod1 volume'>Vol f1</th>
-<th class='fmmod2 volume'>Vol f2</th>
+<th class='fmmod1 volume hleftb'>Vol mod1</th>
+<th class='fmmod2 volume'>Vol mod2</th>
 <th class='master volume'>Vol Master</th>
 <th class='voice'>Porta</th>
 
-<th class='env1 release'>Release 1</th>
+<th class='env1 release hleftb'>Release 1</th>
 <th class='env2 release'>Release 2</th>
 <th class='sidechain release'>Release SC</th>
 <th class='arp rate'>Arp Rate</th>
 
-<th class='lfo1 rate'>LFO1 Rate</th>
+<th class='lfo1 rate hleftb'>LFO1 Rate</th>
 <th class='lfo2 rate'>LFO2 Rate</th>
 <th class='rate delay'>Delay Rate</th>
 <th class='modsources'>Aftertouch</th>
 </tr>
 
 <tr>
-<td class='sample1 mode'>{{c113}}</td>
-<td class='sample2 mode'>{{c114}}</td>
+<td class='sample1 mode'>{{osc1.loopMode}}</td>
+<td class='sample2 mode'>{{osc2.loopMode}}</td>
 <td class='osc1 volume'>{{oscAVolume}}</td>
 <td class='osc2 volume'>{{oscBVolume}}</td>
 
-<td class='fmmod1 volume'>{{c117}}</td>
-<td class='fmmod2 volume'>{{c118}}</td>
+<td class='fmmod1 volume hleftb'>{{modulator1Amount}}</td>
+<td class='fmmod2 volume'>{{modulator2Amount}}</td>
 <td class='master volume'>{{volume}}</td>
 <td class='voice'>{{portamento}}</td>
 
-<td class='env1 release'>{{envelope1.release}}</td>
+<td class='env1 release hleftb'>{{envelope1.release}}</td>
 <td class='env2 release'>{{envelope2.release}}</td>
-<td class='sidechain release'>{{c123}}</td>
+<td class='sidechain release'>{{compressor.release}}</td>
 <td class='arp rate'>{{arpeggiatorRate}}</td>
 
-<td class='lfo1 rate'>{{lfo1Rate}}</td>
+<td class='lfo1 rate hleftb'>{{lfo1Rate}}</td>
 <td class='lfo2 rate'>{{lfo2Rate}}</td>
 <td class='rate delay '>{{delayRate}}</td>
 <td class='textsm modsources m_aftertouch'>{{m_aftertouch}}</td>

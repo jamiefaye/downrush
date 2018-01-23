@@ -552,9 +552,7 @@ function sectionRepeats(arr, obj) {
 }
 
 function songTail(jsong, obj) {
-	if(jsong.songParams) {
-		formatSound(jsong, obj, false);
-	}
+	// formatSound(obj, jsong, jsong.songParams, jsong.defaultParams, jsong.soundParams);
 }
 
 // Return song tempo calculated from timePerTimerTick and timerTickFraction
@@ -698,31 +696,35 @@ function formatSampleEntry(sound, obj, ix)
 	obj.append(Mustache.to_html(sample_entry_template, context));
 }
 
-function formatSound(json, obj, showJSON)
+function formatSound(obj, json, json1, json2, json3)
 {
-	let working = jQuery.extend(true, {}, json);
-	jQuery.extend(true, working, json.defaultParams);
-	// Override with soundParameters if present.
-	if(json.soundParamters) {
-		jQuery.extend(true, working, json.soundParams);
+	let context = jQuery.extend(true, {}, json);
+	
+	if (json1) {
+		jQuery.extend(true, context, json1);
 	}
-	cleanUpReverb(working);
-	cleanUpParams(working);
-
-	let context = working;
-
-	if (working.midiKnobs && working.midiKnobs.midiKnob) {
-		formatModKnobs(working.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
+	if (json2) {
+		jQuery.extend(true, context, json2);
+	}
+	if(json3) {
+		jQuery.extend(true, context, json3);
 	}
 
-	if (working.modKnobs && working.modKnobs.modKnob) {
-		formatModKnobs(working.modKnobs.modKnob, "Parameter Knob Mapping", obj);
+	cleanUpReverb(context);
+	cleanUpParams(context);
+
+	if (context.midiKnobs && context.midiKnobs.midiKnob) {
+		formatModKnobs(context.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
+	}
+
+	if (context.modKnobs && context.modKnobs.modKnob) {
+		formatModKnobs(context.modKnobs.modKnob, "Parameter Knob Mapping", obj);
 	}
 
 	// Populate mod sources fields with specified destinations
-	if (working.patchCables) {
+	if (context.patchCables) {
 		let destMap = {};
-		let patchA = forceArray(working.patchCables.patchCable);
+		let patchA = forceArray(context.patchCables.patchCable);
 		for (var i = 0; i < patchA.length; ++i) {
 			let cable = patchA[i];
 			let sName = "m_" + cable.source;
@@ -735,13 +737,9 @@ function formatSound(json, obj, showJSON)
 			val += info;
 			destMap[sName]  = val;
 		}
-		jQuery.extend(true, working, destMap);
+		jQuery.extend(true, context, destMap);
 	}
 	obj.append(Mustache.to_html(sound_template, context));
-
-	if (showJSON) {
-		jsonToTable(working, obj);
-	}
 }
 
 function viewSound(e) {
@@ -769,10 +767,9 @@ function viewSound(e) {
 		target.textContent = "►";
 		$(where)[0].innerHTML = "";
 	} else {
-	   if (trackD.soundParams) {
+	   if (trackD.soundParams || trackD.sound) {
 	   	target.textContent = "▼";
-		let sp = trackD.soundParams;
-		formatSound(sp, where);
+		formatSound(where, trackD.sound, trackD.soundParams);
 	  } else if (trackD.kit) {
 	   		target.textContent = "▼";
 			let kitroot = trackD.kit;
@@ -886,7 +883,7 @@ function jsonToTopTable(json, obj)
 	if(json['song']) {
 		formatSong(json.song, obj);
 	} else if(json['sound']) {
-		formatSound(json.sound, obj, true);
+		formatSound(obj, json.sound, json.sound.defaultParams, json.sound.soundParams);
 	} else if(json['kit']) {
 		formatKit(json.kit, obj, true);
 	} else {
