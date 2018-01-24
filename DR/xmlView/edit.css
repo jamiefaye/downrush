@@ -224,8 +224,12 @@ div.trnote {
 }
 
 
-.bass, .treble {
+.bass {
 	background-color: #E8FFE8;
+}
+
+.treble {
+	background-color: #E0F8E0;
 }
 
 .kit_tab td {

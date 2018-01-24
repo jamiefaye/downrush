@@ -182,8 +182,8 @@ var sound_template = `<table class='sound_grid'>
 
 <th class ='toph lpf hleftb'>LPF</th>
 <th class ='toph hpf'>HPF</th>
-<th class ='toph adjust'>Bass</th>
-<th class ='toph adjust'>Treble</th>
+<th class ='toph bass'>Bass</th>
+<th class ='toph treble'>Treble</th>
 
 <th class ='toph modfx hleftb'>Mod FX</th>
 <th class ='toph reverb'>Reverb</th>
@@ -200,7 +200,7 @@ var sound_template = `<table class='sound_grid'>
 <th class='unlab' style='border-bottom: hidden'> </th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
-<th class='unlab hleftb' style='border-bottom: hidden'> </th>
+<th class='unlab' style='border-bottom: hidden'> </th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 <th class='distortion'>Saturation</th>
 <th class='unlab' style='border-bottom: hidden'> </th>
@@ -222,7 +222,7 @@ var sound_template = `<table class='sound_grid'>
 <td class='unlab'>{{c03}}</td>
 <td class='unlab'>{{c04}}</td>
 
-<td class='unlab hleftb'>{{c05}}</td>
+<td class='unlab'>{{c05}}</td>
 <td class='unlab'>{{c06}}</td>
 <td class='distortion'>{{c07}}</td>
 <td class='unlab'>{{c08}}</td>
@@ -254,8 +254,8 @@ var sound_template = `<table class='sound_grid'>
 <th class='distortion'>Bitcrush</th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
-<th class='lpf resonance hleftb'>LPF Res</th>
-<th class='hpf resonance'>HPF Res</th>
+<th class='lpf resonance hleftb'>LPF Reson</th>
+<th class='hpf resonance'>HPF Reson</th>
 <th class='bass adjust'>Adj Bass</th>
 <th class='treble adjust'>Adj Treble</th>
 
@@ -395,7 +395,7 @@ var sound_template = `<table class='sound_grid'>
 <th class='arp'>Arp Octs</th>
 
 <th class='modfx hleftb'>Type</th>
-<th class='reverb amount'>Rvrb Amt</th>
+<th class='reverb amount'>Reverb Amt</th>
 <th class='delay amount'>Delay Amt</th>
 <th class='modsources'>Note</th>
 </tr>
