@@ -521,7 +521,7 @@ function trackPasteField(obj) {
 }
 
 function horizontalArray(arr, obj, title) {
-	let trtab = $('<table/>');
+	let trtab = $("<table class='repeats'/>");
 	if(title) {
 		let trt = $("<tr/>");
 		trt.append($("<th colspan='" + arr.length +"'/>").html(title));
@@ -529,7 +529,7 @@ function horizontalArray(arr, obj, title) {
 	}
 	let trh = $("<tr/>");
 	for(var i = 0; i < arr.length; ++i) {
-		trh.append($("<th/>").html(i));
+		trh.append($("<th/>").html(i + 1));
 	}
 	trtab.append(trh);
 	
@@ -568,7 +568,9 @@ function convertTempo(jsong)
 function formatSong(jsong, obj) {
 	let ctab = genColorTab(jsong.preview);
 	obj.append(ctab);
+	obj.append($("<p class='tinygap'>"));
 	obj.append("Tempo = " + convertTempo(jsong) + " bpm");
+	obj.append($("<p class='tinygap'>"));
 	if(jsong.sections) {
 		sectionRepeats(jsong.sections.section, obj);
 	}

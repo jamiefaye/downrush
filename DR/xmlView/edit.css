@@ -20,6 +20,10 @@
   width: 30vw;
 }
 
+.tinygap {
+	font-size: 2pt;
+}
+
 .toolbox{
   margin-left: 5px;
   width:auto;
@@ -62,6 +66,10 @@ th {
 	padding: 0.5em;
 }
 
+.repeats {
+	font-size: 9pt;
+}
+
 .tabval td {
 	text-align: left;
 	padding: 0.5em;
@@ -94,6 +102,7 @@ div.trnote {
 .mkhead {
 	background-color:  #F0F0D0;
 	font-size: 10pt;
+
 }
 
 .mkhdata {

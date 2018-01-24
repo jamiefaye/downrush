@@ -21,7 +21,7 @@ var track_head_template = `<table>
 <td>{{colourOffset}}</td>
 <td>{{info}}</td>
 </tr>
-</table>
+</table><p class='tinygap'>
 <div id='snd_place{{trackNum}}'> </div>`;
 
 var track_copy_template = `<input type='button' class='clipbtn' value='Copy To Clipboard' trackno='{{trackNum}}'><p/>`;
@@ -33,7 +33,7 @@ var sound_view_template = `<input type='button' class='soundviewbtn' value='View
 var paster_template = `<hr><div>
 			<b>Paste track data in field below to add it to song.</b><br>
 			<textarea id='paster' rows='2' class='tinybox'></textarea>{{#iOSDevice}}<br><input type='button' value='Add Track' id='iosSubmit'>{{/iOSDevice}}
-		</div><br><hr>`;
+		</div><p class='tinygap'>`;
 
 // This table expands into a parameter display which follows the
 // "Shortcut template" layout:
@@ -144,7 +144,7 @@ var modKnobTemplate = `<table class='mod_knobs'>
 <td class='mkhdata'>{{mk12}}</td>
 <td class='mkhdata'>{{mk14}}</td>
 </tr>
-</table>`;
+</table><p class='tinygap'>`;
 
 var sample_list_header =`<tr class='kithead'>
 <th> </th>
@@ -172,6 +172,27 @@ var sample_entry_template = `<tr class='kitentry'>
 
 var sound_template = `<table class='sound_grid'>
 
+
+<tr>
+<th class ='toph sample1'>Sample 1</th>
+<th class ='toph sample2'>Sample 2</th>
+<th class ='toph unlab' colspan='4'></th>
+<th class ='toph distortion'>Distortion</th>
+<th class ='toph unlab'></th>
+
+<th class ='toph lpf hleftb'>LPF</th>
+<th class ='toph hpf'>HPF</th>
+<th class ='toph adjust'>Bass</th>
+<th class ='toph adjust'>Treble</th>
+
+<th class ='toph modfx hleftb'>Mod FX</th>
+<th class ='toph reverb'>Reverb</th>
+<th class ='toph unlab' colspan='2'></th>
+
+
+</tr>
+
+
 <!-- Row 0 -->
 <tr>
 <th class='zone start sample1'>Start 1</th>
@@ -184,8 +205,8 @@ var sound_template = `<table class='sound_grid'>
 <th class='distortion'>Saturation</th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
-<th class='lpf frequency hleftb'>LPF freq</th>
-<th class='hpf frequency'>HPF freq</th>
+<th class='lpf frequency hleftb'>LPF Freq</th>
+<th class='hpf frequency'>HPF Freq</th>
 <th class='frequency bass'>Bass</th>
 <th class='frequency treble'>Treble</th>
 
@@ -219,19 +240,22 @@ var sound_template = `<table class='sound_grid'>
 
 <!-- Row 1 -->
 
+
+
+
 <tr>
 <th class='zone end sample1'>End 1</th>
 <th class='zone end sample2'>End 2</th>
 <th class='noise'>Noise</th>
 <th class='osc2'>Osc Sync</th>
 
-<th class='destination fmmod1 hleftb'>Mod1 Dest</th>
-<th class='destination fmmod2'>Mod2 Dest</th>
+<th class='destination fmmod1 hleftb'>Dest M 1</th>
+<th class='destination fmmod2'>Dest M 2</th>
 <th class='distortion'>Bitcrush</th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
-<th class='lpf resonance hleftb'>LPF res</th>
-<th class='hpf resonance'>HPF res</th>
+<th class='lpf resonance hleftb'>LPF Res</th>
+<th class='hpf resonance'>HPF Res</th>
 <th class='bass adjust'>Adj Bass</th>
 <th class='treble adjust'>Adj Treble</th>
 
@@ -270,8 +294,8 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 feedback'>Feedbk 1</th>
 <th class='osc2 feedback'>Feedbk 2</th>
 
-<th class='fmmod1 feedback hleftb'>Feedbk mod1</th>
-<th class='fmmod2 feedback'>Feedbk mod2</th>
+<th class='fmmod1 feedback hleftb'>Feedbk M 1</th>
+<th class='fmmod2 feedback'>Feedbk M 2</th>
 <th class='distortion'>Decimation</th>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
@@ -315,8 +339,8 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 retrigphase'>Retrig 1</th>
 <th class='osc2 retrigphase'>Retrig 2</th>
 
-<th class='fmmod1 hleftb retrigphase'>Retrig mod1</th>
-<th class='fmmod2 retrigphase'>Retrig mod2</th>
+<th class='fmmod1 hleftb retrigphase'>Retrig M 1</th>
+<th class='fmmod2 retrigphase'>Retrig M 2</th>
 <th class='master'>Synth Mode</th>
 <th class='unison'>Unison #</th>
 
@@ -360,14 +384,14 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 pw'>PW 1</th>
 <th class='osc2 pw'>PW 2</th>
 
-<th class='fmmod1 pw hleftb'>PW mod1</th>
-<th class='fmmod2 pw'>PW mod2</th>
+<th class='fmmod1 pw hleftb'>PW M 1</th>
+<th class='fmmod2 pw'>PW M 2</th>
 <th class='master'>Master Pan</th>
 <th class='unison'>Detune</th>
 
 <th class='attack env1 hleftb'>Attack 1</th>
 <th class='attack env2'>Attack 2</th>
-<th class='attack sidechain'>SC Attack</th>
+<th class='attack sidechain'>Attack SC</th>
 <th class='arp'>Arp Octs</th>
 
 <th class='modfx hleftb'>Type</th>
@@ -406,8 +430,8 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 type'>Type 1</th>
 <th class='osc2 type'>Type 2</th>
 
-<th class='fmmod1 type hleftb'>Type mod1</th>
-<th class='fmmod2 type'>Type mod2</th>
+<th class='fmmod1 type hleftb'>Type M 1</th>
+<th class='fmmod2 type'>Type M 2</th>
 <th class='master'>Vibrato</th>
 <th class='voice'>Priority</th>
 
@@ -416,8 +440,8 @@ var sound_template = `<table class='sound_grid'>
 <th class='sidechain'>Vol Duck</th>
 <th class='arp'>Gate</th>
 
-<th class='lfo1 shape hleftb'>LFO1 Shape</th>
-<th class='lfo2 shape'>LFO2 Shape</th>
+<th class='lfo1 shape hleftb'>LFO 1 Shape</th>
+<th class='lfo2 shape'>LFO 2 Shape</th>
 <th class='delay'>Analog</th>
 <th class='modsources'>Random</th>
 </tr>
@@ -451,8 +475,8 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 transpose'>Trans 1</th>
 <th class='osc2 transpose'>Trans 2</th>
 
-<th class='fmmod1 transpose hleftb'>Trans mod1</th>
-<th class='fmmod2 transpose'>Trans mod2</th>
+<th class='fmmod1 transpose hleftb'>Trans M 1</th>
+<th class='fmmod2 transpose'>Trans M 2</th>
 <th class='master transpose'>Trans Master</th>
 <th class='voice'>Poly</th>
 
@@ -496,8 +520,8 @@ var sound_template = `<table class='sound_grid'>
 <th class='osc1 volume'>Vol 1</th>
 <th class='osc2 volume'>Vol 2</th>
 
-<th class='fmmod1 volume hleftb'>Vol mod1</th>
-<th class='fmmod2 volume'>Vol mod2</th>
+<th class='fmmod1 volume hleftb'>Vol M 1</th>
+<th class='fmmod2 volume'>Vol M 2</th>
 <th class='master volume'>Vol Master</th>
 <th class='voice'>Porta</th>
 
@@ -506,8 +530,8 @@ var sound_template = `<table class='sound_grid'>
 <th class='sidechain release'>Release SC</th>
 <th class='arp rate'>Arp Rate</th>
 
-<th class='lfo1 rate hleftb'>LFO1 Rate</th>
-<th class='lfo2 rate'>LFO2 Rate</th>
+<th class='lfo1 rate hleftb'>LFO 1 Rate</th>
+<th class='lfo2 rate'>LFO 2 Rate</th>
 <th class='rate delay'>Delay Rate</th>
 <th class='modsources'>Aftertouch</th>
 </tr>
@@ -533,6 +557,29 @@ var sound_template = `<table class='sound_grid'>
 <td class='rate delay '>{{delayRate}}</td>
 <td class='textsm modsources m_aftertouch'>{{m_aftertouch}}</td>
 </tr>
+
+<tr>
+<th class ='both sample1'>Sample 1</th>
+<th class ='both sample2'>Sample 2</th>
+<th class ='both osc1'>Osc 1</th>
+<th class ='both osc1'>Osc 2</th>
+
+<th class ='both fmmod1 hleftb'>FM Mod 1</th>
+<th class ='both fmmod2'>FM Mod 2</th>
+<th class ='both master'>Volume</th>
+<th class ='both voice'>Voice</th>
+<th class ='both env1 release hleftb'>Envelope 1</th>
+<th class ='both env2 release'>Envelope 2</th>
+<th class ='both sidechain'>Sidechain</th>
+<th class ='both arp'>Arp</th>
+<th class ='both lfo1 hleftb'>LFO 1</th>
+<th class ='both lfo1'>LFO 2</th>
+<th class ='toph delay'>Delay</th>
+<th class ='toph modsources'>Mod Source</th>
+
+</tr>
+
+
 </table><p/>`
 
 // **** Thats all for the sound table
