@@ -371,12 +371,17 @@ var trackKindNames = {"kit": "Kit",
 function trackHeader(track, inx, obj) {
 	let section = track.section;
 	let kind = trackKind(track);
+	let patchStr = "";
+
 	let patch = Number(track.instrumentPresetSlot);
-	let patchStr = patch;
-	let subpatch = Number(track.instrumentPresetSubSlot);
-	if (subpatch >= 0) {
-		patchStr += ' ';
-		patchStr += String.fromCharCode(subpatch + 65); // 0 = a, 1 = b, …
+
+	if (kind === 'kit' || kind === 'synth') {
+		patchStr = patch;
+		let subpatch = Number(track.instrumentPresetSubSlot);
+		if (subpatch >= 0) {
+			atchStr += ' ';
+			patchStr += String.fromCharCode(subpatch + 65); // 0 = a, 1 = b, …
+		}
 	}
 	let info = "";
 	if (track.soundMidiCommand) {
@@ -584,7 +589,7 @@ function formatSong(jsong, obj) {
 	  let trax = forceArray(jsong.tracks.track);
 	  if (trax) {
 		for(var i = 0; i < trax.length; ++i) {
-			obj.append($("<h3/>").text("Track number " + (i + 1)));
+			obj.append($("<h3/>").text("Track " + (i + 1)));
 			trackCopyButton(i, obj);
 			trackHeader(trax[trax.length - i- 1], i, obj);
 			plotTrack(trax[trax.length - i- 1], obj);
