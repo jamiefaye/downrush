@@ -193,7 +193,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 </tr>
 
 
-<!-- Row 0 -->
+<!-- Row 0 c1-16 -->
 <tr>
 <th class='zone start sample1'>Start 1</th>
 <th class='zone start sample2'>Start 2</th>
@@ -238,7 +238,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <td class='unlab'>{{c16}}</td>
 </tr>
 
-<!-- Row 1 -->
+<!-- Row 1 c17-32 -->
 
 
 
@@ -269,10 +269,10 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <td class='zone end sample1'>{{fmttime osc1.zone.endMilliseconds}}</td>
 <td class='zone end sample2'>{{fmttime osc2.zone.endMilliseconds}}</td>
 <td class='noise'>{{fixh noiseVolume}}</td>
-<td class='osc2'>{{c20}}</td>
+<td class='osc2'>{{fmtonoff osc2.oscillatorSync}}</td>
 
 <td class='destination fmmod1 hleftb'>{{c21}}</td>
-<td class='destination fmmod2'>{{c22}}</td>
+<td class='destination fmmod2'>{{fmtmoddest modulator2.toModulator1}}</td>
 <td class='distortion'>{{fixh bitCrush}}</td>
 <td class='unlab'> </th>
 
@@ -287,7 +287,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <td class='textsm modsources m_envelope2'>{{m_envelope2}}</td>
 </tr>
 
-<!-- Row 2 -->
+<!-- Row 2 c33-48 -->
 <tr>
 <th class='audio browse sample1'>Browse 1</th>
 <th class='audio browse sample2'>Browse 2</th>
@@ -318,7 +318,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
               
 <td class='fmmod1 feedback hleftb'>{{fixh modulator1Feedback}}</td>
 <td class='fmmod2 feedback'>{{fixh modulator2Feedback}}</td>
-<td class='distortion'>{{c39}}</td>
+<td class='distortion'>{{fixh sampleRateReduction}}</td>
 <th class='unlab' style='border-bottom: hidden'> </th>
 
 <td class='dboct lpf hleftb'>{{lpfMode}}</td>
@@ -332,7 +332,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <td class='textsm modsources m_lfo2'>{{m_lfo2}}</td>
 </tr>
 
-<!-- Row 3 -->
+<!-- Row 3 c49 to c64 -->
 <tr>
 <th class='audio record sample1'>Record 1</th>
 <th class='audio record sample2'>Record 2</th>
@@ -369,15 +369,15 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <td class='unlab hleftb'>{{c57}}</td>
 <td class='unlab'>{{c58}}</td>
 <td class='sidechain'>{{fixh compressorShape}}</td>
-<td class='arp'>{{c60}}</td>
+<td class='arp'>{{arpeggiator.mode}}</td>
               
 <td class='modfx hleftb'>{{fixh modFXOffset}}</td>
 <td class='reverb'>{{fixrev reverb.pan}}</td>
-<td class='delay'>{{c63}}</td>
+<td class='delay'>{{fmtonoff delay.pingPong}}</td>
 <td class='textsm modsources m_sidechain'>{{m_sidechain}}</td>
 </tr>
 
-<!-- Row 4 -->
+<!-- Row 4 c65-c80 -->
 <tr>
 <th class='sample1 pitchtime'>Pitch/T 1</th>
 <th class='sample2 pitchtime'>Pitch/T 2</th>
@@ -415,7 +415,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <td class='attack env1 hleftb'>{{fixh envelope1.attack}}</td>
 <td class='attack env2'>{{fixh envelope2.attack}}</td>
 <td class='attack sidechain'>{{fixrev compressor.attack}}</td>
-<td class='arp'>{{c76}}</td>
+<td class='arp'>{{arpeggiator.numOctaves}}</td>
               
 <td class='modfx hleftb'>{{modFXType}}</td>
 <td class='reverb amount'>{{fixh reverbAmount}}</td>
@@ -423,7 +423,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <td class='textsm modsources m_note'>{{m_note}}</td>
 </tr>
 
-<!-- Row 5 -->
+<!-- Row 5 c81-c96 -->
 <tr>
 <th class='sample1 speed'>Speed 1</th>
 <th class='sample2 speed'>Speed 2</th>
@@ -454,13 +454,13 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
               
 <td class='fmmod1 type hleftb'>{{c85}}</td>
 <td class='fmmod2 type'>{{c86}}</td>
-<td class='master'>{{fixh c87}}</td>
+<td class='master'>{{vibrato}}</td>
 <td class='voice'>{{voicePriority}}</td>
               
 <td class='env1 decay hleftb'>{{fixh envelope1.decay}}</td>
 <td class='env2 decay'>{{fixh envelope2.decay}}</td>
 <td class='sidechain'>{{fixh compressor.decay}}</td>
-<td class='arp'>{{c92}}</td>
+<td class='arp'>{{fixh arpeggiatorGate}}</td>
               
 <td class='lfo1 shape hleftb'>{{lfo1.type}}</td>
 <td class='lfo2 shape'>{{lfo2.type}}</td>
@@ -468,7 +468,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <td class='textsm modsources m_random'>{{m_random}}</td>
 </tr>
 
-<!-- Row 6 -->
+<!-- Row 6 c97-112 -->
 <tr>
 <th class='sample1 reverse'>Reverse 1</th>
 <th class='sample2 reverse'>Reverse 2</th>
@@ -499,21 +499,21 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
               
 <td class='fmmod1 transpose hleftb'>{{modulator1.transpose}}</td>
 <td class='fmmod2 transpose'>{{modulator2.transpose}}</td>
-<td class='master transpose'>{{c103}}</td>
+<td class='master transpose'>{{transpose}}</td>
 <td class='voice'>{{polyphonic}}</td>
               
 <td class='env1 sustain hleftb'>{{fixh envelope1.sustain}}</td>
 <td class='env2 sustain'>{{fixh envelope2.sustain}}</td>
-<td class='sidechain'>{{compressor.syncLevel}}</td>
-<td class='arp sync'>{{c108}}</td>
+<td class='sidechain'>{{fmtsync compressor.syncLevel}}</td>
+<td class='arp sync'>{{fmtsync arpeggiator.syncLevel}}</td>
               
-<td class='lfo1 sync hleftb'>{{lfo1.syncLevel}}</td>
-<td class='lfo2 sync'>{{lfo2.syncLevel}}</td>
-<td class='delay sync '>{{delay.syncLevel}}</td>
+<td class='lfo1 sync hleftb'>{{fmtsync lfo1.syncLevel}}</td>
+<td class='lfo2 sync'>{{fmtsync lfo2.syncLevel}}</td>
+<td class='delay sync'>{{fmtsync delay.syncLevel}}</td>
 <td class='textsm modsources m_velocity'>{{m_velocity}}</td>
 </tr>
 
-<!-- Row 7 -->
+<!-- Row 7 c113-128 -->
 <tr>
 <th class='sample1 mode'>Mode 1</th>
 <th class='sample2 mode'>Mode 2</th>

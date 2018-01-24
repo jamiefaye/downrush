@@ -372,6 +372,12 @@ function trackHeader(track, inx, obj) {
 	let section = track.section;
 	let kind = trackKind(track);
 	let patch = Number(track.instrumentPresetSlot);
+	let patchStr = patch;
+	let subpatch = Number(track.instrumentPresetSubSlot);
+	if (subpatch >= 0) {
+		patchStr += ' ';
+		patchStr += String.fromCharCode(subpatch + 65); // 0 = a, 1 = b, …
+	}
 	let info = "";
 	if (track.soundMidiCommand) {
 		info += "Midi in: " + track.soundMidiCommand.channel;
@@ -392,7 +398,7 @@ function trackHeader(track, inx, obj) {
 
 	let context = {
 		len:			track.trackLength,
-		patch: 			patch,
+		patch: 			patchStr,
 		colourOffset: 	track.colourOffset,
 		patchName:		patchName,
 		kindName: 		trackKindNames[kind],
@@ -629,6 +635,22 @@ function fixpan(v) {
 	} else return v;
 }
 
+// Vibrato 
+function fixvibrato(v) {
+	if(v === undefined) return 0;
+	if(typeof v !== "string") return v;
+	if (v.startsWith('0x')) {
+		let asInt= parseInt(v.substring(2, 10), 16);
+		// Convert to signed 32 bit.
+		if (asInt & 0x80000000) {
+			asInt -= 0x100000000;
+		}
+		// vibrato ranges from 0xC0000000 to 0x3FFFFFF, and we want to show it
+		// as -50 to 50
+		return Math.round( ((asInt + 0x80000000) * 200) / 0x100000000) - 100;
+	} else return v;
+}
+
 
 Handlebars.registerHelper('fixh', fixhex);
 Handlebars.registerHelper('fixpan',fixpan);
@@ -644,9 +666,19 @@ Handlebars.registerHelper('fixrev', function (v) {
 Handlebars.registerHelper('fixphase', function (v) {
 	if (v === undefined) return v;
 	let vn = Number(v);
-	if (vn == -1) return 'Off';
+	if (vn == -1) return 'off';
 	// convert to unsigned 32 bits and divide by scaling factor.
-	return (Number(vn) >>> 0) / 11930464;
+	return Math.round((Number(vn) >>> 0) / 11930464);
+});
+
+
+Handlebars.registerHelper('fmtmoddest', function (tv) {
+	if (tv === undefined) return "";
+	let tvn = Number(tv);
+	if (tvn === 0) return 'carrier';
+	if (tvn === 1) return 'mod 1';
+	return 'Unknown';
+
 });
 
 Handlebars.registerHelper('fmttime', function (tv) {
@@ -655,6 +687,24 @@ Handlebars.registerHelper('fmttime', function (tv) {
 	let v = t.toFixed(3);
 	return v;
 });
+
+
+Handlebars.registerHelper('fmtonoff', function (tv) {
+	if(tv === undefined) return "";
+	let tvn = Number(tv);
+	if (tvn > 0) return 'on';
+	return 'off';
+});
+
+var syncLevelTab = ["off", "4 bars", "2 bars", "1 bar", "2nd", "4th", "8th", "16th", "32nd", "64th"];
+
+Handlebars.registerHelper('fmtsync', function (tv) {
+	if(tv === undefined) return "";
+	let tvn = Number(tv);
+	return syncLevelTab[tvn];
+});
+
+
 
 function formatModKnobs(knobs, title, obj)
 {
@@ -700,6 +750,7 @@ function formatSound(obj, json, json1, json2, json3)
 		formatModKnobs(context.modKnobs.modKnob, "Parameter Knob Mapping", obj);
 	}
 
+
 	// Populate mod sources fields with specified destinations
 	if (context.patchCables) {
 		let destMap = {};
@@ -708,6 +759,11 @@ function formatSound(obj, json, json1, json2, json3)
 			let cable = patchA[i];
 			let sName = "m_" + cable.source;
 			let aDest = cable.destination;
+			// Vibrato is represented by a patchCable between lfo1 and pitch
+			if (cable.source === 'lfo1' && aDest === 'pitch') {
+				let vibratoVal = fixvibrato(cable.amount);
+				context['vibrato'] = vibratoVal;
+			}
 			let amount = fixhex(cable.amount);
 			let info = aDest + "(" + amount + ")";
 			let val = destMap[sName];
@@ -716,8 +772,10 @@ function formatSound(obj, json, json1, json2, json3)
 			val += info;
 			destMap[sName]  = val;
 		}
+		
 		jQuery.extend(true, context, destMap);
 	}
+
 	obj.append(sound_template(context));
 }
 
