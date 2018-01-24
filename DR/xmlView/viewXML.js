@@ -599,61 +599,33 @@ function formatSong(jsong, obj) {
 	});
 }
 
-// Recur down a JSON object, replacing all string values that
-// contain hexidecimal constants with numbers 	
-function cleanUpParams(json, formatters) {
-	for (var k in json) {
-		if(json.hasOwnProperty(k)) {
-			if(formatters && formatters[k]) {
-				let v = formatters[k](json, k);
-				json[k] = v;
-				continue;
-			}
-
-			let v = json[k];
-			if (v.constructor === Array) {
-				for(var ix = 0; ix < v.length; ++ix) {
-					cleanUpParams(v[ix], formatters);
-				}
-
-			} else if(v.constructor === Object) {
-					cleanUpParams(v);
-			} else
-				if(typeof v === "string") {
-				if (v.startsWith('0x')) {
-					
-					let asInt= parseInt(v.substring(2, 10), 16);
-					// Convert to signed 32 bit.
-					if (asInt & 0x80000000) {
-						asInt -= 0x100000000;
-					}
-					let ranged = Math.round( ((asInt + 0x80000000) * 50) / 0x100000000) ;
-					json[k] = ranged;
-					//console.log(k + " converting: " + v + " to: " + ranged);
-				}
-			}
+Handlebars.registerHelper('fixh', function (v) {
+	if(v === undefined) return v;
+	if(typeof v !== "string") return v;
+	if (v.startsWith('0x')) {
+		let asInt= parseInt(v.substring(2, 10), 16);
+		// Convert to signed 32 bit.
+		if (asInt & 0x80000000) {
+			asInt -= 0x100000000;
 		}
-	}
-}
+		let ranged = Math.round( ((asInt + 0x80000000) * 50) / 0x100000000) ;
+		return ranged;
+	} else return v;
+});
 
-function fixRebParm(v) {
-
-	if(typeof v === "string" && v.startsWith('0x')) return v;
+Handlebars.registerHelper('fixrev', function (v) {
+	if (v === undefined) return v;
 	let vn = Number(v);
 	let ranged = Math.round( (vn * 50) / 0x7FFFFFFF);
 	return ranged;
-}
+});
 
-function cleanUpReverb(json) {
-	let reverb = json.reverb;
-	if(reverb) {
-		reverb.roomSize = fixRebParm(reverb.roomSize);
-		reverb.dampening = fixRebParm(reverb.dampening);
-		reverb.width = fixRebParm(reverb.width);
-		let fpan = fixRebParm(reverb.pan);
-		reverb.pan = fpan; //  - 25;
-	}
-}
+Handlebars.registerHelper('fmttime', function (tv) {
+	if(tv === undefined) return tv;
+	let t = Number(tv) / 1000;
+	let v = t.toFixed(3);
+	return v;
+});
 
 function formatModKnobs(knobs, title, obj)
 {
@@ -665,36 +637,15 @@ function formatModKnobs(knobs, title, obj)
 	obj.append(modKnobTemplate(context));
 }
 
-function formatTime(tv)
-{
-	let t = Number(tv) / 1000;
-	let v = t.toFixed(3);
-	return v;
-}
 function formatSampleEntry(sound, obj, ix)
 {
-	let context = {index: ix};
-	if (sound.name) context.sound_name = sound.name;
-	
+	let context = jQuery.extend(true, {}, sound);
+	context.index = ix;
 
-	if (sound.osc1) {
-		if (sound.osc1.fileName) context.fileName = sound.osc1.fileName;
-		if (sound.osc1.zone) {
-			if (sound.osc1.zone.startMilliseconds) context.startTime = formatTime(sound.osc1.zone.startMilliseconds);
-			if (sound.osc1.zone.endMilliseconds) context.endTime = formatTime(sound.osc1.zone.endMilliseconds);
-		}
+	// If Osc2 does not have a sample defined for it, strike osc2 from the context
+	if (!context.osc2 || !context.osc2.fileName || $.isEmptyObject(context.osc2.fileName)) {
+		delete context.osc2;
 	}
-
-	// If Osc2 also has a sample, note that.
-	if (sound.osc2 && sound.osc2.fileName && sound.osc2.fileName.length > 0) {
-
-		context.fileName2 = sound.osc2.fileName;
-		if (sound.osc2.zone) {
-			if (sound.osc2.zone.startMilliseconds) context.startTime2 = formatTime(sound.osc2.zone.startMilliseconds);;
-			if (sound.osc2.zone.endMilliseconds) context.endTime2 = formatTime(sound.osc2.zone.endMilliseconds);
-		}
-	}
-
 	obj.append(sample_entry_template(context));
 }
 
@@ -711,9 +662,6 @@ function formatSound(obj, json, json1, json2, json3)
 	if(json3) {
 		jQuery.extend(true, context, json3);
 	}
-
-	cleanUpReverb(context);
-	cleanUpParams(context);
 
 	if (context.midiKnobs && context.midiKnobs.midiKnob) {
 		formatModKnobs(context.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
@@ -784,7 +732,7 @@ function viewSound(e) {
 }
 
 
-function formatKitSoundEntry(json, obj, showJSON)
+function formatKitSoundEntry(json, obj)
 {
 	let working = jQuery.extend(true, {}, json);
 	jQuery.extend(true, working, json.defaultParams);
@@ -792,11 +740,6 @@ function formatKitSoundEntry(json, obj, showJSON)
 	if(json.soundParamters) {
 		jQuery.extend(true, working, json.soundParams);
 	}
-	cleanUpReverb(working);
-	cleanUpParams(working);
-//	for (var k in working) {
-//		console.log(k);
-//	}
 
 	let context = working;
 
@@ -827,10 +770,6 @@ function formatKitSoundEntry(json, obj, showJSON)
 		jQuery.extend(true, working, destMap);
 	}
 	obj.append(sound_template(context));
-
-	if (showJSON) {
-		jsonToTable(working, obj);
-	}
 }
 
 function openKitSound(e, kitTab) {
@@ -848,7 +787,7 @@ function openKitSound(e, kitTab) {
 	var aKitSound = kitTab[ourX];
 	let newRow = $("<tr class='soundentry'/>");
 	let newData =$("<td  colspan='8'/>");
-	formatKitSoundEntry(aKitSound, newData, false);
+	formatKitSoundEntry(aKitSound, newData);
 	newRow.append(newData);
 	if (nextRow) {
 		ourTab.insertBefore(newRow[0], nextRow); 
