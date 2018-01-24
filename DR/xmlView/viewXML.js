@@ -395,7 +395,7 @@ function trackHeader(track, inx, obj) {
 	if (kind === 'kit') {
 		patchName = kitNames[patch];
 	} else if (kind === 'midi') {
-		patch = Number(track.midiChannel) + 1;
+		patchStr = Number(track.midiChannel) + 1;
 		patchName = '';
 	} else if (kind === 'sound') {
 		patchName = patchNames[patch];
