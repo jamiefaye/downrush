@@ -358,11 +358,11 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <tr>
 <td class='audio record sample1'>{{c49}}</td>
 <td class='audio record sample2'>{{c50}}</td>
-<td class='osc1 retrigphase'>{{c51}}</td>
-<td class='osc2 retrigphase'>{{c52}}</td>
+<td class='osc1 retrigphase'>{{fixphase osc1.retrigPhase}}</td>
+<td class='osc2 retrigphase'>{{fixphase osc2.retrigPhase}}</td>
               
-<td class='fmmod1 retrigphase hleftb'>{{fixh modulator1.retrigPhase}}</td>
-<td class='fmmod2 retrigphase'>{{fixh modulator2.retrigPhase}}</td>
+<td class='fmmod1 retrigphase hleftb'>{{fixphase modulator1.retrigPhase}}</td>
+<td class='fmmod2 retrigphase'>{{fixphase modulator2.retrigPhase}}</td>
 <td class='master textsm'>{{mode}}</td>
 <td class='unison'>{{unison.num}}</td>
               
@@ -409,7 +409,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
               
 <td class='fmmod1 pw hleftb'>{{c69}}</td>
 <td class='fmmod2 pw'>{{c70}}</td>
-<td class='master'>{{fixh pan}}</td>
+<td class='master'>{{fixpan pan}}</td>
 <td class='unison'>{{unison.detune}}</td>
               
 <td class='attack env1 hleftb'>{{fixh envelope1.attack}}</td>

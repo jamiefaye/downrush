@@ -613,14 +613,40 @@ function fixhex(v) {
 	} else return v;
 }
 
+function fixpan(v) {
+	if(v === undefined) return 0;
+	if(typeof v !== "string") return v;
+	if (v.startsWith('0x')) {
+		let asInt= parseInt(v.substring(2, 10), 16);
+		// Convert to signed 32 bit.
+		if (asInt & 0x80000000) {
+			asInt -= 0x100000000;
+		}
+		let rangedm32to32 = Math.round( ((asInt + 0x80000000) * 64) / 0x100000000) - 32;
+		if (rangedm32to32 === 0) return 0;
+		if (rangedm32to32 < 0) return Math.abs(rangedm32to32) + 'L';
+		return rangedm32to32 + 'R';
+	} else return v;
+}
+
 
 Handlebars.registerHelper('fixh', fixhex);
+Handlebars.registerHelper('fixpan',fixpan);
 
 Handlebars.registerHelper('fixrev', function (v) {
 	if (v === undefined) return v;
 	let vn = Number(v);
 	let ranged = Math.round( (vn * 50) / 0x7FFFFFFF);
 	return ranged;
+});
+
+
+Handlebars.registerHelper('fixphase', function (v) {
+	if (v === undefined) return v;
+	let vn = Number(v);
+	if (vn == -1) return 'Off';
+	// convert to unsigned 32 bits and divide by scaling factor.
+	return (Number(vn) >>> 0) / 11930464;
 });
 
 Handlebars.registerHelper('fmttime', function (tv) {
