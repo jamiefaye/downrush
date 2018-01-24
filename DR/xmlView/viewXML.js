@@ -599,7 +599,7 @@ function formatSong(jsong, obj) {
 	});
 }
 
-Handlebars.registerHelper('fixh', function (v) {
+function fixhex(v) {
 	if(v === undefined) return v;
 	if(typeof v !== "string") return v;
 	if (v.startsWith('0x')) {
@@ -608,10 +608,13 @@ Handlebars.registerHelper('fixh', function (v) {
 		if (asInt & 0x80000000) {
 			asInt -= 0x100000000;
 		}
-		let ranged = Math.round( ((asInt + 0x80000000) * 50) / 0x100000000) ;
+		let ranged = Math.round( ((asInt + 0x80000000) * 50) / 0x100000000);
 		return ranged;
 	} else return v;
-});
+}
+
+
+Handlebars.registerHelper('fixh', fixhex);
 
 Handlebars.registerHelper('fixrev', function (v) {
 	if (v === undefined) return v;
@@ -759,7 +762,7 @@ function formatKitSoundEntry(json, obj)
 			let cable = patchA[i];
 			let sName = "m_" + cable.source;
 			let aDest = cable.destination;
-			let amount = cable.amount;
+			let amount = fixhex(cable.amount);
 			let info = aDest + "(" + amount + ")";
 			let val = destMap[sName];
 			if (val) val += ' ';
