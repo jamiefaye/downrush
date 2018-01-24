@@ -379,7 +379,7 @@ function trackHeader(track, inx, obj) {
 		patchStr = patch;
 		let subpatch = Number(track.instrumentPresetSubSlot);
 		if (subpatch >= 0) {
-			atchStr += ' ';
+			patchStr += ' ';
 			patchStr += String.fromCharCode(subpatch + 65); // 0 = a, 1 = b, …
 		}
 	}
