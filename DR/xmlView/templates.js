@@ -1,5 +1,5 @@
 // Mustache tamplates
-var track_head_template = `<table>
+var track_head_template = Handlebars.compile(`<table>
 
 <tr>
 <th> </th>
@@ -22,18 +22,18 @@ var track_head_template = `<table>
 <td>{{info}}</td>
 </tr>
 </table><p class='tinygap'>
-<div id='snd_place{{trackNum}}'> </div>`;
+<div id='snd_place{{trackNum}}'> </div>`);
 
-var track_copy_template = `<input type='button' class='clipbtn' value='Copy To Clipboard' trackno='{{trackNum}}'><p/>`;
+var track_copy_template = Handlebars.compile(`<input type='button' class='clipbtn' value='Copy To Clipboard' trackno='{{trackNum}}'><p/>`);
 /*
 var sound_view_template = `<input type='button' class='soundviewbtn' value='View Sound Info' trackno='{{trackNum}}'><p/>
 	<div id='snd_place{{trackNum}}'> </div>`;
 */
 
-var paster_template = `<hr><div>
+var paster_template = Handlebars.compile(`<hr><div>
 			<b>Paste track data in field below to add it to song.</b><br>
 			<textarea id='paster' rows='2' class='tinybox'></textarea>{{#iOSDevice}}<br><input type='button' value='Add Track' id='iosSubmit'>{{/iOSDevice}}
-		</div><p class='tinygap'>`;
+		</div><p class='tinygap'>`);
 
 // This table expands into a parameter display which follows the
 // "Shortcut template" layout:
@@ -94,7 +94,7 @@ release
 rate
 
 */
-var modKnobTemplate = `<table class='mod_knobs'>
+var modKnobTemplate = Handlebars.compile(`<table class='mod_knobs'>
 <!-- Mod Knob Mappings -->
 <tr>
 <th class='mkhead' colspan='8'>{{title}}</th>
@@ -144,9 +144,9 @@ var modKnobTemplate = `<table class='mod_knobs'>
 <td class='mkhdata'>{{mk12}}</td>
 <td class='mkhdata'>{{mk14}}</td>
 </tr>
-</table><p class='tinygap'>`;
+</table><p class='tinygap'>`);
 
-var sample_list_header =`<tr class='kithead'>
+var sample_list_header = Handlebars.compile(`<tr class='kithead'>
 <th> </th>
 <th>Name</th>
 <th>Path</th>
@@ -155,9 +155,9 @@ var sample_list_header =`<tr class='kithead'>
 <th>Osc2 Path</th>
 <th>Osc2 Start</th>
 <th>Osc2 End</th>
-</tr>`;
+</tr>`);
 
-var sample_entry_template = `<tr class='kitentry'>
+var sample_entry_template = Handlebars.compile(`<tr class='kitentry'>
 <td class='kit_opener' kitItem='{{index}}'>&#x25BA</td>
 <td>{{sound_name}}</td>
 <td style='text-align: left'>{{fileName}}</td>
@@ -167,10 +167,10 @@ var sample_entry_template = `<tr class='kitentry'>
 <td>{{startTime2}}</td>
 <td>{{endTime2}}</td>
 
-</tr><div class='kit_spot'> <div>`;
+</tr><div class='kit_spot'> <div>`);
 
 
-var sound_template = `<table class='sound_grid'>
+var sound_template = Handlebars.compile(`<table class='sound_grid'>
 
 
 <tr>
@@ -580,6 +580,6 @@ var sound_template = `<table class='sound_grid'>
 </tr>
 
 
-</table><p/>`
+</table><p/>`);
 
 // **** Thats all for the sound table

@@ -400,7 +400,7 @@ function trackHeader(track, inx, obj) {
 		info:			info,
 		trackNum:		inx,
 	}
-	let trtab = Mustache.to_html(track_head_template, context);
+	let trtab = track_head_template(context);
 
 	obj.append(trtab);
 }
@@ -439,11 +439,11 @@ function getTrackText(trackNum)
 }
 
 function trackCopyButton(trackNum, obj) {
-	obj.append(Mustache.to_html(track_copy_template, {trackNum: trackNum}));
+	obj.append(track_copy_template({trackNum: trackNum}));
 }
 
 function soundViewButton(trackNum, obj) {
-	obj.append(Mustache.to_html(sound_view_template, {trackNum: trackNum}));
+	obj.append(sound_view_template({trackNum: trackNum}));
 }
 function pasteTrackText(text) {
 	
@@ -510,7 +510,7 @@ function pasteTrack(e) {
 
 function trackPasteField(obj) {
 	let iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
-	let paster = Mustache.to_html(paster_template, {iOSDevice: iOSDevice});
+	let paster = paster_template({iOSDevice: iOSDevice});
 	obj.append($(paster));
 
 	if(iOSDevice) {
@@ -622,7 +622,7 @@ function cleanUpParams(json, formatters) {
 				if(typeof v === "string") {
 				if (v.startsWith('0x')) {
 					
-					let asInt= parseInt(v.substring(2, 18), 16);
+					let asInt= parseInt(v.substring(2, 10), 16);
 					// Convert to signed 32 bit.
 					if (asInt & 0x80000000) {
 						asInt -= 0x100000000;
@@ -662,7 +662,7 @@ function formatModKnobs(knobs, title, obj)
 		let kName = 'mk' + i;
 		context[kName] = knobs[i].controlsParam;
 	}
-	obj.append(Mustache.to_html(modKnobTemplate, context));
+	obj.append(modKnobTemplate(context));
 }
 
 function formatTime(tv)
@@ -695,7 +695,7 @@ function formatSampleEntry(sound, obj, ix)
 		}
 	}
 
-	obj.append(Mustache.to_html(sample_entry_template, context));
+	obj.append(sample_entry_template(context));
 }
 
 function formatSound(obj, json, json1, json2, json3)
@@ -741,7 +741,7 @@ function formatSound(obj, json, json1, json2, json3)
 		}
 		jQuery.extend(true, context, destMap);
 	}
-	obj.append(Mustache.to_html(sound_template, context));
+	obj.append(sound_template(context));
 }
 
 function viewSound(e) {
@@ -826,7 +826,7 @@ function formatKitSoundEntry(json, obj, showJSON)
 		}
 		jQuery.extend(true, working, destMap);
 	}
-	obj.append(Mustache.to_html(sound_template, context));
+	obj.append(sound_template(context));
 
 	if (showJSON) {
 		jsonToTable(working, obj);
@@ -863,7 +863,7 @@ function formatKit(json, obj) {
 	let kitList = forceArray(json.soundSources.sound);
 	
 	let tab = $("<table class='kit_tab'/>");
-	tab.append(Mustache.to_html(sample_list_header));
+	tab.append(sample_list_header());
 	
 	for(var i = 0; i < kitList.length; ++i) {
 		let kit = kitList[i];
