@@ -682,7 +682,7 @@ function formatSound(obj, json, json1, json2, json3)
 			let cable = patchA[i];
 			let sName = "m_" + cable.source;
 			let aDest = cable.destination;
-			let amount = cable.amount;
+			let amount = fixhex(cable.amount);
 			let info = aDest + "(" + amount + ")";
 			let val = destMap[sName];
 			if (val) val += ' ';
@@ -734,47 +734,6 @@ function viewSound(e) {
 	 }
 }
 
-
-function formatKitSoundEntry(json, obj)
-{
-	let working = jQuery.extend(true, {}, json);
-	jQuery.extend(true, working, json.defaultParams);
-	// Override with soundParameters if present.
-	if(json.soundParamters) {
-		jQuery.extend(true, working, json.soundParams);
-	}
-
-	let context = working;
-
-	if (working.midiKnobs && working.midiKnobs.midiKnob) {
-		formatModKnobs(working.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
-	}
-
-	if (working.modKnobs && working.modKnobs.modKnob) {
-		formatModKnobs(working.modKnobs.modKnob, "Parameter Knob Mapping", obj);
-	}
-
-	// Populate mod sources fields with specified destinations
-	if (working.patchCables) {
-		let destMap = {};
-		let patchA = forceArray(working.patchCables.patchCable);
-		for (var i = 0; i < patchA.length; ++i) {
-			let cable = patchA[i];
-			let sName = "m_" + cable.source;
-			let aDest = cable.destination;
-			let amount = fixhex(cable.amount);
-			let info = aDest + "(" + amount + ")";
-			let val = destMap[sName];
-			if (val) val += ' ';
-				else val = "";
-			val += info;
-			destMap[sName]  = val;
-		}
-		jQuery.extend(true, working, destMap);
-	}
-	obj.append(sound_template(context));
-}
-
 function openKitSound(e, kitTab) {
 	let target = e.target;
 	let ourX = Number(target.getAttribute('kitItem'));
@@ -790,7 +749,9 @@ function openKitSound(e, kitTab) {
 	var aKitSound = kitTab[ourX];
 	let newRow = $("<tr class='soundentry'/>");
 	let newData =$("<td  colspan='8'/>");
-	formatKitSoundEntry(aKitSound, newData);
+
+	formatSound(newData, aKitSound, aKitSound.defaultParams, aKitSound.soundParams);
+	// formatKitSoundEntry(aKitSound, newData);
 	newRow.append(newData);
 	if (nextRow) {
 		ourTab.insertBefore(newRow[0], nextRow); 
