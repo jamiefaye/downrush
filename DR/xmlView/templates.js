@@ -368,7 +368,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
               
 <td class='fmmod1 retrigphase hleftb'>{{fixphase modulator1.retrigPhase}}</td>
 <td class='fmmod2 retrigphase'>{{fixphase modulator2.retrigPhase}}</td>
-<td class='master textsm'>{{mode}}</td>
+<td class='master'>{{{shrinkifneeded mode}}}</td>
 <td class='unison'>{{unison.num}}</td>
               
 <td class='unlab hleftb'>{{c57}}</td>
@@ -482,7 +482,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 
 <th class='fmmod1 transpose hleftb'>Trans M 1</th>
 <th class='fmmod2 transpose'>Trans M 2</th>
-<th class='master transpose'>Trans Master</th>
+<th class='master transpose'>Master Trans</th>
 <th class='voice'>Poly</th>
 
 <th class='env1 sustain hleftb'>Sustain 1</th>
@@ -527,7 +527,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 
 <th class='fmmod1 volume hleftb'>Vol M 1</th>
 <th class='fmmod2 volume'>Vol M 2</th>
-<th class='master volume'>Vol Master</th>
+<th class='master volume'>Master Vol</th>
 <th class='voice'>Porta</th>
 
 <th class='env1 release hleftb'>Release 1</th>
@@ -571,7 +571,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 
 <th class ='both fmmod1 hleftb'>FM Mod 1</th>
 <th class ='both fmmod2'>FM Mod 2</th>
-<th class ='both master'>Volume</th>
+<th class ='both master'>Master</th>
 <th class ='both voice'>Voice</th>
 <th class ='both env1 release hleftb'>Envelope 1</th>
 <th class ='both env2 release'>Envelope 2</th>

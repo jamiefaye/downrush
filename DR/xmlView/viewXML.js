@@ -614,12 +614,17 @@ function fixhex(v) {
 	if(v === undefined) return v;
 	if(typeof v !== "string") return v;
 	if (v.startsWith('0x')) {
+
 		let asInt= parseInt(v.substring(2, 10), 16);
 		// Convert to signed 32 bit.
 		if (asInt & 0x80000000) {
 			asInt -= 0x100000000;
 		}
 		let ranged = Math.round( ((asInt + 0x80000000) * 50) / 0x100000000);
+		if (v.length > 10) {
+			// console.log(v);
+			ranged += '…';
+		}
 		return ranged;
 	} else return v;
 }
@@ -699,6 +704,14 @@ Handlebars.registerHelper('fmtonoff', function (tv) {
 	let tvn = Number(tv);
 	if (tvn > 0) return 'on';
 	return 'off';
+});
+
+Handlebars.registerHelper('shrinkifneeded', function (s) {
+	if(s === undefined) return "";
+	if (s.length <= 6) {
+		return s;
+	}
+	return"<div class='textsm2'>" + s + "</div>";
 });
 
 var syncLevelTab = ["off", "4 bars", "2 bars", "1 bar", "2nd", "4th", "8th", "16th", "32nd", "64th"];
