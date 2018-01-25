@@ -218,7 +218,7 @@ function rename(file)
 	{
 		path = path.replace(/ /g , "|" ) ;
 		file = file.replace(/ /g , "|" ) ;
-		var url = "/SD_WLAN/FTF/move.lua?"+file+"%20"+path
+		var url = "/DR/FTF/move.lua?"+file+"%20"+path
 		$.get(url).done(function(data, textStatus, jqXHR){
 			upload_after();
 		});
@@ -273,7 +273,7 @@ function getFileList(nextPath) { //dir
 	
 	var url = "";
 	if($("#FullFileList").prop('checked')) {
-		url = "/SD_WLAN/FTF/command100emu.lua?DIR=" + nextPath+"&TIME="+(Date.now());
+		url = "/DR/FTF/command100emu.lua?DIR=" + nextPath+"&TIME="+(Date.now());
 	}else{
 		url = "/command.cgi?op=100&DIR=" + nextPath+"&TIME="+(Date.now());
 	}
@@ -412,9 +412,9 @@ function NewDirectory()
 		var url = "";
 		if(last_dirpath != "/")
 		{
-			url = "/SD_WLAN/FTF/mkdir.lua?"+last_dirpath+"/"+path;
+			url = "/DR/FTF/mkdir.lua?"+last_dirpath+"/"+path;
 		}else{
-			url = "/SD_WLAN/FTF/mkdir.lua?"+"/"+path;		
+			url = "/DR/FTF/mkdir.lua?"+"/"+path;		
 		}
 		url = url.replace(/ /g , "|" ) ;
 				
@@ -429,7 +429,7 @@ function RemoveAllFiles()
 	var pass = window.prompt("Are you sure you want to REMOVE ALL FILES in this directory?\n"+last_dirpath+"  To continue, type \"REMOVEALL\".", "");
 	if(pass)
 	{
-		var url = '/SD_WLAN/FTF/delall.lua?'+last_dirpath+"%20"+pass;
+		var url = '/DR/FTF/delall.lua?'+last_dirpath+"%20"+pass;
 		url = url.replace(/ /g , "|" ) ;
 		window.open(url, '_blank');
 		upload_after();

@@ -1059,7 +1059,7 @@ function btn_menu()
 {
 
 	unexpected_close=false; //ページ脱出警告を無効化
-	location.href="/Downrush.lua";
+	location.href="/DR/Downrush.lua";
 }
 
 //---------handler-----------
