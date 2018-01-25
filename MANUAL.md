@@ -90,7 +90,8 @@ Under each track's name is a "Copy To Clipboard" button, which copies the track 
 Next is a track header which indicated section, track type, preset and preset name, length (in units of 64th note triplets), colour, and Info. I show Colour to help me reverse-engineer how colour assignment works.
 "Info" is presently used to indicate which 'Midi In" channel is used to capture data for this track, if the track invokes a midi program change, that is also shown here.
 
-Below this header is a plot of the musical note content as a piano roll. Until I figure out how colour assignment works, the notes are black. The high and low note values for the visible range is shown just above and below.
+Below this header is a plot of the musical note content as a piano roll. Until I figure out how colour assignment works, the notes are black.
+The high and low note values for the visible range is shown just above and below.
 
 After all the tracks there is a small text field labeled "Paste track data in field below to add it to song". This is where you paste in data that you grabbed using the "Copy To Clipboard". Use the browsers paste menu item or paste shortcut key.
 For most users, the act of pasting is enough to trigger the system to load, parse, and modify the song so as to add a track. The pasted text may appear briefly and then disappear. This is normal.
@@ -98,4 +99,10 @@ You can copy from one song and paste into another. You can also paste the text i
 
 You need to activate the "Save(F1)" button at the top of the page for your changes to stick. The preview pattern at the top won't change, and when you call up the song on the Deluge, the preview pattern will be wrong. Don't worry, twisting the 'up/down" knob will fix it.
 
-The rest of the page shows an object diagram with the header info for the song that has not yet been formatted into a more human-readible way.
+The bottom of the Song page shows the sound parameter table for the overall song. If you click on the black triangles in the sound header, you can see the sound parameters for that track. This parameter table is described in more detail next.
+
+I recently added the ability to view synth patches and drum kits.
+
+You you open a synth, you will see a "periodic table" or "sound parameter table that shows the values for this patch. The layout corresponds to the Deluge shortcut labels on the Deluge LED button matrix.
+
+Openning a kit now gives a table of the samples within. Clicking on the black triangle displays the kit's sound parameters.

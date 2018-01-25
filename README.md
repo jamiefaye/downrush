@@ -12,7 +12,7 @@ line and it will open the finder in the right place:
 ```
 open /Volumes/NO\ NAME/SD_WLAN/
 ```
-1. There is a yet another hidden file called CONFIG. If you are comfortable using vi, you can open it with the following:
+1. There is a hidden file called CONFIG in this hidden directory. If you are comfortable using vi, you can open it with the following:
 ```
 vi /Volumes/NO\ NAME/SD_WLAN/CONFIG
 ```
@@ -22,10 +22,8 @@ UPLOAD=1
 WEBDAV=2
 ```
 
-1. Copy the files named List.htm and jquery-3.2.1.min.js from the SD_WLAN distribution directory and put them into the SD_WLAN directory on the FlashAir Card.
-1. Copy the directory named FTF from the SD_WLAN distribution directory and put it into the SD_WLAN directory on the FlashAir Card.
+1. Copy the file named List.htm from the SD_WLAN distribution directory and put it into the SD_WLAN directory on the FlashAir Card.
 1. For the next steps, we will copy stuff into the root directory. This is one directory up from the SD_WLAN directory. 
-1. Copy the file named Downrush.laua from  the distribution directory and put them into the root directory on the FlashAir Card.
 1. Copy the Directory named DR from the distribution directory and put it into the root directory on the FlashAir Card.
 1. There is no need to copy LICENSE or README.md.
 1. Copy the four directories from your backup copy of the Deluge SD card into the root directory of your FlashAir card. The directory names to copy should be KITS, SAMPLES, SONGS, and SYNTHS.
@@ -35,6 +33,11 @@ WEBDAV=2
   connection over to flashair and type the following URL into the browser: `http://flashair/` or `http://192.168.0.1/`
   2. If you set the FlashAir up in Station Mode, determine which IP number your wireless router assigned to the FlashAir and use that instead of `192.168.0.1`. (You will want to set this up someday so you can surf the web while connected to the FlashAir).
   3. If you have problems connecting to the FlashAir in the Deluge, you might try connecting to it while it is inserted into your computer. The file browser works in there too.
+
+## Upgrades
+
+If you are updating an existing Downrush installation, put the new List.htm into card's SD_WLAN and completely replace the contents of DR with the new version. If you earlier put jquery-3.2.1.min.js and FTF in the SD_WLAN directory, you can remove them now if you want to. You can also remove the 
+Downrush.lua file from the root level if you have it there.
 
 ## Troubleshooting Hints
 
