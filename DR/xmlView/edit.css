@@ -118,6 +118,11 @@ div.trnote {
 		border-bottom-color: #A0A0A0;
 }
 
+
+.sound_grid td {
+	text-align: center;
+}
+
 .hleftb {
 	 border-left-width: 2px;
 
@@ -232,9 +237,10 @@ div.trnote {
 	background-color: #E0F8E0;
 }
 
-.kit_tab td {
-	text-align: right;
-}
+// .kit_tab td {
+// 	text-align: right;
+// }
+
 .kitentry {
 	background-color: #FFFFE8;
 }

@@ -781,6 +781,14 @@ function formatSound(obj, json, json1, json2, json3)
 		jQuery.extend(true, context, destMap);
 	}
 
+	if ( (context.osc1 && context.osc1.fileName) || (context.osc2 && context.osc2.fileName) ) {
+		let subContext = jQuery.extend(true, {}, context);
+		// If Osc2 does not have a sample defined for it, strike osc2 from the context
+		if (!context.osc2 || !context.osc2.fileName || $.isEmptyObject(context.osc2.fileName)) {
+			delete subContext.osc2;
+		}
+		context.stprefix = sample_name_prefix(subContext);
+	}
 	obj.append(sound_template(context));
 }
 

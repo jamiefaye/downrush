@@ -169,10 +169,15 @@ var sample_entry_template = Handlebars.compile(`<tr class='kitentry'>
 
 </tr><div class='kit_spot'> <div>`);
 
+var sample_name_prefix = Handlebars.compile(`<tr class='sampleprefix'>
+<tr>
+<td class='sampfile sample1' style='text-align: left' colspan='8'>{{osc1.fileName}}</td>
+<td class='sampfile sample2' style='text-align: left' colspan='8'>{{osc2.fileName}}</td>
+</tr>
+`);
 
 var sound_template = Handlebars.compile(`<table class='sound_grid'>
-
-
+{{{stprefix}}}
 <tr>
 <th class ='toph sample1'>Sample 1</th>
 <th class ='toph sample2'>Sample 2</th>
