@@ -419,7 +419,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
               
 <td class='attack env1 hleftb'>{{fixh envelope1.attack}}</td>
 <td class='attack env2'>{{fixh envelope2.attack}}</td>
-<td class='attack sidechain'>{{fixrev compressor.attack}}</td>
+<td class='attack sidechain'>{{fmtscattack compressor.attack}}</td>
 <td class='arp'>{{arpeggiator.numOctaves}}</td>
               
 <td class='modfx hleftb'>{{modFXType}}</td>
@@ -464,7 +464,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
               
 <td class='env1 decay hleftb'>{{fixh envelope1.decay}}</td>
 <td class='env2 decay'>{{fixh envelope2.decay}}</td>
-<td class='sidechain'>{{fixh compressor.decay}}</td>
+<td class='sidechain'>{{fixrev compressor.volume}}</td>
 <td class='arp'>{{fixh arpeggiatorGate}}</td>
               
 <td class='lfo1 shape hleftb'>{{lfo1.type}}</td>
@@ -554,7 +554,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 
 <td class='env1 release hleftb'>{{fixh envelope1.release}}</td>
 <td class='env2 release'>{{fixh envelope2.release}}</td>
-<td class='sidechain release'>{{compressor.release}}</td>
+<td class='sidechain release'>{{fmtscrelease compressor.release}}</td>
 <td class='arp rate'>{{fixh arpeggiatorRate}}</td>
 
 <td class='lfo1 rate hleftb'>{{fixh lfo1Rate}}</td>

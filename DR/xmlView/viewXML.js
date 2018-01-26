@@ -720,9 +720,51 @@ Handlebars.registerHelper('fmtsync', function (tv) {
 	if(tv === undefined) return "";
 	let tvn = Number(tv);
 	return syncLevelTab[tvn];
+});234624
+
+var sidechain_release = [261528,38632, 19552, 13184, 9872, 7840, 6472, 5480, 4736, 4152, 3680, 3296, 2976,
+2704, 2472, 2264, 2088, 1928, 1792, 1664, 1552, 1448, 1352, 1272, 1192, 1120, 1056, 992, 936, 880, 832,
+784, 744, 704, 664, 624, 592, 560, 528, 496, 472, 448, 424, 400, 376, 352, 328, 312, 288, 272, 256];
+
+var sidechain_attack = [1048576, 887876, 751804, 636588, 539028, 456420, 386472, 327244, 277092,
+234624, 198668, 168220, 142440, 120612, 102128, 86476, 73224, 62000, 52500, 44452, 37640, 31872,
+26988, 22852, 19348, 16384, 13876, 11748, 9948, 8428, 7132, 6040, 5112, 4328, 3668, 3104, 2628,
+2224, 1884, 1596, 1352, 1144, 968, 820, 696, 558, 496, 420, 356, 304, 256];
+
+function binaryIndexOf(tab,	seek) {
+	if (seek === undefined) return undefined;
+ 
+	var	minX = 0;
+	var	maxX= tab.length - 1;
+	var	curX;
+	var	curItem;
+ 
+	while (minX	<= maxX) {
+		curX = (minX + maxX) / 2 | 0;
+		curItem	= tab[curX];
+ 
+		if (curItem	> seek)	{
+			minX = curX	+ 1;
+		}
+		else if	(curItem < seek) {
+			maxX = curX	- 1;
+		}
+		else {
+			return curX;
+		}
+	}
+	return maxX;
+}
+
+Handlebars.registerHelper('fmtscrelease', function (sv) {
+	return binaryIndexOf(sidechain_release, sv);
+	
 });
 
-
+Handlebars.registerHelper('fmtscattack', function (sv) {
+	return binaryIndexOf(sidechain_attack, sv);
+	
+});
 
 function formatModKnobs(knobs, title, obj)
 {
