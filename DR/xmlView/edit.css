@@ -61,6 +61,8 @@ td {
 	padding: 0.5em;
 }
 
+
+
 th {
 	border: solid 1px;
 	padding: 0.5em;
@@ -99,10 +101,36 @@ div.trnote {
 	background-color:#202020;
 }
 
+div.parmplot {
+	position: relative;
+	background-color:#fffff0;
+	height: 54px;
+}
+
+div.paramrun {
+	position: absolute;
+	height: 1px;
+	background-color:#202020;
+}
+
+.plotspot, .parmplot {
+	padding:0%;
+	margin: 0%;
+	padding: 0em;
+	border-spacing: 0px;
+}
+
+.plottab th {
+	font-size: 9pt;
+	font-weight: 500;
+	background-color: #E8E8C0;
+}
+
 .mkhead {
 	background-color:  #F0F0D0;
-	font-size: 10pt;
-
+	font-size: 9pt;
+	padding:0%;
+	margin: 0%;
 }
 
 .mkhdata {

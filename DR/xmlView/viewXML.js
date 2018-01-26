@@ -351,6 +351,75 @@ function plotTrack(track, obj) {
 	obj.append(lowNote);
 }
 
+ 
+function plotParamChanges(k, ps, elem)
+{
+	elem.append($("<p class='tinygap'/>"));
+	let parentDiv = $("<div class='parmplot'/>");
+	let cursor = 10;
+	let xpos = 0;
+	while (cursor < ps.length) {
+		let val = parseInt(ps.substring(cursor, cursor + 8), 16);
+		let runx = parseInt(ps.substring(cursor + 8, cursor + 16), 16);
+		// Convert val to signed 32 bit.
+		if (val & 0x80000000) {
+			val -= 0x100000000;
+		}
+		let ranged = Math.round( ((val + 0x80000000) * 50) / 0x100000000);
+		let runto = runx & 0x7FFFFFFF; // mask off sign
+		let ypos = 52 - ranged;
+		let w = runto - xpos;
+		let ndiv = $("<div class='paramrun'/>");
+		ndiv.css({left: xpos + 'px', bottom: ypos + 'px', width: w + 'px'});
+		parentDiv.append(ndiv);
+		cursor += 16;
+		xpos = runto;
+	}
+	parentDiv.css({width: xpos + 'px'});
+	
+	let tab = $(param_plot_template({paramName: k}));
+	let plottd = tab.find('.plotspot');
+	plottd[0].append(parentDiv[0]);
+	elem.append(tab);
+/* 
+	elem.append(parentDiv);
+	elem.append(k);
+
+	let tab = $('<table/>');
+	let trhdr = $('<tr/>');
+	let thhdr = $("<th>" + k + "</th>");
+	trhdr.append(thhdr);
+	tab.append(trhdr);
+	let trtab = $('<tr/>');
+	let tdtab = $("<td/>");
+	tdtab.append(parentDiv);
+	trtab.append(tdtab);
+	tab.append(tdtab);
+	elem.append(tab);
+*/
+}
+
+
+function plotParamLevel(track, elem)
+{
+	for (var k in track) {
+		if(track.hasOwnProperty(k)) {
+			let v = track[k];
+			if(typeof v === "string"&& v.startsWith('0x') && v.length > 10) {
+				plotParamChanges(k, v, elem);
+			}
+		}
+	}
+}
+
+function plotParams(track, elem) {
+	if (track.sound) plotParamLevel(track.sound, elem);
+	if (track.defaultParams) plotParamLevel(track.defaultParams, elem);
+	if (track.soundParams) plotParamLevel(track.soundParams, elem);
+	
+	if (track.kitParams) plotParamLevel(track.kitParams, elem);
+}
+
 function trackKind(track) {
 	if(track['kit']) return 'kit';
 	if(track['sound']) return 'sound';
@@ -375,7 +444,7 @@ function trackHeader(track, inx, obj) {
 
 	let patch = Number(track.instrumentPresetSlot);
 
-	if (kind === 'kit' || kind === 'synth') {
+	if (kind === 'kit' || kind === 'sound') {
 		patchStr = patch;
 		let subpatch = Number(track.instrumentPresetSubSlot);
 		if (subpatch >= 0) {
@@ -591,8 +660,10 @@ function formatSong(jsong, obj) {
 		for(var i = 0; i < trax.length; ++i) {
 			obj.append($("<h3/>").text("Track " + (i + 1)));
 			trackCopyButton(i, obj);
-			trackHeader(trax[trax.length - i- 1], i, obj);
-			plotTrack(trax[trax.length - i- 1], obj);
+			let track = trax[trax.length - i- 1];
+			trackHeader(track, i, obj);
+			plotTrack(track, obj);
+			plotParams(track, obj);
 		}
 	  }
 	}
@@ -622,7 +693,6 @@ function fixhex(v) {
 		}
 		let ranged = Math.round( ((asInt + 0x80000000) * 50) / 0x100000000);
 		if (v.length > 10) {
-			// console.log(v);
 			ranged += '…';
 		}
 		return ranged;

@@ -7,8 +7,6 @@ var track_head_template = Handlebars.compile(`<table>
 <th>Type</th>
 <th>Preset #</th>
 <th>Name</th>
-<th>Length</th>
-<th>Colour</th>
 <th>Info</th>
 </tr>
 <tr>
@@ -17,12 +15,18 @@ var track_head_template = Handlebars.compile(`<table>
 <td>{{kindName}}</td>
 <td>{{patch}}</td>
 <td>{{patchName}}</td>
-<td>{{len}}</td>
-<td>{{colourOffset}}</td>
 <td>{{info}}</td>
 </tr>
 </table><p class='tinygap'>
 <div id='snd_place{{trackNum}}'> </div>`);
+
+var param_plot_template = Handlebars.compile(`
+<p class='tinygap'/>
+<table class='plottab'>
+<tr><th>{{paramName}}</th></tr>
+<tr><td class ='plotspot'/td></tr>
+</table>
+<p class='tinygap'/>`);
 
 var track_copy_template = Handlebars.compile(`<input type='button' class='clipbtn' value='Copy To Clipboard' trackno='{{trackNum}}'><p/>`);
 /*
@@ -37,63 +41,8 @@ var paster_template = Handlebars.compile(`<hr><div>
 
 // This table expands into a parameter display which follows the
 // "Shortcut template" layout:
-// 
-/* Vertical grouping class names
-sample1
-audio
-zone
-sample2
-osc1
-osc2
-fmmod1
-fmmod2
-master
-distortion
-voice
-unison
-envelope1
-lpf
-envelope2
-hpf
-sidechain
-arp
-lfo1
-modfx
-lfo2
-reverb
-delay
-modsources
 
-/// Horizontal grouping class names
-start
-frequency
-end
-destination
-resonance
-adjust
-browse
-feedback
-dboct
-record
-retrigphase
-pitchtime
-pw
-attack
-amount
-speed
-type
-decay
-shape
-reverse
-transpose
-sustain
-sync
-mode
-volume
-release
-rate
 
-*/
 var modKnobTemplate = Handlebars.compile(`<table class='mod_knobs'>
 <!-- Mod Knob Mappings -->
 <tr>
