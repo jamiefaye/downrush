@@ -22,6 +22,12 @@ let fileManagerHTML =`<html>
 			body {
  			   	margin: 0;
 			}
+			#header {
+				font-size: 14pt;
+			}
+			.tab_check {
+				width: 1em;
+			}
 			.table_name {
 				/*width: 100px;*/
 				position:relative;
@@ -69,7 +75,6 @@ let fileManagerHTML =`<html>
 			.table_dts {
 				width: 4em;
 				position:relative;
-				position:relative;
 			    text-align: right;
 			}
 		
@@ -85,14 +90,20 @@ let fileManagerHTML =`<html>
 				width:100%;
 				height:100%;
 			}
+			.nobord * {
+				border: none;
+				background-color: white;
+				width: auto;
+			}
 
 			#uploader {
 				background-color: #FFFFF0;
 			}
-			.bigger {
-				font-size: 100%;
+
+			.tinygap {
+			font-size: 2pt;
 			}
-	
+
 			@media (max-width: 800px) {
 				.wrapper {
 					margin: 0 0 0 2px;
@@ -110,34 +121,33 @@ let fileManagerHTML =`<html>
  
 		</style>
 		<body>
-			<div>
-				<h2>Downrush File Manager</h2>
-			</div>
 			<div id="header">
-				<h2>/</h2>
+				
 			</div>
 			<hr>
 			<div class="wrapper">
 				<table id="filetable"></table>
 			</div>
-			<hr>
-			<div id="reloadtime">
-			</div>
-			<a href="javascript:reload_list()">[Reload]</a><br>
-			<input type="checkbox" id="FullFileList" value="0">Full File List(use Lua)</input>
-			<hr>
+
 			<div id="uploader">
 				<form action="/upload.cgi" method="post" enctype="multipart/form-data" target="hogehogeFrame" >
-					<input class='bigger' name="file" type="file" />
-					<input class='bigger' type="submit" value="upload" onclick="return upload();" />
+					<input name="file" type="file" />
+					<input type="submit" value="upload" onclick="return upload();" />
 					<iframe src="about:blank" id="hogehogeFrame" name="hogehogeFrame" style="display:none;"></iframe>
 				</form>
-			<p>Drag and drop files and folders to upload here.<br><div id="statind"></div>
-			</div>	
+			<br>Drag and drop files and folders to upload here.<br><div id="statind"></div>
+			</div>
+			<input type="button" value="New Directory" onclick="NewDirectory()">
+			<input type="button" value="Remove Checked Files" onclick="deleteFiles()">
+			<input type="button" value="Rename Checked File" onclick="renameFile()">
 			<hr>
-			<input class='bigger' type="button" value="New Directory" onclick="NewDirectory()">
-			<input class='bigger' type="button" value="Remove All Files" onclick="RemoveAllFiles()">
-			<hr>
+						<div class = 'nobord'>
+			<table class='nobord'><tr>
+			<td><div id="reloadtime"></div></td>
+			<td><a href="javascript:reload_list()">[Reload]</a></td>
+			<td><input type="checkbox" id="FullFileList" value="0">Show Hiddens</input></td>
+				<td><a style='text-decoration: underline' href="/~/Set.htm">Configuration Menu</a></td>
+		</tr></table></div>
 	<script>
 	uppie(document.querySelector('#uploader'), function (event, formData, files) {
 	var flist = [];
@@ -146,11 +156,7 @@ let fileManagerHTML =`<html>
 });
 
 </script>
-<hr>
-<div id="footer">
-<a href="/~/Set.htm">FlashAir Settings</a><br>
-<a href="/DR/Downrush.lua">Downrush Main Menu</a>
-</div>
+
 </body>
 </html>`;
 document.write(fileManagerHTML);
