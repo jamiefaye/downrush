@@ -36,7 +36,7 @@ var sound_view_template = `<input type='button' class='soundviewbtn' value='View
 
 var paster_template = Handlebars.compile(`<hr><div>
 			<b>Paste track data in field below to add it to song.</b><br>
-			<textarea id='paster' rows='2' class='tinybox'></textarea>{{#iOSDevice}}<br><input type='button' value='Add Track' id='iosSubmit'>{{/iOSDevice}}
+			<textarea id='paster' rows='2' class='tinybox'></textarea>{{#if iOSDevice}}<br><input type='button' value='Add Track' id='iosSubmit'>{{/if}}
 		</div><p class='tinygap'>`);
 
 // This table expands into a parameter display which follows the
