@@ -13,22 +13,28 @@
   width: 90vw;
   height: 80vh;
 }
-.minibox {
-  width: 90vw;
+.statusbox {
+  width: 30vw;
 }
 .tinybox {
   width: 30vw;
 }
 
+.nobord td,th {
+	border: none;
+	width: auto;
+}
+
 .tinygap {
 	font-size: 2pt;
 }
-
+/*
 .toolbox{
   margin-left: 5px;
   width:auto;
   float:left;
 }
+*/
 input[type="checkbox"] {
 	width:30px;
 	height:30px;
@@ -36,11 +42,9 @@ input[type="checkbox"] {
 }
 input[type="button"] {
 	width:120px;
-	height:30px;
+	height:24px;
 	-webkit-appearance: none;
 	padding:0%;
-	margin-top: 5px;
-
     text-decoration:none;
     display:inline;
     color:#000;
@@ -136,6 +140,11 @@ div.paramrun {
 		font-size: 10pt;
 }
 
+.clipbtn {
+	font-size: 9pt;
+	padding:0%;
+	margin: 0%;
+}
 
 .sound_grid th {
 		font-size: 6pt;

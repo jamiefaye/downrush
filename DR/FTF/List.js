@@ -5,6 +5,9 @@ let fileManagerHTML =`<html>
 			<meta charset="UTF-8">
 			<script type="text/javascript" src="/DR/FTF/jquery-3.2.1.min.js"></script>
 			<script type="text/javascript" src="/DR/FTF/uppie.js"></script>
+			<!--
+			<script type="text/javascript" src="/DR/FTF/jszip.min.js"></script>
+			-->
 			<script type="text/javascript" src="/DR/FTF/main.js"></script>
 		</head>
 		<style type="text/css">

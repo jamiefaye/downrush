@@ -8,8 +8,6 @@ var filename_input = document.getElementById ("fname");//.value
 var stat_output = document.getElementById ("status")//.value
 var respons_output = document.getElementById( "res" )//.innerHTML;
 
-var ckh = document.getElementById ("chk");
-
 var fname = "";
 
 var jsonDocument;
@@ -478,7 +476,8 @@ function trackHeader(track, inx, obj) {
 		kindName: 		trackKindNames[kind],
 		section: 		section,
 		info:			info,
-		trackNum:		inx,
+		trackNum:		inx + 1,
+		trackIndex:		inx,
 	}
 	let trtab = track_head_template(context);
 
@@ -625,10 +624,15 @@ function horizontalArray(arr, obj, title) {
 
 function sectionRepeats(arr, obj) {
 	let repL = [];
+	let totalRepeats = 0;
 	for(var i = 0; i < arr.length; ++i) {
-		repL[i] = arr[i].numRepeats;
+		let rc = arr[i].numRepeats;
+		totalRepeats += rc;
+		repL[i] = rc;
 	}
-	horizontalArray(repL, obj, "Section Repeats");
+	if (totalRepeats > 0) {
+		horizontalArray(repL, obj, "Section Repeats");
+	}
 }
 
 function songTail(jsong, obj) {
@@ -658,9 +662,8 @@ function formatSong(jsong, obj) {
 	  let trax = forceArray(jsong.tracks.track);
 	  if (trax) {
 		for(var i = 0; i < trax.length; ++i) {
-			obj.append($("<h3/>").text("Track " + (i + 1)));
-			trackCopyButton(i, obj);
-			let track = trax[trax.length - i- 1];
+			// obj.append($("<h3/>").text("Track " + (i + 1)));
+			let track = trax[trax.length - i - 1];
 			trackHeader(track, i, obj);
 			plotTrack(track, obj);
 			plotParams(track, obj);
@@ -1006,7 +1009,7 @@ function formatKit(json, obj) {
 
 function jsonToTopTable(json, obj)
 {
-	$('#fileTitle').html("<h3>" + fname + "</h3>");
+	$('#fileTitle').html(fname);
 	if(json['song']) {
 		formatSong(json.song, obj);
 	} else if(json['sound']) {
@@ -1073,7 +1076,6 @@ function onLoad()
 	{
 		// Decode and assign to file name box
 		filename_input.value = decodeURI(urlarg);
-		//$('#fileTitle').text(decodeURI(urlarg));
 	}
 
 //	postWorker("eva");
@@ -1199,27 +1201,11 @@ function clrStat()
 // add one line to status
 function addStat(x)
 {
-	status_str += x+"\n";
+	status_str += "\n" + x;
 	stat_output.value = status_str;
 	stat_output.scrollTop = stat_output.scrollHeight;
 }
 
-// Clear Response
-function clrRes()
-{
-	respons_output.innerHTML = "Response";
-}
-
-// Set response
-function setRes(text)
-{
-	if(chk.checked)
-	{
-		respons_output.innerHTML = "<pre>"+text + "</pre>";
-	}else{
-		respons_output.innerHTML = text ;
-	}
-}
 
 //editor
 function setEditText(text)
@@ -1243,7 +1229,7 @@ function setLineHighlight(lineno)
 function postWorker(mode)
 {
 	var saveText  = "";
-	if(mode === 'save') {
+	if(mode === 'save' && jsonDocument.song) {
 		let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
 		saveText = headerStr + jsonToXMLString("song", jsonDocument.song);
 	}
@@ -1282,17 +1268,9 @@ worker.onmessage = function(e) {
 	{
 		clrStat();
 	}
-	if(e.data.func == "addStatus")
+	if(e.data.func == "addStatus" || e.data.func == "setResponse")
 	{
 		addStat(e.data.arg);
-	}
-	if(e.data.func == "clearResponse")
-	{
-		clrRes();
-	}
-	if(e.data.func == "setResponse")
-	{
-		setRes(e.data.arg);
 	}
 	if(e.data.func == "setEditor")
 	{

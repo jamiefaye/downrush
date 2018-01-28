@@ -23,42 +23,17 @@ window.onerror = function(msg, url, line, col, error) {
 <link rel="stylesheet" href="edit.css">
 	</head>
 	<body>
-		Downrush Deluge Object Viewer
-		<div style="margin-top: 5px;overflow: hidden;">
-			<div class="toolbox">
-				File:<input id="fname" type="text" size="24" value="">
-				<input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()">
-				<input type="button" value="Reload(F12)" style="width:55pt" onclick="btn_load()" >
-			</div>
-			
-			<div class="toolbox">
-				<input type="button" value="#" id="showbtn" style="width:25pt" onclick="showTool()">
-			</div>
-			<span id="ToolButtons1" style="display:none">
-				<!--
-				<div class="toolbox">
-					<input type="button" value="Unlock(F7)" style="width:60pt" onclick="btn_unlock()" id="UnlockButton">
-				</div>
-				-->
-				<div class="toolbox">
-					<input type="button" value="Menu" style="width:40pt" onclick="btn_menu()">
-					<input type="button" value="CONFIG" style="width:50pt" onclick='btn_config()'>
-				</div>
-				<div style="margin-left: 5px;width:auto;float:left;display:inline-block;width: 30px;vertical-align: middle;font-size: x-small;text-align: center;">
-					<input type="checkbox" id="chk" name="pre_en" value="1" checked="checked">
-					&lt;pre&gt;
-				</div>
-			</span>
-		</div>
 
-		<div>
-			Status
-			<br>
-			<textarea id="status" rows="2"  class="minibox" readonly></textarea>
-		</div>
-		<p/>
+				<table class='nobord'><tr>
+				<td>File:&nbsp;<input id="fname" type="text" size="24" value=""></td>
+				<td><input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"></td>
+				<td><input type="button" value="Reload(F12)" style="width:55pt" onclick="btn_load()" ></td>
+				<td><textarea id="status" rows="2"  class="statusbox" readonly></textarea></td>
+			</tr>
+			</table>
+
 		<div id='fileTitle'></div>
-		<p/>
+		<p class='tinygap'/>
 		<div id='jtab'> </div>
 		<script src="viewXML.js"></script>
 	</body>

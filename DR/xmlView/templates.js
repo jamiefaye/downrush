@@ -1,6 +1,13 @@
-// Mustache tamplates
-var track_head_template = Handlebars.compile(`<table>
+// Handlebars tamplates
 
+
+var track_copy_template = Handlebars.compile(`<button class='clipbtn'trackno='{{trackIndex}}'><img src='img/copy-to-clipboard.png'/></button>`);
+Handlebars.registerPartial("getcopytoclip", track_copy_template);
+
+/* Track Head
+*/
+var track_head_template = Handlebars.compile(`<table>
+<tr><th colspan='7'>Track {{trackNum}}<//th></tr>
 <tr>
 <th> </th>
 <th>Section</th>
@@ -8,18 +15,22 @@ var track_head_template = Handlebars.compile(`<table>
 <th>Preset #</th>
 <th>Name</th>
 <th>Info</th>
+<th> </th>
 </tr>
 <tr>
-<td class='soundviewbtn' trackno='{{trackNum}}'>&#x25BA</td>
+<td class='soundviewbtn' trackno='{{trackIndex}}'>&#x25BA</td>
 <td>{{section}}</td>
 <td>{{kindName}}</td>
 <td>{{patch}}</td>
 <td>{{patchName}}</td>
 <td>{{info}}</td>
+<td>{{>getcopytoclip}}</td>
 </tr>
 </table><p class='tinygap'>
-<div id='snd_place{{trackNum}}'> </div>`);
+<div id='snd_place{{trackIndex}}'> </div>`);
 
+/* Param Plotter
+*/
 var param_plot_template = Handlebars.compile(`
 <p class='tinygap'/>
 <table class='plottab'>
@@ -28,11 +39,6 @@ var param_plot_template = Handlebars.compile(`
 </table>
 <p class='tinygap'/>`);
 
-var track_copy_template = Handlebars.compile(`<input type='button' class='clipbtn' value='Copy To Clipboard' trackno='{{trackNum}}'><p/>`);
-/*
-var sound_view_template = `<input type='button' class='soundviewbtn' value='View Sound Info' trackno='{{trackNum}}'><p/>
-	<div id='snd_place{{trackNum}}'> </div>`;
-*/
 
 var paster_template = Handlebars.compile(`<hr><div>
 			<b>Paste track data in field below to add it to song.</b><br>
