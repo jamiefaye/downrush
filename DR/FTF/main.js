@@ -2,7 +2,7 @@
  *  main.js
  *
  *  Created by Junichi Kitano on 2013/05/15.
- * 
+ *  Many mods by Jamie Faye Fenton 2018
  *  Copyright (c) 2013, Fixstars Corporation
  *  All rights reserved.
  *  Released under the BSD 2-Clause license.
@@ -196,20 +196,6 @@ function showFileList(path, recheckSet) {
 	});
 }
 
-/*
-function delfile(file)
-{
-	var result = confirm( "delete "+ file+ "?" );
-
-	if(result){
-		var url = "/upload.cgi?DEL=" + file;
-		$.get(url).done(function(data, textStatus, jqXHR){
-			//alert("upload.cgi: "+data);
-			upload_after();
-		});
-	}
-}
-*/
 // Be careful if you rearrange the order of items, as the following code assumes
 // the checkbox to be immediately to the left of the file name item.
 function getCheckedList(prepend)
@@ -259,18 +245,6 @@ function deleteFiles()
 	if (result) {
 		deleteNext(boxList);
 	}
-/*
-	return;
-
-	if(result){
-		var url = "/upload.cgi?DEL=" + file;
-		$.get(url).done(function(data, textStatus, jqXHR){
-			
-			//alert("upload.cgi: "+data);
-			upload_after();
-		});
-	}
-*/
 }
 
 function rename(file)
@@ -387,9 +361,9 @@ function getFileList(nextPath) { //dir
 var last_dirpath = "/";
 //Document Ready
 $(function() {
-	//HTTPアクセスの設定を行います
+	// Configure HTTP access
 	$.ajaxSetup({
-		//cache: false,	//キャッシュ禁止するとなぜかロードできなくなる
+		//cache: false,	// If you prohibit caching you can not load anyhow
 		timeout: 300000	// Increased timeout value so as to not interfere with uploads.
 	});
 
@@ -405,7 +379,7 @@ $(function() {
 /*
 	$(document).on("click","a.dir",function() {
 		var dirpath = makePath(this.text);
-		$("#header").html(""+dirpath+"");
+		$("#header").html("dirpath");
 		$("#list").html("Loading...");
 		getFileList(dirpath);
 		
@@ -501,24 +475,6 @@ function NewDirectory()
 			upload_after();
 		});
 	}
-}
-/*
-function RemoveAllFiles()
-{
-	var pass = window.prompt("Are you sure you want to REMOVE ALL FILES in this directory?\n"+last_dirpath+"  To continue, type \"REMOVEALL\".", "");
-	if(pass)
-	{
-		var url = '/DR/FTF/delall.lua?'+last_dirpath+"%20"+pass;
-		url = url.replace(/ /g , "|" ) ;
-		window.open(url, '_blank');
-		upload_after();
-	}
-}
-*/
-
-function handleUpload() {
-	
-	alert("Meow");
 }
 
 var uppie = new Uppie();
