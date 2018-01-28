@@ -6,24 +6,18 @@ Handlebars.registerPartial("getcopytoclip", track_copy_template);
 
 /* Track Head
 */
-var track_head_template = Handlebars.compile(`<table>
+var track_head_template = Handlebars.compile(`<p class='tinygap'>
+<table>
 <tr><th colspan='7'>Track {{trackNum}}<//th></tr>
-<tr>
-<th> </th>
-<th>Section</th>
-<th>Type</th>
-<th>Preset #</th>
-<th>Name</th>
-<th>Info</th>
-<th> </th>
-</tr>
 <tr>
 <td class='soundviewbtn' trackno='{{trackIndex}}'>&#x25BA</td>
 <td>{{section}}</td>
 <td>{{kindName}}</td>
 <td>{{patch}}</td>
 <td>{{patchName}}</td>
+{{#if info}}
 <td>{{info}}</td>
+{{/if}}
 <td>{{>getcopytoclip}}</td>
 </tr>
 </table><p class='tinygap'>

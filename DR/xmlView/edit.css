@@ -1,11 +1,4 @@
-.CodeMirror {
-  border: 1px solid #AAAAAA;
-  height: auto;
-}
-.CodeMirror-scroll {
-  overflow-y: hidden;
-  overflow-x: auto;
-}
+
 .error-line {
   background-color:#FFDDDD;
 }
@@ -92,9 +85,14 @@ th {
 div.trgrid {
 	position: relative;
 	// border: solid 1px;
-	background-color:#f8f8f8;
-	padding: 4px;
-	margin: 4px;
+	background-color:#FFE8E8;
+
+}
+
+div.kitgrid {
+	position: relative;
+	// border: solid 1px;
+	background-color:#F8FFFF;
 }
 
 div.trnote {
@@ -103,10 +101,31 @@ div.trnote {
 	background-color:#202020;
 }
 
+div.kitlab {
+	position: absolute;
+	font-size: 7pt;
+}
+
+div.notelab {
+	position: absolute;
+	font-size: 9pt;
+}
+
+div.parmlab {
+	position: absolute;
+	font-size: 7pt;
+	top:  0px;
+	left: 0px;
+}
+div.trkitnote {
+	position: absolute;
+	height: 8px;
+	background-color:#202020;
+}
 div.parmplot {
 	position: relative;
 	background-color:#fffff0;
-	height: 54px;
+	height: 62px;
 }
 
 div.paramrun {

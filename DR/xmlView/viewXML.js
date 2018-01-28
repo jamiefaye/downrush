@@ -12,6 +12,7 @@ var fname = "";
 
 var jsonDocument;
 
+var xPlotOffset = 32;
 	
 /**
 * Converts passed XML string into a DOM element.
@@ -291,13 +292,8 @@ function forceArray(obj) {
 
 // Used to cope with y addresses of -32768
 function rowYfilter(row) {
+	if (row.drumIndex) return Number(row.drumIndex);
 	let y = Number(row.y);
-	if (y === -32768) {
-		if (row.drumIndex) {
-			y = row.drumIndex;
-		}
-	}
-
 	return y;
 }
 
@@ -311,6 +307,7 @@ function yToNoteName(note)
 
 function plotTrack(track, obj) {
 // first walk the track and find min and max y positions
+	let trackW = Number(track.trackLength);
 	let ymin =  1000000;
 	let ymax = -1000000;
 	let rowList = forceArray(track.noteRows.noteRow);
@@ -323,11 +320,11 @@ function plotTrack(track, obj) {
 			if (y > ymax) ymax = y;
 		}
 	}
-	let lowNote = yToNoteName(ymin);
-	let hiNote = yToNoteName(ymax);
-	let totH = ((ymax - ymin) + 1) * 4;
-	obj.append(hiNote);
+	let totH = ((ymax - ymin) + 2) * 4;
+
 	parentDiv.css({height: totH + 'px'});
+	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
 		var noteList = forceArray(row.notes.note);
@@ -335,7 +332,7 @@ function plotTrack(track, obj) {
 		if (y < 0) continue;
 		for (var nx = 0; nx < noteList.length; ++nx) {
 			let n = noteList[nx];
-			let x = n.pos;
+			let x = Number(n.pos) + xPlotOffset;
 			let dur = n.length;
 			if (dur > 1) dur--;
 			let vel = n.velocity;
@@ -345,17 +342,86 @@ function plotTrack(track, obj) {
 			parentDiv.append(ndiv);
 		}
 	}
+	let miny = totH - 10;
+	plotNoteName(ymin, {top: miny + 'px', obj}, parentDiv);
+	if (ymin !== ymax) {
+		plotNoteName(ymax, {top: '0px'}, parentDiv);
+	}
 	obj.append(parentDiv);
-	obj.append(lowNote);
+
 }
 
- 
-function plotParamChanges(k, ps, elem)
+function plotNoteName(note, style, parentDiv) {
+	let labName = yToNoteName(note);
+	if (labName != undefined) {
+		let labdiv = $("<div class='notelab'/>");
+		labdiv.text(labName);
+		labdiv.css(style);
+		parentDiv.append(labdiv);
+	}
+}
+
+function plotKit(track, obj) {
+	let kitItemH = 8;
+	let trackW = Number(track.trackLength);
+// first walk the track and find min and max y positions
+	let ymin =  1000000;
+	let ymax = -1000000;
+	let rowList = forceArray(track.noteRows.noteRow);
+	let parentDiv = $("<div class='kitgrid'/>");
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		let y = rowYfilter(row);
+		if (y >= 0) {
+			if (y < ymin) ymin = y;
+			if (y > ymax) ymax = y;
+		}
+	}
+	let totH = ((ymax - ymin) + 1) * kitItemH;
+	// obj.append("<p clear='both'>");
+	let kitList = forceArray(track.kit.soundSources.sound);
+	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		var noteList = forceArray(row.notes.note);
+		let y = rowYfilter(row);
+		let ypos = (y- ymin) * kitItemH;
+
+		if (row.drumIndex) {
+			let rowInfo = kitList[row.drumIndex];
+			let labName = rowInfo.name;
+			if (labName != undefined) {
+				let labdiv = $("<div class='kitlab'/>");
+				labdiv.text(labName);
+				labdiv.css({left: 0, bottom: (ypos - 2) + 'px'});
+				parentDiv.append(labdiv);
+			}
+		}
+		if (y < 0) continue;
+		for (var nx = 0; nx < noteList.length; ++nx) {
+			let n = noteList[nx];
+			let x = Number(n.pos) + xPlotOffset;
+			let dur = n.length;
+			if (dur > 1) dur--;
+			let vel = n.velocity;
+			let ndiv = $("<div class='trkitnote'/>");
+
+			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px'});
+			parentDiv.append(ndiv);
+		}
+	}
+	obj.append(parentDiv);
+}
+
+
+function plotParamChanges(k, ps, tracklen, elem)
 {
 	elem.append($("<p class='tinygap'/>"));
 	let parentDiv = $("<div class='parmplot'/>");
 	let cursor = 10;
 	let xpos = 0;
+	let textH = 8;
+
 	while (cursor < ps.length) {
 		let val = parseInt(ps.substring(cursor, cursor + 8), 16);
 		let runx = parseInt(ps.substring(cursor + 8, cursor + 16), 16);
@@ -365,63 +431,49 @@ function plotParamChanges(k, ps, elem)
 		}
 		let ranged = Math.round( ((val + 0x80000000) * 50) / 0x100000000);
 		let runto = runx & 0x7FFFFFFF; // mask off sign
-		let ypos = 52 - ranged;
+		let ypos = 60 - textH - ranged;
 		let w = runto - xpos;
+		let xoff = xpos + xPlotOffset;
 		let ndiv = $("<div class='paramrun'/>");
-		ndiv.css({left: xpos + 'px', bottom: ypos + 'px', width: w + 'px'});
+		ndiv.css({left: xoff + 'px', bottom: ypos + 'px', width: w + 'px'});
 		parentDiv.append(ndiv);
 		cursor += 16;
 		xpos = runto;
 	}
-	parentDiv.css({width: xpos + 'px'});
-	
-	let tab = $(param_plot_template({paramName: k}));
-	let plottd = tab.find('.plotspot');
-	plottd[0].append(parentDiv[0]);
-	elem.append(tab);
-/* 
+	let labdiv = $("<div class='parmlab'/>");
+	labdiv.text(k);
+	parentDiv.append(labdiv);
+	parentDiv.css({width: (tracklen + xPlotOffset) + 'px'});
 	elem.append(parentDiv);
-	elem.append(k);
-
-	let tab = $('<table/>');
-	let trhdr = $('<tr/>');
-	let thhdr = $("<th>" + k + "</th>");
-	trhdr.append(thhdr);
-	tab.append(trhdr);
-	let trtab = $('<tr/>');
-	let tdtab = $("<td/>");
-	tdtab.append(parentDiv);
-	trtab.append(tdtab);
-	tab.append(tdtab);
-	elem.append(tab);
-*/
 }
 
 
-function plotParamLevel(track, elem)
+function plotParamLevel(track, trackW, elem)
 {
 	for (var k in track) {
 		if(track.hasOwnProperty(k)) {
 			let v = track[k];
 			if(typeof v === "string"&& v.startsWith('0x') && v.length > 10) {
-				plotParamChanges(k, v, elem);
+				plotParamChanges(k, v, trackW, elem);
 			}
 		}
 	}
 }
 
 function plotParams(track, elem) {
-	if (track.sound) plotParamLevel(track.sound, elem);
-	if (track.defaultParams) plotParamLevel(track.defaultParams, elem);
-	if (track.soundParams) plotParamLevel(track.soundParams, elem);
+	let trackW = Number(track.trackLength);
+	if (track.sound) plotParamLevel(track.sound, trackW, elem);
+	if (track.defaultParams) plotParamLevel(track.defaultParams, trackW, elem);
+	if (track.soundParams) plotParamLevel(track.soundParams, trackW, elem);
 	
-	if (track.kitParams) plotParamLevel(track.kitParams, elem);
+	if (track.kitParams) plotParamLevel(track.kitParams, trackW, elem);
 }
 
 function trackKind(track) {
 	if(track['kit']) return 'kit';
 	if(track['sound']) return 'sound';
 	if(track['midiChannel']) return 'midi';
+	if(track['cvChannel']) return 'cv';
 	// deal with indirect refs
 	if(track['kitParams']) return 'kit';
 	if(track['soundParams']) return 'sound';
@@ -435,9 +487,8 @@ var trackKindNames = {"kit": "Kit",
 					"unknown": "?",
 					};
 
-function trackHeader(track, inx, obj) {
+function trackHeader(track, kind, inx, obj) {
 	let section = track.section;
-	let kind = trackKind(track);
 	let patchStr = "";
 
 	let patch = Number(track.instrumentPresetSlot);
@@ -466,6 +517,9 @@ function trackHeader(track, inx, obj) {
 		patchName = '';
 	} else if (kind === 'sound') {
 		patchName = patchNames[patch];
+	} else if (kind === 'cv') {
+		patchStr = Number(track.cvChannel) + 1;
+		patchName = '';
 	}
 
 	let context = {
@@ -664,8 +718,13 @@ function formatSong(jsong, obj) {
 		for(var i = 0; i < trax.length; ++i) {
 			// obj.append($("<h3/>").text("Track " + (i + 1)));
 			let track = trax[trax.length - i - 1];
-			trackHeader(track, i, obj);
-			plotTrack(track, obj);
+			let tKind = trackKind(track);
+			trackHeader(track, tKind, i, obj);
+			if(tKind === 'kit') {
+				plotKit(track, obj);
+			} else {
+				plotTrack(track, obj);
+			}
 			plotParams(track, obj);
 		}
 	  }
