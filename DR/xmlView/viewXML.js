@@ -2,6 +2,9 @@
 // while this program is called viewXML, in reality we use JSON internally
 // and convert from XML to JSON on load, from JSON to XML on save.
 
+// Flag to enable local execution (not via the FlashAir web server)
+var local_exec = document.URL.indexOf('file:') == 0;
+var sample_path_prefix = '';
 var filename_input = document.getElementById ("fname");//.value
 // var arg_input = document.getElementById ("line");//.value
 
@@ -735,7 +738,7 @@ function sampleReport(json, showAll, obj) {
 		});
 	}
 	sampList.sort();
-	obj.append(sample_list_template({sampList: sampList, showDrums: showAll}));
+	obj.append(sample_list_template({sample_path_prefix: sample_path_prefix, sampList: sampList, showDrums: showAll}));
 }
 
 function genSampleReport(track)
@@ -960,6 +963,7 @@ function formatSampleEntry(sound, obj, ix)
 {
 	let context = jQuery.extend(true, {}, sound);
 	context.index = ix;
+	context.sample_path_prefix = sample_path_prefix;
 
 	// If Osc2 does not have a sample defined for it, strike osc2 from the context
 	if (!context.osc2 || !context.osc2.fileName || $.isEmptyObject(context.osc2.fileName)) {
@@ -1016,7 +1020,7 @@ function formatSound(obj, json, json1, json2, json3)
 		
 		jQuery.extend(true, context, destMap);
 	}
-
+	context.sample_path_prefix = sample_path_prefix;
 	if ( (context.osc1 && context.osc1.fileName) || (context.osc2 && context.osc2.fileName) ) {
 		let subContext = jQuery.extend(true, {}, context);
 		// If Osc2 does not have a sample defined for it, strike osc2 from the context
@@ -1175,6 +1179,28 @@ window.onbeforeunload = function(event){
 }
 */
 
+
+
+function openLocal(evt)
+{
+	var files = evt.target.files;
+	var f = files[0];
+	if (f === undefined) return;
+	var reader = new FileReader();
+// Closure to capture the file information.
+	reader.onload = (function(theFile) {
+		return function(e) {
+			// Display contents of file
+				let t = e.target.result;
+				setEditText(t);
+			};
+		})(f);
+
+	// Read in the image file as a data URL.
+	reader.readAsText(f);
+}
+
+
 //---------- When reading page -------------
 function onLoad()
 {
@@ -1188,8 +1214,16 @@ function onLoad()
 
 //	postWorker("eva");
 //	modeChanger(filename_input.value);
-	postWorker("load");
-	fname = filename_input.value;
+	if(!local_exec) {
+		postWorker("load");
+		fname = filename_input.value;
+	} else {
+		$('#filegroup').remove();
+		$('#filegroupplace').append(local_exec_head());
+		$('#opener').on('change', openLocal);
+		// up from xmlView, up from DR, 
+		sample_path_prefix = '../../';
+	}
 	// jsEditor.markClean();
 }
 window.onload = onLoad;
@@ -1322,7 +1356,7 @@ function setEditText(text)
 	var asDOM = getXmlDOMFromString(fixedText);
 	var asJSON = xmlToJson(asDOM);
 	jsonDocument = asJSON;
-
+	$('#jtab').empty();
 	jsonToTopTable(asJSON, $('#jtab'));
 }
 
@@ -1354,11 +1388,13 @@ function postWorker(mode)
 }
 
 //------------Worker---------------
-if (!window.Worker) {
+if (!local_exec && !window.Worker) {
 	alert("Web Worker disabled! Editor won't work!")
 }
 
 var worker;
+
+if (!local_exec) {
 try {
 	worker = new Worker("XMLworker.js");
 }catch (e) {
@@ -1390,3 +1426,4 @@ worker.onmessage = function(e) {
 	}
 };
 
+}
