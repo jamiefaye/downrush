@@ -703,6 +703,51 @@ function convertTempo(jsong)
 	return tempo;
 }
 
+function scanSamples(json, sampMap) {
+	for (var k in json) {
+		if(json.hasOwnProperty(k)) {
+			// Have we found something?
+			let v = json[k];
+			if (k === 'fileName' && typeof v === "string") {
+				sampMap.add(v);
+			} else
+			if (v.constructor === Array) {
+				for(var ix = 0; ix < v.length; ++ix) {
+					let aobj = v[ix];
+					if (aobj.constructor == Array || aobj.constructor == Object) {
+						scanSamples(v[ix], sampMap);
+					}
+				}
+			} else if(v.constructor === Object) {
+				scanSamples(v, sampMap);
+			}
+		}
+	}
+}
+
+function sampleReport(json, showAll, obj) {
+	var sampSet = new Set();
+	scanSamples(json, sampSet);
+	var sampList = Array.from(sampSet);
+	if (!showAll) {
+		sampList = sampList.filter(function (n) {
+			return !n.startsWith('SAMPLES/DRUMS/');
+		});
+	}
+	sampList.sort();
+	obj.append(sample_list_template({sampList: sampList, showDrums: showAll}));
+}
+
+function genSampleReport(track)
+{
+	let isChecked = $("#showdrums").is(':checked');
+	$('#samprepplace table').remove();
+	sampleReport(track, isChecked, $('#samprepplace'));
+	$('#showdrums').on('click', function () {
+		genSampleReport(track);
+	});
+}
+
 function formatSong(jsong, obj) {
 	let ctab = genColorTab(jsong.preview);
 	obj.append(ctab);
@@ -731,6 +776,9 @@ function formatSong(jsong, obj) {
 	}
 	trackPasteField(obj);
 	songTail(jsong, obj);
+	obj.append($("<div id='samprepplace'></div>"));
+	genSampleReport(jsong);
+
 	// Populate copy to clippers.
 	new Clipboard('.clipbtn', {
 	   text: function(trigger) {
@@ -919,6 +967,7 @@ function formatSampleEntry(sound, obj, ix)
 	}
 	obj.append(sample_entry_template(context));
 }
+
 
 function formatSound(obj, json, json1, json2, json3)
 {

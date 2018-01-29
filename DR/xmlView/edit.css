@@ -28,11 +28,7 @@
   float:left;
 }
 */
-input[type="checkbox"] {
-	width:30px;
-	height:30px;
-	-moz-transform: scale( 2 , 2 );
-}
+
 input[type="button"] {
 	width:120px;
 	height:24px;
@@ -61,6 +57,10 @@ td {
 th {
 	border: solid 1px;
 	padding: 0.5em;
+}
+
+.samplelist td {
+	text-align: left;
 }
 
 .repeats {

@@ -23,6 +23,22 @@ var track_head_template = Handlebars.compile(`<p class='tinygap'>
 </table><p class='tinygap'>
 <div id='snd_place{{trackIndex}}'> </div>`);
 
+/* Sample List
+*/
+var sample_list_template = Handlebars.compile(`<p class='tinygap'>
+<table class='samplelist'>
+<tr><th>Samples used in this song</th>
+<th><input id='showdrums' type='checkbox' {{#if showDrums}} checked{{/if}}>Show /SAMPLES/DRUMS</input></th>
+</tr>
+{{#each sampList}}
+<tr><td>{{this}}</td>
+<td><audio controls class='smallplayer' preload='none' style='background-color: blue'><source src='/{{this}}' type='audio/wav'></audio></td>
+</tr>
+{{/each}}
+</table>
+
+`);
+
 /* Param Plotter
 */
 var param_plot_template = Handlebars.compile(`
