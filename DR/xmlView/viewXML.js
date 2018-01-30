@@ -18,7 +18,7 @@ var respons_output = document.getElementById( "res" )//.innerHTML;
 var fname = "";
 
 var jsonDocument;
-
+var firmwareVersionFound = '';
 var xPlotOffset = 32;
 	
 /**
@@ -1363,7 +1363,14 @@ function addStat(x)
 //editor
 function setEditText(text)
 {
-	var fixedText = text.replace(/<firmwareVersion>1.3.\d<.firmwareVersion>/i,"");
+	// Capture the current firmware version and then remove that from the string.
+	let firmHits = /<firmwareVersion>.*<.firmwareVersion>/i.exec(text);
+	if (firmHits && firmHits.length > 0) {
+		firmwareVersionFound = firmHits[0];
+	} else {
+		firmwareVersionFound='';
+	}
+	var fixedText = text.replace(/<firmwareVersion>.*<.firmwareVersion>/i,"");
 	var asDOM = getXmlDOMFromString(fixedText);
 	var asJSON = xmlToJson(asDOM);
 	jsonDocument = asJSON;
@@ -1384,6 +1391,9 @@ function postWorker(mode)
 	var saveText  = "";
 	if(mode === 'save' && jsonDocument.song) {
 		let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
+		if (firmwareVersionFound) {
+			headerStr += firmwareVersionFound + "\n";
+		}
 		saveText = headerStr + jsonToXMLString("song", jsonDocument.song);
 	}
 	// Set CRLF to LF and then to CRLF. (LF also becomes CRLF)
