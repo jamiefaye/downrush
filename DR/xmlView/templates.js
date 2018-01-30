@@ -219,7 +219,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 
 <td class='unlab'>{{c05}}</td>
 <td class='unlab'>{{c06}}</td>
-<td class='distortion'>{{c07}}</td>
+<td class='distortion'>{{clippingAmount}}</td>
 <td class='unlab'>{{c08}}</td>
 
 <td class='lpf frequency hleftb'>{{fixh lpfFrequency}}</td>
@@ -399,8 +399,8 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <tr>
 <td class='sample1 pitchtime'>{{osc1.timeStretchEnable}}</td>
 <td class='sample2 pitchtime'>{{osc1.timeStretchEnable}}</td>
-<td class='osc1 pw'>{{fixh oscAPulseWidth}}</td>
-<td class='osc2 pw'>{{fixh oscBPulseWidth}}</td>
+<td class='osc1 pw'>{{fixpos50 oscAPulseWidth}}</td>
+<td class='osc2 pw'>{{fixpos50 oscBPulseWidth}}</td>
               
 <td class='fmmod1 pw hleftb'>{{c69}}</td>
 <td class='fmmod2 pw'>{{c70}}</td>
@@ -450,7 +450,7 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <td class='fmmod1 type hleftb'>{{c85}}</td>
 <td class='fmmod2 type'>{{c86}}</td>
 <td class='master'>{{vibrato}}</td>
-<td class='voice'>{{voicePriority}}</td>
+<td class='voice'>{{fmtprior voicePriority}}</td>
               
 <td class='env1 decay hleftb'>{{fixh envelope1.decay}}</td>
 <td class='env2 decay'>{{fixh envelope2.decay}}</td>
@@ -489,11 +489,11 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 <tr>
 <td class='sample1 reverse'>{{osc1.reversed}}</td>
 <td class='sample2 reverse'>{{osc2.reversed}}</td>
-<td class='osc1 transpose'>{{osc1.transpose}}</td>
-<td class='osc2 transpose'>{{osc2.transpose}}</td>
+<td class='osc1 transpose'>{{fmttransp osc1}}</td>
+<td class='osc2 transpose'>{{fmttransp osc2}}</td>
               
-<td class='fmmod1 transpose hleftb'>{{modulator1.transpose}}</td>
-<td class='fmmod2 transpose'>{{modulator2.transpose}}</td>
+<td class='fmmod1 transpose hleftb'>{{fmttransp modulator1}}</td>
+<td class='fmmod2 transpose'>{{fmttransp modulator2}}</td>
 <td class='master transpose'>{{transpose}}</td>
 <td class='voice'>{{polyphonic}}</td>
               

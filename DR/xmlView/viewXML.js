@@ -816,6 +816,20 @@ function fixhex(v) {
 	} else return v;
 }
 
+// scale 0x00000000 to 0x7FFFFFFF to 0-50
+function fixpos50(v) {
+	if(v === undefined) return undefined;
+	if(typeof v !== "string") return v;
+	if (v.startsWith('0x')) {
+		let asInt= parseInt(v.substring(2, 10), 16);
+		let ranged = Math.round( (asInt * 50) / 0x7FFFFFFF);
+		if (v.length > 10) {
+			ranged += '…';
+		}
+		return ranged;
+	} else return v;
+}
+
 function fixpan(v) {
 	if(v === undefined) return 0;
 	if(typeof v !== "string") return v;
@@ -832,8 +846,12 @@ function fixpan(v) {
 	} else return v;
 }
 
-// Vibrato 
-function fixvibrato(v) {
+Handlebars.registerHelper('fixh', fixhex);
+Handlebars.registerHelper('fixpan',fixpan);
+Handlebars.registerHelper('fixpos50',fixpos50);
+
+// Vibrato (and other mod source scaling).
+function fixm50to50(v) {
 	if(v === undefined) return 0;
 	if(typeof v !== "string") return v;
 	if (v.startsWith('0x')) {
@@ -842,15 +860,13 @@ function fixvibrato(v) {
 		if (asInt & 0x80000000) {
 			asInt -= 0x100000000;
 		}
-		// vibrato ranges from 0xC0000000 to 0x3FFFFFF, and we want to show it
+		// mod matrix weights range from 0xC0000000 to 0x3FFFFFF, and we want to show it
 		// as -50 to 50
 		return Math.round( ((asInt + 0x80000000) * 200) / 0x100000000) - 100;
 	} else return v;
 }
 
 
-Handlebars.registerHelper('fixh', fixhex);
-Handlebars.registerHelper('fixpan',fixpan);
 
 Handlebars.registerHelper('fixrev', function (v) {
 	if (v === undefined) return v;
@@ -893,13 +909,22 @@ Handlebars.registerHelper('fmtonoff', function (tv) {
 	return 'off';
 });
 
-Handlebars.registerHelper('shrinkifneeded', function (s) {
-	if(s === undefined) return "";
-	if (s.length <= 6) {
-		return s;
-	}
-	return"<div class='textsm2'>" + s + "</div>";
+
+Handlebars.registerHelper('fmttransp', function (osc) {
+	if(osc === undefined) return "";
+	let amt = Number(osc.transpose) + Number(osc.cents) / 100;
+	return amt.toFixed(2);
 });
+
+var priorityTab = ["low", "medium", "high"];
+
+Handlebars.registerHelper('fmtprior', function (p) {
+	if(p === undefined) return "";
+	p = Number(p);
+	if(p < 0 || p >= priorityTab.length) return '';
+	return priorityTab[p];
+});
+
 
 var syncLevelTab = ["off", "4 bars", "2 bars", "1 bar", "2nd", "4th", "8th", "16th", "32nd", "64th"];
 
@@ -907,7 +932,16 @@ Handlebars.registerHelper('fmtsync', function (tv) {
 	if(tv === undefined) return "";
 	let tvn = Number(tv);
 	return syncLevelTab[tvn];
-});234624
+});
+
+
+Handlebars.registerHelper('shrinkifneeded', function (s) {
+	if(s === undefined) return "";
+	if (s.length <= 6) {
+		return s;
+	}
+	return"<div class='textsm2'>" + s + "</div>";
+});
 
 var sidechain_release = [261528,38632, 19552, 13184, 9872, 7840, 6472, 5480, 4736, 4152, 3680, 3296, 2976,
 2704, 2472, 2264, 2088, 1928, 1792, 1664, 1552, 1448, 1352, 1272, 1192, 1120, 1056, 992, 936, 880, 832,
@@ -1010,10 +1044,10 @@ function formatSound(obj, json, json1, json2, json3)
 			let aDest = cable.destination;
 			// Vibrato is represented by a patchCable between lfo1 and pitch
 			if (cable.source === 'lfo1' && aDest === 'pitch') {
-				let vibratoVal = fixvibrato(cable.amount);
+				let vibratoVal = fixm50to50(cable.amount);
 				context['vibrato'] = vibratoVal;
 			}
-			let amount = fixhex(cable.amount);
+			let amount = fixm50to50(cable.amount);
 			let info = aDest + "(" + amount + ")";
 			let val = destMap[sName];
 			if (val) val += ' ';
