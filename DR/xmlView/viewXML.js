@@ -510,7 +510,7 @@ function trackHeader(track, kind, inx, obj) {
 	}
 	let info = "";
 	if (track.soundMidiCommand) {
-		info += "Midi in: " + Number(track.soundMidiCommand.channel) + 1;
+		info += "Midi in: " + (Number(track.soundMidiCommand.channel) + 1);
 	}
 	if (track.midiPGM) {
 		if(info) info += ', ';
