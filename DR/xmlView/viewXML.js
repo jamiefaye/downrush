@@ -1,10 +1,14 @@
 "use strict";
-// while this program is called viewXML, in reality we use JSON internally
-// and convert from XML to JSON on load, from JSON to XML on save.
+
+// Change the following line as needed to point to the parent directory containing your sample directory.
+// If you leave it undefined, our code will make an informed guess as to where your samples are located.
+// You probably don't need to change it.
+var custom_sample_path = undefined;
 
 // Flag to enable local execution (not via the FlashAir web server)
 var local_exec = document.URL.indexOf('file:') == 0;
-var sample_path_prefix = '';
+
+var sample_path_prefix = '/';
 var filename_input = document.getElementById ("fname");//.value
 // var arg_input = document.getElementById ("line");//.value
 
@@ -1220,11 +1224,18 @@ function onLoad()
 	} else {
 		$('#filegroup').remove();
 		$('#filegroupplace').append(local_exec_head());
+		$('#jtab').append (local_exec_info());
 		$('#opener').on('change', openLocal);
-		// up from xmlView, up from DR, 
-		sample_path_prefix = '../../';
+		if (custom_sample_path) {
+			sample_path_prefix = custom_sample_path;
+		} else {
+			if (document.URL.indexOf('DR/xmlView')> 0) {
+				sample_path_prefix = '../../';
+			} else if (document.URL.indexOf('xmlView')> 0) {
+				sample_path_prefix = '../';
+			} else sample_path_prefix = '';
+		}
 	}
-	// jsEditor.markClean();
 }
 window.onload = onLoad;
 

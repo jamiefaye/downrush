@@ -1,7 +1,7 @@
 // Handlebars tamplates
 
 var local_exec_head = Handlebars.compile(`			<table class='nobord'><tr>
-				<td><input ID='opener' name="file" type="file" /></td>
+				<td><input ID='opener' name="file" type="file" accept=".xml,.XML" /></td>
 				<!--
 				<td><input type="button" value="Open" style="width:55pt" onclick="btn_open()" ></td>
 				<td><input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"></td>
@@ -10,6 +10,11 @@ var local_exec_head = Handlebars.compile(`			<table class='nobord'><tr>
 			</tr>
 			</table>`);
 
+var local_exec_info = Handlebars.compile(`
+You are running the local version of viewXML. Since this is not running on a FlashAir card inserted into a Synthstrom Deluge, 
+you will not be able to save any edits you make.<p>
+To view the contents of a SONG, SYNTH, or KIT file, press the 'Choose File' button at the top of this page and you will get a 'file open' dialog you can use to select the file you want to view. 
+`);
 var track_copy_template = Handlebars.compile(`<button class='clipbtn'trackno='{{trackIndex}}'><img src='img/copy-to-clipboard.png'/></button>`);
 Handlebars.registerPartial("getcopytoclip", track_copy_template);
 
@@ -41,7 +46,7 @@ var sample_list_template = Handlebars.compile(`<p class='tinygap'>
 </tr>
 {{#each sampList}}
 <tr><td>{{this}}</td>
-<td><audio controls class='smallplayer' preload='none' style='background-color: blue'><source src='{{../sample_path_prefix}}/{{this}}' type='audio/wav'></audio></td>
+<td><audio controls class='smallplayer' preload='none' style='background-color: blue'><source src='{{../sample_path_prefix}}{{this}}' type='audio/wav'></audio></td>
 </tr>
 {{/each}}
 </table>
@@ -135,14 +140,14 @@ var sample_entry_template = Handlebars.compile(`<tr class='kitentry'>
 <td style='text-align: left'>{{osc1.fileName}}</td>
 <td>{{fmttime osc1.zone.startMilliseconds}}</td>
 <td>{{fmttime osc1.zone.endMilliseconds}}</td>
-<td><audio controls class='smallplayer' preload='none' style='background-color: blue'><source src='{{sample_path_prefix}}/{{osc1.fileName}}' type='audio/wav'></audio></td>
+<td><audio controls class='smallplayer' preload='none' style='background-color: blue'><source src='{{sample_path_prefix}}{{osc1.fileName}}' type='audio/wav'></audio></td>
 </tr>
 {{#if osc2.fileName}}
 <tr><td colspan='2'></td>
 <td>{{osc2.fileName}}</td>
 <td>{{fmttime osc2.zone.startMilliseconds}}</td>
 <td>{{fmttime osc2.zone.endMilliseconds}}</td>
-<td><controls audio class='smallplayer'  preload='none'><source src='{{sample_path_prefix}}/{{osc2.fileName}}' type='audio/wav'></audio></td>
+<td><controls audio class='smallplayer'  preload='none'><source src='{{sample_path_prefix}}{{osc2.fileName}}' type='audio/wav'></audio></td>
 </tr>
 {{/if}}
 <div class='kit_spot'> <div>`);
@@ -150,12 +155,12 @@ var sample_entry_template = Handlebars.compile(`<tr class='kitentry'>
 var sample_name_prefix = Handlebars.compile(`<tr class='sampleprefix'>
 <tr>
 <td class='sampfile sample1' style='text-align: left' colspan='10'>{{osc1.fileName}}
-<td class='sampfile sample1' colspan='6'><audio controls preload='none'><source src='{{sample_path_prefix}}/{{osc1.fileName}}' type='audio/wav'></audio></td>
+<td class='sampfile sample1' colspan='6'><audio controls preload='none'><source src='{{sample_path_prefix}}{{osc1.fileName}}' type='audio/wav'></audio></td>
 </tr>
 {{#if osc2.fileName}}
 <tr>
 <td class='sampfile sample2' style='text-align: left' colspan='10'>{{osc2.fileName}}</td>
-<td class='sampfile sample2'colspan='6'><audio controls preload='none'><source src='{{sample_path_prefix}}/{{osc2.fileName}}' type='audio/wav'></audio></td>
+<td class='sampfile sample2'colspan='6'><audio controls preload='none'><source src='{{sample_path_prefix}}{{osc2.fileName}}' type='audio/wav'></audio></td>
 </tr>
 {{/if}}
 `);
