@@ -126,7 +126,7 @@ var modKnobTemplate = Handlebars.compile(`<table class='mod_knobs'>
 </table><p class='tinygap'>`);
 
 var sample_list_header = Handlebars.compile(`<tr class='kithead'>
-<th> </th>
+<th class='kit_opener' kitItem='-1'>&#x25BA </th>
 <th>Name</th>
 <th>Path</th>
 <th>Start</th>
