@@ -988,6 +988,12 @@ function formatSong(jsong, obj) {
 	obj.append(ctab);
 	obj.append($("<p class='tinygap'>"));
 	obj.append("Tempo = " + convertTempo(jsong) + " bpm");
+	let swing = Number(jsong.swingAmount);
+	if(swing !== 0) {
+		swing += 50;
+		let sync = Number(jsong.swingInterval);
+		obj.append(", Swing = " + swing + "% on " + syncLevelTab[sync]);
+	}
 	obj.append($("<p class='tinygap'>"));
 	if(jsong.sections) {
 		sectionRepeats(jsong.sections.section, obj);
