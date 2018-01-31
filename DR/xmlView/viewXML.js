@@ -578,7 +578,7 @@ function plotNoteName(note, style, parentDiv) {
 	}
 }
 
-function plotKit(track, obj) {
+function plotKit(track, reftrack, obj) {
 	let kitItemH = 8;
 	let trackW = Number(track.trackLength);
 // first walk the track and find min and max y positions
@@ -595,8 +595,7 @@ function plotKit(track, obj) {
 		}
 	}
 	let totH = ((ymax - ymin) + 1) * kitItemH;
-	// obj.append("<p clear='both'>");
-	let kitList = forceArray(track.kit.soundSources.sound);
+	let kitList = forceArray(reftrack.kit.soundSources.sound);
 	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
@@ -690,7 +689,7 @@ function plotNoteLevelParams(noteRowA, track, trackW, elem)
 	}
 }
 
-function plotParams(track, elem) {
+function plotParams(track, refTrack, elem) {
 	let trackW = Number(track.trackLength);
 	if (track.sound) plotParamLevel("sound.", track.sound, trackW, elem);
 	if (track.defaultParams) plotParamLevel("default.", track.defaultParams, trackW, elem);
@@ -699,7 +698,7 @@ function plotParams(track, elem) {
 	if (track.kitParams) {
 		plotParamLevel("kit.", track.kitParams, trackW, elem);
 		if (track.noteRows) {
-			plotNoteLevelParams(track.noteRows.noteRow, track, trackW, elem);
+			plotNoteLevelParams(track.noteRows.noteRow, refTrack, trackW, elem);
 		}
 	}
 }
@@ -1005,13 +1004,19 @@ function formatSong(jsong, obj) {
 			// obj.append($("<h3/>").text("Track " + (i + 1)));
 			let track = trax[trax.length - i - 1];
 			let tKind = trackKind(track);
+			let refTrack = track;
+			if (track.instrument && track.instrument.referToTrackId !== undefined) {
+				let fromID = Number(track.instrument.referToTrackId);
+				refTrack = trax[fromID];
+			}
+			
 			trackHeader(track, tKind, i, obj);
 			if(tKind === 'kit') {
-				plotKit(track, obj);
+				plotKit(track, refTrack, obj);
 			} else {
 				plotTrack(track, obj);
 			}
-			plotParams(track, obj);
+			plotParams(track, refTrack, obj);
 		}
 	  }
 	}
