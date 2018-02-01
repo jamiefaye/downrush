@@ -891,10 +891,12 @@ function pasteTrackText(text) {
 	for(var i = 1; i < trackA.length; ++i) {
 		let aTrack = trackA[i];
 		if (aTrack.instrument && aTrack.instrument.referToTrackId !== undefined) {
-			aTrack.instrument.referToTrackId++;
+			let bumpedRef = Number(aTrack.instrument.referToTrackId) + 1;
+			aTrack.instrument.referToTrackId = bumpedRef;
 		}
 	}
-
+/****** Disabled for now. It turns out there is an element ordering dependency in the XML file format.
+// If you read a kitParamselemnt in before you read a instrument.referToTrackId, the Deluge freaks out.
 	// Now we try and element duplicate sound or kit elements
 	// Since our new item was inserted at the front of the list, we search the remmaining tracks
 	// for those that are equal to our element. We then replace their sound or kit with a referToTrackId of 0
@@ -908,9 +910,18 @@ function pasteTrackText(text) {
 			if (jsonequals(track0[trackType], aTrack[trackType])) {
 				delete aTrack[trackType];
 				aTrack.instrument = {"referToTrackId": 0};
+				// Since the track we just put a referToTrackId into may have
+				// been the target of another reference, check for that case and fix that too.
+				for (var j = 1; j < trackA.length; ++j) {
+					let bTrack = trackA[j];
+					if (bTrack.instrument && Number(bTrack.instrument.referToTrackId) === i) {
+						bTrack.instrument.referToTrackId = 0;
+					}
+				}
 			}
 		}
 	}
+*****/
 	triggerRedraw();
 }
 
