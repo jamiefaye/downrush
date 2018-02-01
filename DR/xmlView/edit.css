@@ -115,7 +115,7 @@ div.parmlab {
 	position: absolute;
 	font-size: 7pt;
 	top:  0px;
-	left: 0px;
+	left: 2px;
 }
 div.trkitnote {
 	position: absolute;
@@ -125,7 +125,7 @@ div.trkitnote {
 div.parmplot {
 	position: relative;
 	background-color:#fffff0;
-	height: 62px;
+	height: 64px;
 }
 
 div.paramrun {
@@ -154,11 +154,26 @@ div.paramrun {
 	margin: 0%;
 }
 
+
 .mkhdata {
 	background-color:  #FFFFE8;
-		font-size: 10pt;
+	font-size: 10pt;
 }
 
+.midimh {
+	background-color:  #F0F0D0;
+	font-size: 10pt;
+}
+
+.midismh {
+	background-color:  #F0F0E0;
+	font-size: 7pt;
+}
+
+.midi_mod_knobs td {
+	background-color:  #FFFFE8;
+	font-size: 10pt;
+}
 .clipbtn {
 	font-size: 9pt;
 	padding:0%;

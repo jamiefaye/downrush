@@ -291,6 +291,28 @@ function fixpos50(v) {
 	return ranged;
 }
 
+
+function fmtMidiCC(v) {
+	if(v === undefined) return 0;
+	if(typeof v !== "string") return v;
+
+	let res = v;
+	if (v.startsWith('0x')) {
+		let asInt= parseInt(v.substring(2, 10), 16);
+		// Convert to signed 32 bit.
+		if (asInt & 0x80000000) {
+			asInt -= 0x100000000;
+		}
+		// Midi CC params range from 0 to 127
+		res = Math.round( (asInt + 0x80000000) * 127 / 0x100000000);
+	}
+	if (v.length > 10) {
+		res += '…';
+	}
+	return res;
+}
+
+
 function fixpan(v) {
 	if(v === undefined) return 0;
 	if(typeof v !== "string") return v;
@@ -315,7 +337,7 @@ function fixpan(v) {
 Handlebars.registerHelper('fixh', fixhex);
 Handlebars.registerHelper('fixpan',fixpan);
 Handlebars.registerHelper('fixpos50',fixpos50);
-
+Handlebars.registerHelper('fmtMidiCC',fmtMidiCC);
 // Vibrato (and other mod source scaling).
 function fixm50to50(v) {
 	if(v === undefined) return 0;
@@ -336,7 +358,6 @@ function fixm50to50(v) {
 	}
 	return res;
 }
-
 
 
 Handlebars.registerHelper('fixrev', function (v) {
@@ -629,6 +650,15 @@ function plotKit(track, reftrack, obj) {
 	obj.append(parentDiv);
 }
 
+function convertHexTo50(str)
+{
+	let v = parseInt(str, 16);
+	if (v & 0x80000000) {
+			v -= 0x100000000;
+		}
+	let vr = Math.round( ((v + 0x80000000) * 50) / 0x100000000);
+	return vr;
+}
 
 function plotParamChanges(k, ps, tracklen, prefix, elem)
 {
@@ -638,30 +668,37 @@ function plotParamChanges(k, ps, tracklen, prefix, elem)
 	let xpos = 0;
 	let textH = 8;
 
+	var runVal = convertHexTo50(ps.substring(2,10));
+
 	while (cursor < ps.length) {
-		let val = parseInt(ps.substring(cursor, cursor + 8), 16);
+		let nextVal = convertHexTo50(ps.substring(cursor, cursor + 8));
 		let runx = parseInt(ps.substring(cursor + 8, cursor + 16), 16);
-		// Convert val to signed 32 bit.
-		if (val & 0x80000000) {
-			val -= 0x100000000;
-		}
-		let ranged = Math.round( ((val + 0x80000000) * 50) / 0x100000000);
 		let runto = runx & 0x7FFFFFFF; // mask off sign
-		let ypos = 60 - textH - ranged;
-		let w = runto - xpos;
-		let xoff = xpos + xPlotOffset;
 		let ndiv = $("<div class='paramrun'/>");
-		ndiv.css({left: xoff + 'px', bottom: ypos + 'px', width: w + 'px'});
+		ndiv.css({left: (xpos + xPlotOffset) + 'px', bottom: (runVal + 2) + 'px', width: (runto - xpos) + 'px'});
 		parentDiv.append(ndiv);
 		cursor += 16;
 		xpos = runto;
+		runVal = nextVal;
 	}
+	// Handle last run in sequence
+	if (xpos <= tracklen) {
+		let ndiv = $("<div class='paramrun'/>");
+		ndiv.css({left: (xpos + xPlotOffset) + 'px', bottom: (runVal + 2)  + 'px', width: (tracklen - xpos) + 'px'});
+		parentDiv.append(ndiv);
+	}
+
 	let labdiv = $("<div class='parmlab'/>");
 	labdiv.text(prefix + k);
 	parentDiv.append(labdiv);
 	parentDiv.css({width: (tracklen + xPlotOffset) + 'px'});
 	elem.append(parentDiv);
 }
+
+var knobToParamNameTab = ["Pan", "Volume", "Res/FM", "Cutoff/FM",
+ "Release","Attack", "Amount", "Delay Time",
+ "Reverb", "Sidechain","Depth", "Mod Rate",
+ "Custom 1", "Stutter", "Custom 3", "Custom 2"];
 
 
 function plotParamLevel(prefix, track, trackW, elem)
@@ -689,7 +726,22 @@ function plotNoteLevelParams(noteRowA, track, trackW, elem)
 	}
 }
 
+function plotKnobLevelParams(knobs, track, trackW, elem)
+{
+	if (!knobs) return;
+	for (var i = 0; i < knobs.length; ++i) {
+		// if(typeof v === "string"&& v.startsWith('0x') && v.length > 10)
+		let aKnob = knobs[i];
+		let v = aKnob.value;
+		if (typeof v === "string"&& v.startsWith('0x') && v.length > 10) {
+			let prefix = "CC: " + aKnob.cc + " (" + knobToParamNameTab[i] + ")";
+			plotParamChanges('', v, trackW, prefix, elem);
+		}
+	}
+}
+
 function plotParams(track, refTrack, elem) {
+	let trackType = trackKind(track);
 	let trackW = Number(track.trackLength);
 	if (track.sound) plotParamLevel("sound.", track.sound, trackW, elem);
 	if (track.defaultParams) plotParamLevel("default.", track.defaultParams, trackW, elem);
@@ -700,6 +752,9 @@ function plotParams(track, refTrack, elem) {
 		if (track.noteRows) {
 			plotNoteLevelParams(track.noteRows.noteRow, refTrack, trackW, elem);
 		}
+	}
+	if (trackType == 'midi') {
+		plotKnobLevelParams(forceArray(track.modKnobs.modKnob), track, trackW, elem);
 	}
 }
 
@@ -1042,10 +1097,28 @@ function formatModKnobs(knobs, title, obj)
 	let context = {title: title};
 	for(var i = 0; i < knobs.length; ++i) {
 		let kName = 'mk' + i;
-		context[kName] = knobs[i].controlsParam;
+		let aKnob = knobs[i];
+		if (aKnob.controlsParam) {
+			context[kName] = aKnob.controlsParam;
+		}
 	}
 	obj.append(modKnobTemplate(context));
 }
+
+function formatModKnobsMidi(knobs, obj)
+{
+	let context = {};
+	for(var i = 0; i < knobs.length; ++i) {
+		let kName = 'mk' + i;
+		let aKnob = knobs[i];
+		if (aKnob.cc) {
+			context[kName] = aKnob;
+		}
+	}
+	obj.append(midiModKnobTemplate(context));
+}
+
+
 
 function formatSampleEntry(sound, obj, ix)
 {
@@ -1071,13 +1144,13 @@ function formatSound(obj)
 	}
 
 	if (context.midiKnobs && context.midiKnobs.midiKnob) {
-		formatModKnobs(context.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
+		obj.append(midiKnobTemplate(forceArray(context.midiKnobs.midiKnob)));
+		// formatModKnobs(context.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
 	}
 
 	if (context.modKnobs && context.modKnobs.modKnob) {
 		formatModKnobs(context.modKnobs.modKnob, "Parameter Knob Mapping", obj);
 	}
-
 
 	// Populate mod sources fields with specified destinations
 	if (context.patchCables) {
@@ -1115,6 +1188,19 @@ function formatSound(obj)
 	obj.append(sound_template(context));
 }
 
+function formatMidi(obj)
+{
+	let context = {};
+	for (var i = 1; i < arguments.length; ++i) {
+		if(arguments[i]) {
+			jQuery.extend(true, context, arguments[i]);
+		}
+	}
+	if (context.modKnobs && context.modKnobs.modKnob) {
+		formatModKnobsMidi(context.modKnobs.modKnob, obj);
+	}
+}
+
 function viewSound(e) {
 	let target = e.target;
 	let trn =  Number(target.getAttribute('trackno'));
@@ -1140,17 +1226,23 @@ function viewSound(e) {
 		target.textContent = "►";
 		$(where)[0].innerHTML = "";
 	} else {
-		if (trackD.soundParams || trackD.sound) {
-		target.textContent = "▼";
-		formatSound(where, trackD.sound, trackD.soundParams);
-	  } else if (trackD.kit) {
-			// We have a kit track,, 
+		let trackType = trackKind(trackD);
+		if (trackType === 'sound' || trackType === 'kit'|| trackType === 'midi') {
 			target.textContent = "▼";
+		} else {
+			return;
+		}
+		if (trackType === 'sound') {
+		formatSound(where, trackD.sound, trackD.soundParams);
+	  } else if (trackType === 'kit') {
+			// We have a kit track,, 
 			let kitroot = trackD.kit;
 			if (trackD['soundSources']) {
 				kitroot = trackD;
 			}
 			formatKit(kitroot, where, trackD.kitParams, trackD);
+		} else if(trackType === 'midi') {
+			formatMidi(where, trackD);
 		}
 	 }
 }

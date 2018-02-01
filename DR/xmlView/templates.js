@@ -72,6 +72,22 @@ var paster_template = Handlebars.compile(`<hr><div>
 // This table expands into a parameter display which follows the
 // "Shortcut template" layout:
 
+var midiKnobTemplate = Handlebars.compile(`<table class='midi_knobs'>
+<tr><th colspan='4'>Midi Parameter Mapping</th></tr>
+<tr><th>Channel</th><th>CC #</th><th>Rel</th><th>Controls</th></tr>
+{{#each this}}
+<tr>
+<td>{{channel}}</td>
+<td>{{ccNumber}}</td>
+<td>{{relative}}</td>
+<td>{{controlsParam}}</td>
+</tr>
+{{/each}}
+</table>
+<p class='tinygap'/>`);
+
+var midiModKnobTemplate = Handlebars.compile(`<table class='midi_mod_knob'>
+<tr><td>{{cc}}</td><td>{{fixh value}}</td></tr></table>`);
 
 var modKnobTemplate = Handlebars.compile(`<table class='mod_knobs'>
 <!-- Mod Knob Mappings -->
@@ -122,6 +138,80 @@ var modKnobTemplate = Handlebars.compile(`<table class='mod_knobs'>
 <td class='mkhdata'>{{mk10}}</td>
 <td class='mkhdata'>{{mk12}}</td>
 <td class='mkhdata'>{{mk14}}</td>
+</tr>
+</table><p class='tinygap'>`);
+
+var midiModKnobTemplate = Handlebars.compile(`<table class='midi_mod_knobs'>
+<!-- MIDI Mod Knob Mappings -->
+<tr>
+<th class='midimh' colspan='16'>Knob to Midi CC Parameter Mapping</th>
+</tr>
+</tr>
+<tr>
+<th class='midimh' colspan = '2'>Volume</th>
+<th class='midimh' colspan = '2'>Cutoff/FM</th>
+<th class='midimh' colspan = '2'>Attack</th>
+<th class='midimh' colspan = '2'>Delay Time</th>
+
+<th class='midimh' colspan = '2'>Sidechain</th>
+<th class='midimh' colspan = '2'>Mod Rate</th>
+<th class='midimh' colspan = '2'colspan = '2'>Stutter</th>
+<th class='midimh' colspan = '2'>Custom 2</th>
+</tr>
+
+<tr>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+</tr>
+
+<tr>
+<td>{{mk1.cc}}</td><td>{{fmtMidiCC mk1.value}}</td>
+<td>{{mk3.cc}}</td><td>{{fmtMidiCC mk3.value}}</td>
+<td>{{mk5.cc}}</td><td>{{fmtMidiCC mk5.value}}</td>
+<td>{{mk7.cc}}</td><td>{{fmtMidiCC mk7.value}}</td>
+
+<td>{{mk9.cc}}</td><td>{{fmtMidiCC mk9.value}}</td>
+<td>{{mk11.cc}}</td><td>{{fmtMidiCC mk11.value}}</td>
+<td>{{mk13.cc}}</td><td>{{fmtMidiCC mk13.value}}</td>
+<td>{{mk15.cc}}</td><td>{{fmtMidiCC mk15.value}}</td>
+</tr>
+<tr>
+<th class='midimh' colspan = '2'>Pan</th>
+<th class='midimh' colspan = '2'>Res/FM</th>
+<th class='midimh' colspan = '2'>Release</th>
+<th class='midimh' colspan = '2'>Amount</th>
+
+<th class='midimh' colspan = '2'>Reverb</th>
+<th class='midimh' colspan = '2'>Depth</th>
+<th class='midimh' colspan = '2'>Custom 1</th>
+<th class='midimh' colspan = '2'>Custom 3</th>
+</tr>
+<tr>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+<th class='midismh'>CC</th><th class='midismh'>Value</th>
+</tr>
+<tr>
+<td>{{mk0.cc}}</td><td>{{fmtMidiCC mk0.value}}</td>
+<td>{{mk2.cc}}</td><td>{{fmtMidiCC mk2.value}}</td>
+<td>{{mk4.cc}}</td><td>{{fmtMidiCC mk4.value}}</td>
+<td>{{mk6.cc}}</td><td>{{fmtMidiCC mk6.value}}</td>
+
+<td>{{mk8.cc}}</td><td>{{fmtMidiCC mk8.value}}</td>
+<td>{{mk10.cc}}</td><td>{{fmtMidiCC mk10.value}}</td>
+<td>{{mk12.cc}}</td><td>{{fmtMidiCC mk12.value}}</td>
+<td>{{mk14.cc}}</td><td>{{fmtMidiCC mk14.value}}</td>
 </tr>
 </table><p class='tinygap'>`);
 
