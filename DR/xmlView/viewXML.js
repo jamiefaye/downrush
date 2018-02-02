@@ -87,12 +87,386 @@ function xmlToJson(xml) {
   return obj;
 }
 
+
+
+var genDict;
+// Generate entries for element ordering tables
+function xmlToOrderTab(xml) {
+	let accum = '';
+	let ourName = xml.nodeName;
+	let levelSet = new Set();
+	if (xml.hasChildNodes() && xml.childNodes.length === 1 && xml.childNodes[0].nodeType === 3) return;
+
+	accum += '"' + ourName + '": [\n';
+	
+	if (xml.hasChildNodes()) {
+		let levelA = genDict[ourName];
+		if (!levelA) {
+			levelA = [];
+			genDict[ourName] = levelA;
+		}
+		let prevElemName = undefined;
+		for (let i = 0; i < xml.childNodes.length; i += 1) {
+			let item = xml.childNodes.item(i);
+			if (item.nodeType === 3) continue;
+			let itemName = item.nodeName;
+			if (levelSet.has(itemName)) continue;
+			if (levelA.indexOf(itemName) === -1) {
+				let insertAt = 0;
+				if(prevElemName !== undefined) {
+					insertAt = levelA.indexOf(prevElemName) + 1;
+				}
+				levelA.splice(insertAt, 0, itemName);
+	 			levelSet.add(itemName);
+			}
+			prevElemName = itemName;
+		}
+	}
+
+	for (let i = 0; i < xml.childNodes.length; i += 1) {
+	 	let item = xml.childNodes.item(i);
+	 	xmlToOrderTab(item);
+	}
+}
+
+function genOrderTab(xml) {
+	genDict = {};
+	let genStr = '';
+	xmlToOrderTab(xml);
+	for(var ek in genDict) { 
+		if(genDict.hasOwnProperty(ek)) {
+			genStr += '"' + ek + '": [';
+			let ka = genDict[ek];
+			for (var i = 0; i < ka.length; ++i) {
+				genStr += '"' + ka[i] + '",\n';
+			}
+			genStr += '],\n';
+		}
+	}
+	console.log(genStr);
+}
+
+
+// Javascript does not specify a key-oder for enumerating properties of an object.
+// This means that element ordering may have been altered by edits, or the mere
+// act of going from XML to JSON. We fix this by consulting a table showing the
+// natural order of XML elements observed in Deluge files, and using that to
+// determine the order keys are written-out. While XML does not specify any
+// element ordering policies, some developers expect some elements to always
+// appear before certain others.
+	
+ var keyOrderTab = {
+ "song": ["previewNumPads",
+"preview",
+"xScroll",
+"xZoom",
+"yScrollSongView",
+"timePerTimerTick",
+"timerTickFraction",
+"rootNote",
+"inputTickMagnitude",
+"swingAmount",
+"swingInterval",
+"modeNotes",
+"reverb",
+"affectEntire",
+"activeModFunction",
+"lpfMode",
+"modFXType",
+"delay",
+"modFXCurrentParam",
+"currentFilterType",
+"songParams",
+"sections",
+"tracks",
+],
+"modeNotes": ["modeNote",
+],
+"reverb": ["roomSize",
+"dampening",
+"width",
+"pan",
+"compressor",
+],
+"compressor": ["attack",
+"release",
+"volume",
+"syncLevel",
+],
+"delay": ["rate",
+"feedback",
+"pingPong",
+"analog",
+"syncLevel",
+],
+"songParams": ["delay",
+"reverbAmount",
+"volume",
+"pan",
+"lpf",
+"hpf",
+"modFXDepth",
+"modFXRate",
+"stutterRate",
+"sampleRateReduction",
+"bitCrush",
+"equalizer",
+"modFXOffset",
+"modFXFeedback",
+],
+"lpf": ["frequency",
+"resonance",
+],
+"hpf": ["frequency",
+"resonance",
+],
+"equalizer": ["bass",
+"treble",
+"bassFrequency",
+"trebleFrequency",
+],
+"sections": ["section",
+],
+"section": ["id",
+"numRepeats",
+],
+"tracks": ["track",
+],
+"track": ["inKeyMode",
+"yScroll",
+"yScrollKeyboard",
+"status",
+"playEnabledAtStart",
+"trackLength",
+"colourOffset",
+"beingEdited",
+"affectEntire",
+"activeModFunction",
+"instrument",
+"instrumentPresetSlot",
+"instrumentPresetSubSlot",
+"midiChannel",
+"modKnobs",
+"section",
+"sound",
+"soundParams",
+"kit",
+"kitParams",
+"noteRows",
+],
+"instrument": ["referToTrackId",
+],
+"modKnobs": ["modKnob",
+],
+"modKnob": ["controlsParam",
+"patchAmountFromSource",
+"cc",
+"value",
+],
+"noteRows": ["noteRow",
+],
+"noteRow": ["y",
+"muted",
+"colourOffset",
+"drumIndex",
+"soundParams",
+"notes",
+],
+"notes": ["note",
+],
+"note": ["length",
+"velocity",
+"pos",
+],
+"kit": ["lpfMode",
+"modFXType",
+"delay",
+"modFXCurrentParam",
+"currentFilterType",
+"soundSources",
+"selectedDrumIndex",
+],
+"soundSources": ["sound",
+],
+"sound": ["name",
+"osc1",
+"osc2",
+"polyphonic",
+"clippingAmount",
+"voicePriority",
+"sideChainSend",
+"lfo1",
+"lfo2",
+"mode",
+"modulator1",
+"modulator2",
+"transpose",
+"unison",
+"compressor",
+"lpfMode",
+"modFXType",
+"delay",
+"defaultParams",
+"midiKnobs",
+"modKnobs",
+],
+"osc1": ["type",
+"transpose",
+"cents",
+"retrigPhase",
+"loopMode",
+"reversed",
+"timeStretchEnable",
+"timeStretchAmount",
+"fileName",
+"zone",
+],
+"zone": ["startMilliseconds",
+"endMilliseconds",
+],
+"osc2": ["type",
+"transpose",
+"cents",
+"retrigPhase",
+"loopMode",
+"reversed",
+"timeStretchEnable",
+"timeStretchAmount",
+"fileName",
+"zone",
+],
+"lfo1": ["type",
+"syncLevel",
+],
+"lfo2": ["type",
+],
+"unison": ["num",
+"detune",
+],
+"defaultParams": ["arpeggiatorGate",
+"portamento",
+"compressorShape",
+"oscAVolume",
+"oscAPulseWidth",
+"oscBVolume",
+"oscBPulseWidth",
+"noiseVolume",
+"volume",
+"pan",
+"lpfFrequency",
+"lpfResonance",
+"hpfFrequency",
+"hpfResonance",
+"envelope1",
+"envelope2",
+"lfo1Rate",
+"lfo2Rate",
+"modulator1Amount",
+"modulator1Feedback",
+"modulator2Amount",
+"modulator2Feedback",
+"carrier1Feedback",
+"carrier2Feedback",
+"modFXRate",
+"modFXDepth",
+"delayRate",
+"delayFeedback",
+"reverbAmount",
+"arpeggiatorRate",
+"patchCables",
+"stutterRate",
+"sampleRateReduction",
+"bitCrush",
+"equalizer",
+"modFXOffset",
+"modFXFeedback",
+],
+"envelope1": ["attack",
+"decay",
+"sustain",
+"release",
+],
+"envelope2": ["attack",
+"decay",
+"sustain",
+"release",
+],
+"patchCables": ["patchCable",
+],
+"patchCable": ["source",
+"destination",
+"amount",
+"rangeAdjustable",
+],
+"kitParams": ["delay",
+"reverbAmount",
+"volume",
+"pan",
+"lpf",
+"hpf",
+"modFXDepth",
+"modFXRate",
+"stutterRate",
+"sampleRateReduction",
+"bitCrush",
+"equalizer",
+"modFXOffset",
+"modFXFeedback",
+],
+"soundParams": ["arpeggiatorGate",
+"portamento",
+"compressorShape",
+"oscAVolume",
+"oscAPulseWidth",
+"oscBVolume",
+"oscBPulseWidth",
+"noiseVolume",
+"volume",
+"pan",
+"lpfFrequency",
+"lpfResonance",
+"hpfFrequency",
+"hpfResonance",
+"envelope1",
+"envelope2",
+"lfo1Rate",
+"lfo2Rate",
+"modulator1Amount",
+"modulator1Feedback",
+"modulator2Amount",
+"modulator2Feedback",
+"carrier1Feedback",
+"carrier2Feedback",
+"modFXRate",
+"modFXDepth",
+"delayRate",
+"delayFeedback",
+"reverbAmount",
+"arpeggiatorRate",
+"patchCables",
+"stutterRate",
+"sampleRateReduction",
+"bitCrush",
+"equalizer",
+"modFXOffset",
+"modFXFeedback",
+],
+"modulator1": ["transpose",
+"cents",
+"retrigPhase",
+],
+"modulator2": ["transpose",
+"cents",
+"retrigPhase",
+"toModulator1",
+],
+};
+
 function gentabs(d) {
 	var str = "";
 	for(var i = 0; i< d; ++i) str += '\t';
 	return str;
 }
-
 
 function jsonToXML(kv, j, d) {
 	if(j.constructor !== Object && j.constructor !== Array) {
@@ -112,21 +486,55 @@ function jsonToXML(kv, j, d) {
 		}
 	}
 	let insides = "";
-	for(var ek in j) {
-		if(j.hasOwnProperty(ek) && ek != "@attributes") {
-			let v = j[ek];
-			if (v.constructor === Array) {
-				for(var i = 0; i < v.length; ++i) {
-					insides += jsonToXML(ek, v[i], d + 1);
-				}
-			} else if (v.constructor == Object) {
-				insides += jsonToXML(ek, v, d + 1);
-			} else {
-				// Simple k/v pair
-				if(typeof v === "string") v = v.trim();
-				insides += jsonToXML(ek, v, d);
-				// insides += gentabs(d) + "<" + ek + ">" + v + "</" + ek + ">\n";
+	
+	let keyOrder = [];
+	let keyTab = keyOrderTab[kv];
+
+	if (keyTab) {
+		let keySet = new Set();
+		for(var ek in j) { 
+			if(j.hasOwnProperty(ek) && ek != "@attributes") {
+				keySet.add(ek);
 			}
+		}
+		for (var ktx = 0; ktx < keyTab.length; ++ktx) {
+			let nkv = keyTab[ktx];
+			if (j.hasOwnProperty(nkv)) {
+				keyOrder.push(nkv);
+				keySet.delete(nkv);
+			}
+		}
+
+		if (keySet.size > 0) {
+			for (let sk of keySet.keys()) {
+				keyOrder.push(sk);
+				console.log("Missing: " + sk + " in: " + kv);
+			}
+		}
+	} else { // No keytab entry, do it the old-fashioned way.
+		for(var ek in j) { 
+			if(j.hasOwnProperty(ek) && ek != "@attributes") {
+				keyOrder.push(ek);
+			}
+		}
+	}
+
+	for(var i = 0; i < keyOrder.length; ++i) {
+		let kv = keyOrder[i];
+		let v = j[kv];
+		if (v === undefined) {
+			continue;
+		}
+		if (v.constructor === Array) {
+			for(var i = 0; i < v.length; ++i) {
+				insides += jsonToXML(kv, v[i], d + 1);
+				}
+		} else if (v.constructor == Object) {
+			insides += jsonToXML(kv, v, d + 1);
+		} else {
+				// Simple k/v pair
+			if(typeof v === "string") v = v.trim();
+			insides += jsonToXML(kv, v, d);
 		}
 	}
 	let str = gentabs(d - 1) + "<" + kv + atStr;
@@ -884,6 +1292,7 @@ function pasteTrackText(text) {
 	if (!songJ) return;
 
 	let trackA = forceArray(songJ.tracks.track);
+	songJ.tracks.track = trackA; // If we forced an array, we want that permanent.
 	// The beginning of the track array shows up at the screen bottom.
 	trackA.unshift(pastedJSON.track);
 
@@ -895,8 +1304,7 @@ function pasteTrackText(text) {
 			aTrack.instrument.referToTrackId = bumpedRef;
 		}
 	}
-/****** Disabled for now. It turns out there is an element ordering dependency in the XML file format.
-// If you read a kitParamselemnt in before you read a instrument.referToTrackId, the Deluge freaks out.
+
 	// Now we try and element duplicate sound or kit elements
 	// Since our new item was inserted at the front of the list, we search the remmaining tracks
 	// for those that are equal to our element. We then replace their sound or kit with a referToTrackId of 0
@@ -921,7 +1329,6 @@ function pasteTrackText(text) {
 			}
 		}
 	}
-*****/
 	triggerRedraw();
 }
 
@@ -1575,6 +1982,8 @@ function setEditText(text)
 	}
 	var fixedText = text.replace(/<firmwareVersion>.*<.firmwareVersion>/i,"");
 	var asDOM = getXmlDOMFromString(fixedText);
+	// Uncomment following to generate ordering table based on a real-world example.
+	// enOrderTab(asDOM);
 	var asJSON = xmlToJson(asDOM);
 	jsonDocument = asJSON;
 	$('#jtab').empty();
@@ -1598,6 +2007,9 @@ function postWorker(mode)
 			headerStr += firmwareVersionFound + "\n";
 		}
 		saveText = headerStr + jsonToXMLString("song", jsonDocument.song);
+		// Uncomment below to avoid actual disk writing.
+		// console.log(saveText);
+		// return;
 	}
 	// Set CRLF to LF and then to CRLF. (LF also becomes CRLF)
 	//var code_body_lf = code_body.replace(/\r\n/g,"\n").replace(/\n/g,"\r\n");
