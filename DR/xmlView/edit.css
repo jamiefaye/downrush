@@ -122,6 +122,21 @@ div.trkitnote {
 	height: 8px;
 	background-color:#202020;
 }
+
+
+div.trnsn {
+	position: absolute;
+	height: 4px;
+//	background-color:#A0A0A0;
+}
+
+div.trnkn {
+	position: absolute;
+	height: 8px;
+//	background-color:#202020;
+}
+
+
 div.parmplot {
 	position: relative;
 	background-color:#fffff0;

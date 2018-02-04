@@ -19,6 +19,7 @@ var fname = "";
 
 var jsonDocument;
 var firmwareVersionFound = '';
+var newNoteFormat = false;
 var xPlotOffset = 32;
 
 
@@ -951,7 +952,7 @@ function yToNoteName(note)
 	return noteNames[tone] + oct;
 }
 
-function plotTrack(track, obj) {
+function plotTrack13(track, obj) {
 // first walk the track and find min and max y positions
 	let trackW = Number(track.trackLength);
 	let ymin =  1000000;
@@ -994,20 +995,9 @@ function plotTrack(track, obj) {
 		plotNoteName(ymax, {top: '0px'}, parentDiv);
 	}
 	obj.append(parentDiv);
-
 }
 
-function plotNoteName(note, style, parentDiv) {
-	let labName = yToNoteName(note);
-	if (labName != undefined) {
-		let labdiv = $("<div class='notelab'/>");
-		labdiv.text(labName);
-		labdiv.css(style);
-		parentDiv.append(labdiv);
-	}
-}
-
-function plotKit(track, reftrack, obj) {
+function plotKit13(track, reftrack, obj) {
 	let kitItemH = 8;
 	let trackW = Number(track.trackLength);
 // first walk the track and find min and max y positions
@@ -1057,6 +1047,171 @@ function plotKit(track, reftrack, obj) {
 	}
 	obj.append(parentDiv);
 }
+
+function plotNoteName(note, style, parentDiv) {
+	let labName = yToNoteName(note);
+	if (labName != undefined) {
+		let labdiv = $("<div class='notelab'/>");
+		labdiv.text(labName);
+		labdiv.css(style);
+		parentDiv.append(labdiv);
+	}
+}
+
+
+function rgbToHexColor(r, g, b)
+{
+	let rh = r.toString(16);
+	if (rh.length < 2) rh = "0" + rh;
+	let gh = g.toString(16);
+	if (gh.length < 2) gh = "0" + gh;
+	let bh = b.toString(16);
+	if (bh.length < 2) bh = "0" + bh;
+	return '#' + rh + gh + bh;
+	
+}
+function colorEncodeNote(vel,cond) {
+	if (cond === 0x14) {
+		// vanilla note, just encode velocity	
+		let cv = (128 - vel) + 0x30;
+		return rgbToHexColor(cv, cv, cv);
+	}
+	if (cond < 0x14) {
+		if (cond < 5) { // red
+			return 'red';
+		} else if(cond < 15) { // yellow
+			return 'yellow';
+		} else { // green
+			return 'green';
+			
+		}
+	}
+	else if (cond > 0x14) { // blue for conditional
+		return 'blue';
+	}
+}
+
+function plotTrack14(track, obj) {
+// first walk the track and find min and max y positions
+	let trackW = Number(track.trackLength);
+	let ymin =  1000000;
+	let ymax = -1000000;
+	let rowList = forceArray(track.noteRows.noteRow);
+	let parentDiv = $("<div class='trgrid'/>");
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		let y = rowYfilter(row);
+		if (y >= 0) {
+			if (y < ymin) ymin = y;
+			if (y > ymax) ymax = y;
+		}
+	}
+	let totH = ((ymax - ymin) + 2) * 4;
+
+	parentDiv.css({height: totH + 'px'});
+	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		var noteData = row.noteData;
+		let y = rowYfilter(row);
+		if (y < 0) continue;
+		for (var nx = 2; nx < noteData.length; nx += 20) {
+			let notehex = noteData.substring(nx, nx + 20);
+			let x = parseInt(notehex.substring(0, 8), 16);
+			let dur =  parseInt(notehex.substring(8, 16), 16);
+			let vel = parseInt(notehex.substring(16, 18), 16);
+			let cond = parseInt(notehex.substring(18, 20), 16);
+			x += xPlotOffset;
+			if (dur > 1) dur--;
+			let ndiv = $("<div class='trnsn' ndata='" + notehex + "'/>");
+
+			let ypos = (y- ymin) * 4 + 2;
+			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
+			parentDiv.append(ndiv);
+		}
+	}
+	let miny = totH - 10;
+	plotNoteName(ymin, {top: miny + 'px', obj}, parentDiv);
+	if (ymin !== ymax) {
+		plotNoteName(ymax, {top: '0px'}, parentDiv);
+	}
+	obj.append(parentDiv);
+
+}
+
+
+function plotKit14(track, reftrack, obj) {
+	let kitItemH = 8;
+	let trackW = Number(track.trackLength);
+// first walk the track and find min and max y positions
+	let ymin =  1000000;
+	let ymax = -1000000;
+	let rowList = forceArray(track.noteRows.noteRow);
+	let parentDiv = $("<div class='kitgrid'/>");
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		let y = rowYfilter(row);
+		if (y >= 0) {
+			if (y < ymin) ymin = y;
+			if (y > ymax) ymax = y;
+		}
+	}
+	let totH = ((ymax - ymin) + 1) * kitItemH;
+	let kitList = forceArray(reftrack.kit.soundSources.sound);
+	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		var noteData = row.noteData;
+		let y = rowYfilter(row);
+		let ypos = (y- ymin) * kitItemH;
+
+		if (row.drumIndex) {
+			let rowInfo = kitList[row.drumIndex];
+			let labName = rowInfo.name;
+			if (labName != undefined) {
+				let labdiv = $("<div class='kitlab'/>");
+				labdiv.text(labName);
+				labdiv.css({left: 0, bottom: (ypos - 2) + 'px'});
+				parentDiv.append(labdiv);
+			}
+		}
+		if (y < 0) continue;
+		
+		for (var nx = 2; nx < noteData.length; nx += 20) {
+			let notehex = noteData.substring(nx, nx + 20);
+			let x = parseInt(notehex.substring(0, 8), 16);
+			let dur =  parseInt(notehex.substring(8, 16), 16);
+			let vel = parseInt(notehex.substring(16, 18), 16);
+			let cond = parseInt(notehex.substring(18, 20), 16);
+
+			x += xPlotOffset;
+			if (dur > 1) dur--;
+			let ndiv = $("<div class='trnkn' ndata='" + notehex + "'/>");
+			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
+			parentDiv.append(ndiv);
+		}
+	}
+	obj.append(parentDiv);
+}
+
+function plotTrack(track, obj) {
+	if(newNoteFormat) {
+		plotTrack14(track, obj);
+	} else {
+		plotTrack13(track, obj);
+	}
+}
+
+
+function plotKit(track, reftrack, obj) {
+	if(newNoteFormat) {
+		plotKit14(track, reftrack, obj);
+	} else {
+		plotKit13(track, reftrack, obj);
+	}
+}
+
 
 function convertHexTo50(str)
 {
@@ -1980,6 +2135,8 @@ function setEditText(text)
 	} else {
 		firmwareVersionFound='';
 	}
+	
+	newNoteFormat = !(firmwareVersionFound.indexOf('1.2') >= 0 || firmwareVersionFound.indexOf('1.3') >= 0);
 	var fixedText = text.replace(/<firmwareVersion>.*<.firmwareVersion>/i,"");
 	var asDOM = getXmlDOMFromString(fixedText);
 	// Uncomment following to generate ordering table based on a real-world example.
