@@ -5,25 +5,28 @@
 		<meta charset="UTF-8">
 		<title>Downrush XML Viewer</title>
 <!-- https://stackoverflow.com/questions/951791/javascript-global-error-handling -->
-
+<div id="npoptemp" style="display: none;"></div>
 <script type="text/javascript">
-
+<!--
 window.onerror = function(msg, url, line, col, error) {
    var extra = !col ? '' : '\ncolumn: ' + col;
    extra += !error ? '' : '\nerror: ' + error;
    alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
    return true;
 };
+-->
 
 </script>
 
 <script type="text/javascript" src="js/ext/jquery-3.2.1.min.js"></script>
 <script type="text/javascript" src="js/ext/handlebars.min.js"></script>
 <script type="text/javascript" src="js/ext/clipboard.min.js"></script>
+<script type="text/javascript" src="js/ext/tippy.all.min.js"></script>
 <script type="text/javascript" src="js/loc/delugepatches.js"></script>
 <script type="text/javascript" src="templates.js"></script>
 
 <link rel="stylesheet" href="edit.css">
+
 	</head>
 	<body>
 		<div id='filegroupplace'>
@@ -40,5 +43,7 @@ window.onerror = function(msg, url, line, col, error) {
 		<p class='tinygap'/>
 		<div id='jtab'> </div>
 		<script src="viewXML.js"></script>
+
 	</body>
+	
 </html>

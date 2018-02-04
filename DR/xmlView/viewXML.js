@@ -952,6 +952,17 @@ function yToNoteName(note)
 	return noteNames[tone] + oct;
 }
 
+function encodeNoteInfo(noteName, time, dur, vel, cond)
+{
+	let th = (Number(time) + 0x100000000).toString(16).substring(1);
+	let dh = (Number(dur) + 0x100000000).toString(16).substring(1);
+	let vh = (Number(vel) + 0x100).toString(16).substring(1);
+	let ch = (Number(cond) + 0x100).toString(16).substring(1);
+	
+	return th + dh + vh + ch + noteName;
+	
+}
+
 function plotTrack13(track, obj) {
 // first walk the track and find min and max y positions
 	let trackW = Number(track.trackLength);
@@ -976,16 +987,20 @@ function plotTrack13(track, obj) {
 		let row = rowList[rx];
 		var noteList = forceArray(row.notes.note);
 		let y = rowYfilter(row);
+		let labName = yToNoteName(y);
 		if (y < 0) continue;
 		for (var nx = 0; nx < noteList.length; ++nx) {
 			let n = noteList[nx];
-			let x = Number(n.pos) + xPlotOffset;
+			let x = Number(n.pos);
+			let dx = x + xPlotOffset;
 			let dur = n.length;
 			if (dur > 1) dur--;
 			let vel = n.velocity;
-			let ndiv = $("<div class='trnote'/>");
+
+			let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
+			let ndiv = $("<div class='trnote npop' data-note='" + noteInfo + "'/>");
 			let ypos = (y- ymin) * 4 + 2;
-			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px'});
+			ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
 			parentDiv.append(ndiv);
 		}
 	}
@@ -1021,10 +1036,10 @@ function plotKit13(track, reftrack, obj) {
 		var noteList = forceArray(row.notes.note);
 		let y = rowYfilter(row);
 		let ypos = (y- ymin) * kitItemH;
-
+		let labName = '';
 		if (row.drumIndex) {
 			let rowInfo = kitList[row.drumIndex];
-			let labName = rowInfo.name;
+			labName = rowInfo.name;
 			if (labName != undefined) {
 				let labdiv = $("<div class='kitlab'/>");
 				labdiv.text(labName);
@@ -1035,13 +1050,16 @@ function plotKit13(track, reftrack, obj) {
 		if (y < 0) continue;
 		for (var nx = 0; nx < noteList.length; ++nx) {
 			let n = noteList[nx];
-			let x = Number(n.pos) + xPlotOffset;
+			let x = Number(n.pos);
+			let dx = x + xPlotOffset;
 			let dur = n.length;
 			if (dur > 1) dur--;
 			let vel = n.velocity;
-			let ndiv = $("<div class='trkitnote'/>");
 
-			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px'});
+			let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
+			let ndiv = $("<div class='trkitnote npop' data-note='" + noteInfo + "'/>");
+
+			ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
 			parentDiv.append(ndiv);
 		}
 	}
@@ -1087,7 +1105,7 @@ function colorEncodeNote(vel,cond) {
 		}
 	}
 	else if (cond > 0x14) { // blue for conditional
-		return 'blue';
+		return 'lightblue';
 	}
 }
 
@@ -1116,15 +1134,17 @@ function plotTrack14(track, obj) {
 		var noteData = row.noteData;
 		let y = rowYfilter(row);
 		if (y < 0) continue;
+		let labName = yToNoteName(y);
 		for (var nx = 2; nx < noteData.length; nx += 20) {
 			let notehex = noteData.substring(nx, nx + 20);
 			let x = parseInt(notehex.substring(0, 8), 16);
 			let dur =  parseInt(notehex.substring(8, 16), 16);
 			let vel = parseInt(notehex.substring(16, 18), 16);
 			let cond = parseInt(notehex.substring(18, 20), 16);
+			let noteInfo = notehex + labName;
 			x += xPlotOffset;
 			if (dur > 1) dur--;
-			let ndiv = $("<div class='trnsn' ndata='" + notehex + "'/>");
+			let ndiv = $("<div class='trnsn npop' data-note='" + noteInfo + "'/>");
 
 			let ypos = (y- ymin) * 4 + 2;
 			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
@@ -1163,12 +1183,13 @@ function plotKit14(track, reftrack, obj) {
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
 		var noteData = row.noteData;
+		let labName = '';
 		let y = rowYfilter(row);
 		let ypos = (y- ymin) * kitItemH;
 
 		if (row.drumIndex) {
 			let rowInfo = kitList[row.drumIndex];
-			let labName = rowInfo.name;
+			labName = rowInfo.name;
 			if (labName != undefined) {
 				let labdiv = $("<div class='kitlab'/>");
 				labdiv.text(labName);
@@ -1184,15 +1205,94 @@ function plotKit14(track, reftrack, obj) {
 			let dur =  parseInt(notehex.substring(8, 16), 16);
 			let vel = parseInt(notehex.substring(16, 18), 16);
 			let cond = parseInt(notehex.substring(18, 20), 16);
-
+			let noteInfo = notehex + labName;
 			x += xPlotOffset;
 			if (dur > 1) dur--;
-			let ndiv = $("<div class='trnkn' ndata='" + notehex + "'/>");
+			let ndiv = $("<div class='trnkn npop' data-note='" + noteInfo + "'/>");
 			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
 			parentDiv.append(ndiv);
 		}
 	}
 	obj.append(parentDiv);
+}
+
+
+var nitTable = "111222132333142434441525354555162636465666172737475767771828384858687888";
+
+function simplifyFraction(num, den)
+{
+	while (num && den && (num & 1) === 0 && (den & 1) === 0) {
+		num >>= 1; den >>= 1;
+	}
+	
+	while (num && den && (num % 3) === 0 && (den % 3) === 0) {
+		num /= 3; den /= 3;
+	}
+	
+	if(num === den) return "1";
+
+	if(den === 1) return num.toString();
+
+	return num.toString() + '/' + den.toString();
+}
+
+function activateNoteTips()
+{
+	tippy('.npop', {
+		arrow: true,
+		html: '#npoptemp',
+		onShow(pop) {
+		// `this` inside callbacks refers to the popper element
+			const content = this.querySelector('.tippy-content');
+			let notehex = pop.reference.getAttribute('data-note');
+
+			let x = parseInt(notehex.substring(0, 8), 16);
+			let dur =  parseInt(notehex.substring(8, 16), 16);
+			let vel = parseInt(notehex.substring(16, 18), 16);
+			let cond = parseInt(notehex.substring(18, 20), 16);
+			let notename = notehex.substring(20);
+			let condtext = '';
+			let condcode = cond & 0x7F;
+			if (condcode != 0x14) {
+				if (condcode < 0x14) { // Its a probability.
+					let prob = condcode * 5;
+					condtext = prob + '%';
+					if(cond & 0x80) { // if it has a dot, show that
+						condtext = '.' + condtext;
+					}
+				} else { // Its a 1 of N
+					let nitBase = (condcode - 0x14) * 2;
+					condtext = '[' + nitTable[nitBase] + " out of " + nitTable[nitBase + 1] + ']';
+				}
+			}
+
+			// Convert duration to fraction of a measure
+			let durFrac = simplifyFraction(dur, 192);
+
+			// Convert start time to measure, beat, subbeat
+			let meas = Math.floor(x / 192) + 1;
+			let beat = Math.floor((x % 192) / 48)+ 1;
+			let subbeat = Math.floor((x % 48) / 12) + 1;
+			let subFrac = Math.floor(x % 12);
+			let beatX = meas.toString() + '.' + beat.toString() + '.' + subbeat.toString();
+			if (subFrac > 0) {
+				beatX += '+' + simplifyFraction(subFrac, 12);
+			}
+			// {{notename}} {{notevel}} {{notedur}} {{notestart}} {{noteprob}}
+			let noteInfo = note_tip_template({
+				notename: notename,
+				notevel: vel,
+				notedur: durFrac,
+				notestart: beatX,
+				noteprob: condtext,
+			});
+			content.innerHTML = noteInfo;
+			},
+		onHidden() {
+			const content = this.querySelector('.tippy-content')
+			content.innerHTML = '';
+			},
+	});
 }
 
 function plotTrack(track, obj) {
@@ -1646,7 +1746,9 @@ function formatSong(jsong, obj) {
 			}
 			plotParams(track, refTrack, obj);
 		}
+		activateNoteTips();
 	  }
+
 	}
 	trackPasteField(obj);
 	songTail(jsong, obj);

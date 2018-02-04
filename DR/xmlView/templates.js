@@ -18,6 +18,13 @@ To view the contents of a SONG, SYNTH, or KIT file, press the 'Choose File' butt
 var track_copy_template = Handlebars.compile(`<button class='clipbtn'trackno='{{trackIndex}}'><img src='img/copy-to-clipboard.png'/></button>`);
 Handlebars.registerPartial("getcopytoclip", track_copy_template);
 
+
+/* Template for Note tooltip
+*/
+var note_tip_template = Handlebars.compile(`
+{{notename}} {{notevel}} {{noteprob}} {{notedur}} {{notestart}}
+`);
+
 /* Track Head
 */
 var track_head_template = Handlebars.compile(`<p class='tinygap'>
