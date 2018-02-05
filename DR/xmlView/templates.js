@@ -29,10 +29,11 @@ var note_tip_template = Handlebars.compile(`
 */
 var track_head_template = Handlebars.compile(`<p class='tinygap'>
 <table>
-<tr><th colspan='7'>Track {{trackNum}}<//th></tr>
+<tr><th colspan='8'>Track {{trackNum}}<//th></tr>
 <tr>
 <td class='soundviewbtn' trackno='{{trackIndex}}'>&#x25BA</td>
 <td>{{section}}</td>
+<td>{{{repeats}}}</td>
 <td>{{kindName}}</td>
 <td>{{patch}}</td>
 <td>{{patchName}}</td>

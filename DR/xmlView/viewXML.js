@@ -663,8 +663,6 @@ function jsonToTable(json, obj, formatters) {
 
 /* Handlebars formatters
 */
-var noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
 
 function fixhex(v) {
 	if(v === undefined) return v;
@@ -944,6 +942,8 @@ function rowYfilter(row) {
 	return y;
 }
 
+var noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
 // Convert Midi note number into note name + octave, with 0 meaning C minus 2
 function yToNoteName(note)
 {
@@ -954,6 +954,7 @@ function yToNoteName(note)
 
 function encodeNoteInfo(noteName, time, dur, vel, cond)
 {
+	// Use hack to generate leading zeros.
 	let th = (Number(time) + 0x100000000).toString(16).substring(1);
 	let dh = (Number(dur) + 0x100000000).toString(16).substring(1);
 	let vh = (Number(vel) + 0x100).toString(16).substring(1);
@@ -1219,16 +1220,15 @@ function plotKit14(track, reftrack, obj) {
 
 var nitTable = "111222132333142434441525354555162636465666172737475767771828384858687888";
 
+// 192 is the typical denominator. It's prime factors are 2 and 3.
 function simplifyFraction(num, den)
 {
 	while (num && den && (num & 1) === 0 && (den & 1) === 0) {
 		num >>= 1; den >>= 1;
 	}
-	
 	while (num && den && (num % 3) === 0 && (den % 3) === 0) {
 		num /= 3; den /= 3;
 	}
-	
 	if(num === den) return "1";
 
 	if(den === 1) return num.toString();
@@ -1439,8 +1439,8 @@ var trackKindNames = {"kit": "Kit",
 					"unknown": "?",
 					};
 
-function trackHeader(track, kind, inx, obj) {
-	let section = track.section;
+function trackHeader(track, kind, inx, repeatTab, obj) {
+	let section = Number(track.section);
 	let patchStr = "";
 
 	let patch = Number(track.instrumentPresetSlot);
@@ -1474,6 +1474,9 @@ function trackHeader(track, kind, inx, obj) {
 		patchName = '';
 	}
 
+	let repeats = Number(repeatTab[section].numRepeats);
+	if (repeats === 0) repeats = '&#x221e;';
+	 else if (repeats === -1) repeats = 'Share';
 	let context = {
 		len:			track.trackLength,
 		patch: 			patchStr,
@@ -1481,6 +1484,7 @@ function trackHeader(track, kind, inx, obj) {
 		patchName:		patchName,
 		kindName: 		trackKindNames[kind],
 		section: 		section,
+		repeats:		repeats,
 		info:			info,
 		trackNum:		inx + 1,
 		trackIndex:		inx,
@@ -1615,42 +1619,6 @@ function trackPasteField(obj) {
 	}
 }
 
-function horizontalArray(arr, obj, title) {
-	let trtab = $("<table class='repeats'/>");
-	if(title) {
-		let trt = $("<tr/>");
-		trt.append($("<th colspan='" + arr.length +"'/>").html(title));
-		trtab.append(trt);
-	}
-	let trh = $("<tr/>");
-	for(var i = 0; i < arr.length; ++i) {
-		trh.append($("<th/>").html(i + 1));
-	}
-	trtab.append(trh);
-	
-	let trd = $("<tr/>");
-	for(var i = 0; i < arr.length; ++i) {
-		let rc = "" + arr[i];
-		trd.append($("<td/>").html(rc));
-	}
-	trtab.append(trd);
-	
-	obj.append(trtab);
-}
-
-function sectionRepeats(arr, obj) {
-	let repL = [];
-	let totalRepeats = 0;
-	for(var i = 0; i < arr.length; ++i) {
-		let rc = arr[i].numRepeats;
-		totalRepeats += rc;
-		repL[i] = rc;
-	}
-	if (totalRepeats > 0) {
-		horizontalArray(repL, obj, "Section Repeats");
-	}
-}
-
 function songTail(jsong, obj) {
 	formatSound(obj, jsong, jsong.songParams, jsong.defaultParams, jsong.soundParams);
 }
@@ -1722,9 +1690,8 @@ function formatSong(jsong, obj) {
 		obj.append(", Swing = " + swing + "% on " + syncLevelTab[sync]);
 	}
 	obj.append($("<p class='tinygap'>"));
-	if(jsong.sections) {
-		sectionRepeats(jsong.sections.section, obj);
-	}
+	let sectionTab = forceArray(jsong.sections.section);
+
 	if(jsong.tracks) {
 	  let trax = forceArray(jsong.tracks.track);
 	  if (trax) {
@@ -1737,8 +1704,7 @@ function formatSong(jsong, obj) {
 				let fromID = Number(track.instrument.referToTrackId);
 				refTrack = trax[fromID];
 			}
-			
-			trackHeader(track, tKind, i, obj);
+			trackHeader(track, tKind, i, sectionTab, obj);
 			if(tKind === 'kit') {
 				plotKit(track, refTrack, obj);
 			} else {
