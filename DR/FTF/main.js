@@ -104,7 +104,6 @@ function showFileList(path, recheckSet) {
 	row.append($("<td></td>").append($("<b>Time</b><a href='javascript:setSortFunction(1)'></a>")).addClass("table_bts"));
 	row.append($("<td></td>").append($("<b>Size</b><a href='javascript:setSortFunction(2)'></a>")).addClass("table_bts"));
 	row.append($("<td></td>").append($("<div>Edit</div><a href='javascript:void(0)'></a>")).addClass("table_cmd"));
-	row.append($("<td></td>").append($("<div>&#x1f441</div><a href='javascript:void(0)'></a>")).addClass("table_eye"));
 	$("#filetable").append(row);
 	$("#headcheck").on('click', toggleChecks);
 	// Output a link to the parent directory if it is not the root directory.
@@ -115,7 +114,7 @@ function showFileList(path, recheckSet) {
 				$('<a href="javascript:dir(\'..\')" class="dir"></a>')
 			).addClass("table_name")
 		);
-		row.append($("<td colspan='4'></td>").append($("<b> </b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
+		row.append($("<td colspan='5'></td>").append($("<b> </b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
 		$("#filetable").append(row);
 	}
 	$.each(wlansd, function() {
@@ -127,15 +126,12 @@ function showFileList(path, recheckSet) {
 		// Make a link to directories and files.
 		var filelink = $('<a href="javascript:void(0)"></a>');
 		var filelink2 = $('<a href="javascript:void(0)"></a>');
-		var filelink5 = $('<a href="javascript:void(0)"></a>');
 
 		var caption;
 		var caption2;
-		var caption5;
 		var filesize;
 		var dateTime;
 
-		caption5 = "";
 		if ( file["attr"] & 0x10 ) {
 			caption = "<b>"+file["fname"]+"</b>";
 			caption2 = "Edit";
@@ -152,13 +148,11 @@ function showFileList(path, recheckSet) {
 		   
 			if (ext === 'lua' && INCLUDE_FTLE) {
 				caption2 = "<font color='#FF0000'>Edit Lua</font>";
-				filelink2.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',true)");
+				filelink2.addClass("file").attr('href', "javascript:openedit('"+file["r_uri"] + '/' + file["fname"]+"')");
 			}
 			if (editWhiteListSet.has(ext)) {
 				caption2 = "<font color='#FF0000'>Edit</font>";
-				filelink2.addClass("file").attr('href', "javascript:opensp('"+file["r_uri"] + '/' + file["fname"]+"',true)");
-				caption5 = "<font color='#0000FF'>&#x1f441"
-				filelink5.addClass("file").attr('href', "javascript:openspx('"+file["r_uri"] + '/' + file["fname"]+"')");
+				filelink2.addClass("file").attr('href', "javascript:openedit('"+file["r_uri"] + '/' + file["fname"]+"')");
 			}
 		}
 		// Append a file entry or directory to the end of the list.
@@ -185,11 +179,6 @@ function showFileList(path, recheckSet) {
 			$("<td></td>").append(caption2).append(
 				filelink2.append()
 			).addClass("table_cmd")
-		);
-		row.append(
-			$("<td></td>").append(caption5).append(
-				filelink5.append()
-			).addClass("table_eye")
 		);
 
 		$("#filetable").append(row);
@@ -275,17 +264,23 @@ function renameFile() {
 
 function opensp(file,conf)
 {
-	if(!conf)
-	{
+	// Open editor based on file type:
+	var ext = file.split('.').pop().toLowerCase();
+	if (ext === 'xml') {
+		window.open("/DR/xmlView/viewXML.htm?"+file);
+	} else {
 		window.open(file);	
-	}else{
-		// Open editor based on file type:
-		var ext = file.split('.').pop().toLowerCase();
-		if (ext === 'lua' && INCLUDE_FTLE) {
-			window.open("/FTLE/edit.htm?"+file);
-		} else if (editWhiteListSet.has(ext)) {
-			window.open("/DR/edit.htm?"+file);
-		}
+	}
+}
+
+function openedit(file)
+{
+	// Open editor based on file type:
+	var ext = file.split('.').pop().toLowerCase();
+	if (ext === 'lua' && INCLUDE_FTLE) {
+		window.open("/FTLE/edit.htm?"+file);
+	} else if (editWhiteListSet.has(ext)) {
+		window.open("/DR/edit.htm?"+file);
 	}
 }
 
