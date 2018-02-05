@@ -959,10 +959,10 @@ function encodeNoteInfo(noteName, time, dur, vel, cond)
 	let dh = (Number(dur) + 0x100000000).toString(16).substring(1);
 	let vh = (Number(vel) + 0x100).toString(16).substring(1);
 	let ch = (Number(cond) + 0x100).toString(16).substring(1);
-	
+
 	return th + dh + vh + ch + noteName;
-	
 }
+
 
 function plotTrack13(track, obj) {
 // first walk the track and find min and max y positions
@@ -1295,6 +1295,68 @@ function activateNoteTips()
 	});
 }
 
+// Convert an old (pre 1.4) noteRow from the note array representation into the noteData representation.
+function oldToNewNotes(track)
+{
+	let rowList = forceArray(track.noteRows.noteRow);
+	track.noteRows.noteRow = rowList;
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx]; // make sure JSON is updated.
+		var noteList = forceArray(row.notes.note);
+		let noteData = '0x';
+		for (var nx = 0; nx < noteList.length; ++nx) {
+			let n = noteList[nx];
+			let x = Number(n.pos);
+			let dur = Number(n.length);
+			let vel = Number(n.velocity);
+
+			let noteInfo = encodeNoteInfo('', x, dur, vel, 0x14);
+			noteData += noteInfo;
+		}
+		row.noteData = noteData;
+		delete row.notes;
+	}
+}
+
+
+function newToOldNotes(track) {
+	let rowList = forceArray(track.noteRows.noteRow);
+	track.noteRows.noteRow = rowList;
+
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		var noteData = row.noteData;
+		let noteArray = [];
+
+		for (var nx = 2; nx < noteData.length; nx += 20) {
+			let notehex = noteData.substring(nx, nx + 20);
+			let t = parseInt(notehex.substring(0, 8), 16);
+			let dur =  parseInt(notehex.substring(8, 16), 16);
+			let vel = parseInt(notehex.substring(16, 18), 16);
+			// let cond = parseInt(notehex.substring(18, 20), 16);
+			let note = {
+				pos:		t,
+				length: 	dur,
+				velocity: 	vel,
+			};
+			noteArray.push(note);
+		}
+		delete row.noteData;
+		row.notes = {};
+		row.notes.note = noteArray;
+	}
+}
+
+function usesNewNotekFormat(track) {
+	let rowList = forceArray(track.noteRows.noteRow);
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		if (row.noteData) return true;
+		if (row.notes && row.notes.note) return false;
+	}
+	return false;
+}
+
 function plotTrack(track, obj) {
 	if(newNoteFormat) {
 		plotTrack14(track, obj);
@@ -1535,7 +1597,6 @@ function soundViewButton(trackNum, obj) {
 	obj.append(sound_view_template({trackNum: trackNum}));
 }
 function pasteTrackText(text) {
-	
 	let pastedJSON = JSON.parse(text);
 	// Clear the pasted-into-area
 	setTimeout( function() {
@@ -1546,6 +1607,19 @@ function pasteTrackText(text) {
 		alert("Invalid data on clipboard.");
 		return;
 	}
+
+	// If needed, convert the tracks note format
+	let clipUsingNewNotes = usesNewNotekFormat(pastedJSON.track);
+	if (clipUsingNewNotes !== newNoteFormat) {
+		if (newNoteFormat) {
+			console.log('converting old note format to new');
+			oldToNewNotes(pastedJSON.track);
+		} else {
+			console.log('converting new note format to old');
+			newToOldNotes(pastedJSON.track);
+		}
+	}
+
 	// Place the new track at the beginning of the track array
 	let songJ = jsonDocument.song;
 	if (!songJ) return;
