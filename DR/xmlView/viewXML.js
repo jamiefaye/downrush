@@ -1276,7 +1276,7 @@ function activateNoteTips()
 			let subFrac = Math.floor(x % 12);
 			let beatX = meas.toString() + '.' + beat.toString() + '.' + subbeat.toString();
 			if (subFrac > 0) {
-				beatX += '+' + simplifyFraction(subFrac, 12);
+				beatX += '+' + simplifyFraction(subFrac, 192);
 			}
 			// {{notename}} {{notevel}} {{notedur}} {{notestart}} {{noteprob}}
 			let noteInfo = note_tip_template({
