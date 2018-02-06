@@ -110,7 +110,9 @@ function save(msg)
 		return -1;
 	}
 	callFunction("addStatus","save success.("+xhr.status+")");
-	return 0;
+
+	// JFF automatically unlock the FlashAir card so the deluge can write to it.
+	return unlock();
 }
 
 function run(msg)
