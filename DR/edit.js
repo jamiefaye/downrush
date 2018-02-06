@@ -130,26 +130,6 @@ document.onkeydown = function (e){
 		return false;		
 	}
 
-	if(e.keyCode == 116) //F5
-	{
-		btn_run();
-		return false;		
-	}
-	if(e.keyCode == 117) //F6
-	{
-		btn_debug();
-		return false;		
-	}
-	if(e.keyCode == 118) //F7
-	{
-		btn_unlock();
-		return false;		
-	}
-	if(e.keyCode == 119) //F8
-	{
-		btn_break();
-		return false;		
-	}
 	if(e.keyCode == 120) //F9
 	{
 		btn_getmsg();
@@ -160,17 +140,6 @@ document.onkeydown = function (e){
 
 
 //---------Button-----------
-
-//CONFIGボタン
-function btn_config()
-{
-//	if(window.confirm('Load /SD_WLAN/CONFIG?'))
-//	{
-		filename_input.value="/SD_WLAN/CONFIG";
-		modeChanger(filename_input.value);
-		postWorker("load");
-//	}
-}
 
 //Loadボタン
 function btn_load()
@@ -199,60 +168,6 @@ function btn_save(){
 	jsEditor.markClean();
 }
 
-//Runボタン
-function btn_run(){
-	if(fname != filename_input.value)
-	{
-		if(!window.confirm('Are you sure you want to save it? \n(Target file name has changed !)'))
-		{
-			return;
-		}
-	}
-	fname = filename_input.value;
-
-	postWorker("run");
-	jsEditor.markClean();
-}
-
-//Debugボタン
-function btn_debug(){
-	if(fname != filename_input.value)
-	{
-		if(!window.confirm('Are you sure you want to save it? \n(Target file name has changed !)'))
-		{
-			return;
-		}
-	}
-	fname = filename_input.value;
-
-	postWorker("debug");
-	jsEditor.markClean();
-}
-
-//Unlockボタン
-function btn_unlock(){
-	postWorker("unlock");
-}
-
-//Breakボタン
-function btn_break(){
-	addStat("*Break: Only works on debug mode or breakpoint.");
-	addStat("Break...");	
-	var xhr = new XMLHttpRequest();
-	xhr.open("GET", "/command.cgi?op=131&ADDR=0x00&LEN=0x01&DATA=!");
-	xhr.setRequestHeader("If-Modified-Since", "Thu, 01 Jan 1970 00:00:00 GMT");
-	xhr.timeout=3000;
-	xhr.onload = function(){
-		if (xhr.status == 200) {
-			addStat(xhr.responseText);
-		}else {
-			addStat(xhr.statusText);
-		}
-	};
-	xhr.onerror = function(){addStat(xhr.statusText);};
-	xhr.send();
-}
-
 //GetMsgボタン
 function btn_getmsg()
 {
@@ -269,14 +184,6 @@ function btn_getmsg()
 	};
 	xhr.onerror = function(){addStat("*GetMsg: "+xhr.statusText);};
 	xhr.send();
-}
-
-//Menuボタン
-function btn_menu()
-{
-
-	unexpected_close=false; //ページ脱出警告を無効化
-	location.href="/FlashTools.lua";
 }
 
 //---------handler-----------

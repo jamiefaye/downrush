@@ -10,13 +10,7 @@ After that, make a communication part of each function.
 */
 
 onmessage = function(e) {
-if(e.data.mode == "unlock")
-	{
-//		callFunction("console.log","unlock");
-		callFunction("clearStatus","");
-		unlock(e.data);
-		
-	}else if(e.data.mode == "save")
+    if(e.data.mode == "save")
 	{
 //		callFunction("console.log","save");
 		callFunction("clearStatus","");
@@ -114,53 +108,6 @@ function save(msg)
 	// JFF automatically unlock the FlashAir card so the deluge can write to it.
 	return unlock();
 }
-
-function run(msg)
-{
-	var filepath = msg.filepath;
-	var arg = msg.arg;
-//	var edit = msg.edit;
-
-	var xhr = new XMLHttpRequest();
-	if(arg == ""){
-		xhr.open("GET" , ""+filepath,false);//同期Request
-		callFunction("addStatus","run Start :"+filepath);
-	}else{
-		xhr.open("GET" , ""+filepath+"?"+encodeURIComponent(arg),false);//同期Request
-		callFunction("addStatus","run Start :"+filepath+"?"+encodeURIComponent(arg));
-	}
-	xhr.setRequestHeader("If-Modified-Since", "Thu, 01 Jan 1970 00:00:00 GMT");
-	xhr.timeout = xhr_timeout;
-	
-	var startTime = new Date();	
-	try {
-		xhr.send();
-	}catch (e) {
-		callFunction("addStatus","Exception!(Worker): "+e.message);
-	}
-	var endTime = new Date();
-	callFunction("addStatus","*Elapsed time: "+(endTime - startTime + "ms"));
-	
-	//---return stat---
-	if(xhr.readyState != 4)
-	{
-		callFunction("addStatus","run failed.");
-		return -1;
-	}
-	callFunction("setResponse",xhr.responseText);
-
-	if(xhr.status == 0){
-		callFunction("addStatus","internal Error (EMPTY RESPONSE / CONNECTION REFUSED / etc...)");
-		return -1;
-	}
-	if((xhr.status < 200) || (xhr.status > 300)){ //!=2XX
-		callFunction("addStatus","Server Error. CODE:"+xhr.status);
-		return -1;
-	}
-	callFunction("addStatus","run success.("+xhr.status+")");
-	return 0;
-}
-
 
 function unlock(msg)
 {
