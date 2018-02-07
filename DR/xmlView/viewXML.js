@@ -1752,6 +1752,30 @@ function genSampleReport(track)
 	});
 }
 
+var scaleTable = [
+"Major",	[0, 2, 4, 5, 7, 9, 11],
+"Minor",	[0, 2, 3, 5, 7, 8, 10],
+"Dorian",	[0, 2, 3, 5, 7, 9, 10],
+"Phrygian", [0, 1, 3, 5, 7, 8, 10],
+"Lydian", 	[0, 2, 4, 6, 7, 9, 11],
+"Mixolydian", [0, 2, 4, 5, 7, 9, 10],
+"Locrian", 	[0, 1, 3, 5, 6, 8, 10] ];
+
+function scaleString(jsong) {
+	let str = noteNames[Number(jsong.rootNote) % 12] + " ";
+
+	let modeTab = jsong.modeNotes.modeNote;
+	let modeNums = Array(7);
+	for (var j = 0; j < 7; ++j) modeNums[j] = Number(modeTab[j]);
+	for (var i = 0; i < scaleTable.length; i += 2) {
+		let aMode = scaleTable[i + 1];
+		if (jsonequals(modeNums, aMode)) {
+			return str + scaleTable[i];
+		}
+	}
+	return str + "Chromatic";
+}
+
 function formatSong(jsong, obj) {
 	let ctab = genColorTab(jsong.preview);
 	obj.append(ctab);
@@ -1763,6 +1787,7 @@ function formatSong(jsong, obj) {
 		let sync = Number(jsong.swingInterval);
 		obj.append(", Swing = " + swing + "% on " + syncLevelTab[sync]);
 	}
+	obj.append(", Key = " + scaleString(jsong));
 	obj.append($("<p class='tinygap'>"));
 	let sectionTab = forceArray(jsong.sections.section);
 
@@ -2239,14 +2264,6 @@ function btn_getmsg()
 	};
 	xhr.onerror = function(){addStat("*GetMsg: "+xhr.statusText);};
 	xhr.send();
-}
-
-//Menuボタン
-function btn_menu()
-{
-
-	unexpected_close=false; //ページ脱出警告を無効化
-	location.href="/DR/Downrush.lua";
 }
 
 //---------handler-----------
