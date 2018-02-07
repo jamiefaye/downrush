@@ -17,16 +17,16 @@ var editWhiteList = ['xml', 'js', 'htm', 'html', 'css', 'lua'];
 var editWhiteListSet = new Set(editWhiteList);
 
 // Convert data format from V1 to V2.
-function convertFileList() {
-	for (var i = 0; i < wlansd.length; i++) {
-		var elements = wlansd[i].split(",");
-		wlansd[i] = new Array();
-		wlansd[i]["r_uri"] = elements[0];
-		wlansd[i]["fname"] = elements[1];
-		wlansd[i]["fsize"] = Number(elements[2]);
-		wlansd[i]["attr"]  = Number(elements[3]);
-		wlansd[i]["fdate"] = Number(elements[4]);
-		wlansd[i]["ftime"] = Number(elements[5]);
+function convertFileList(fl) {
+	for (var i = 0; i < fl.length; i++) {
+		var elements = fl[i].split(",");
+		fl[i] = new Array();
+		fl[i]["r_uri"] = elements[0];
+		fl[i]["fname"] = elements[1];
+		fl[i]["fsize"] = Number(elements[2]);
+		fl[i]["attr"]  = Number(elements[3]);
+		fl[i]["fdate"] = Number(elements[4]);
+		fl[i]["ftime"] = Number(elements[5]);
 	}
 }
 
@@ -343,7 +343,7 @@ function getFileList(nextPath) { //dir
 		var url = "/upload.cgi?UPDIR=" + nextPath+"&TIME="+(Date.now());
 		$.get(url);
 	}).fail(function(jqXHR, textStatus, errorThrown){
-		//失敗した場合:エラー内容を表示
+		// Failure: Display error contents
 		var row = $("<tr></tr>");
 		$("#filetable tr").remove();
 		row.append(
@@ -354,6 +354,58 @@ function getFileList(nextPath) { //dir
 }
 
 var last_dirpath = "/";
+
+function checkDownOne(goodPart, remaining, whenDone)
+{
+	if (remaining.length === 0) {
+		whenDone(true);
+		return;
+	}
+	var	url = "/command.cgi?op=100&DIR=" + goodPart +"&TIME="+(Date.now());
+	var seeking = remaining.shift();
+	// Issue CGI command.
+	$.get(url).done(function(data, textStatus, jqXHR){
+	   // Save the current path.
+		// Split lines by new line characters.
+		let xlsd = data.split(/\n/g);
+		// Ignore the first line (title) and last line (blank).
+		xlsd.shift();
+		xlsd.pop();
+		// Convert to V2 format.
+		convertFileList(xlsd);
+		let found = false;
+		for (var i = 0; i < xlsd.length; ++i) {
+			let entry = xlsd[i];
+			if (entry.fname === seeking) {
+				 if (entry.attr !== 0x10) {
+				 	whenDone(false);
+				 	return;
+				 }
+				found = true;
+				break;
+			}
+		}
+		
+		if (!found) {
+			let dirpath = goodPart + '/' + seeking;
+			let lurl = "/DR/FTF/mkdir.lua?"+"/" + dirpath;		
+			lurl = lurl.replace(/ /g , "|" ) ;
+				
+		$.get(lurl).done(function(data, textStatus, jqXHR){
+			if (textStatus !== 'success') {
+				whenDone(false);
+				return;				
+			}
+			let deeperGood = goodPart + '/' + seeking;
+			checkDownOne(deeperGood, remaining, whenDone);
+		});
+		} else {
+			let deeperGood = goodPart + '/' + seeking;
+			checkDownOne(deeperGood, remaining, whenDone);
+		}
+	});
+}
+
 //Document Ready
 $(function() {
 	// Configure HTTP access
@@ -480,7 +532,19 @@ var uploadNext = function(flist) {
 		upload(200); // trigger refresh when done.
 		return;
 	}
-	f = flist[0];
+	let f = flist[0];
+
+// Create (if necessary) nested directories)
+	var dirList = f.name.split('/');
+	dirList.pop(); // Get rid of file name at the end.
+	var uploadDirPath = currentPath + '/' + dirList.join('/');
+
+	checkDownOne(currentPath, dirList, function (status) {
+	if (!status) {
+		// Could not create intermediate directories.
+		alert("Unable to create intermediate directories");
+		return;
+	}
 	var fd = new FormData();
 	fd.append('file', f);
 	// fd.append("upload_file", true);
@@ -494,7 +558,9 @@ var uploadNext = function(flist) {
 	var minutes = dt.getMinutes() << 5;
 	var seconds = Math.floor(dt.getSeconds() / 2);
 	var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
-	var urlDateSet = '/upload.cgi?FTIME=' + timestring;
+	console.log(uploadDirPath);
+	console.log(f.name);
+	var urlDateSet = '/upload.cgi?FTIME=' + timestring + "&UPDIR=" + uploadDirPath + "&TIME="+(Date.now());;
 	var fName = f.name;
 	$.get(urlDateSet, function() {
 	 $.ajax({
@@ -522,7 +588,7 @@ var uploadNext = function(flist) {
 		 }, false);
 		 return xhr;
 	  },
-	   
 	});
    });
+ });
 };
