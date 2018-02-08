@@ -205,26 +205,68 @@ function getCheckedSet() {
 	return new Set(getCheckedList);
 }
 
+function isDirectoryEntry(name, xlsd)
+{
+	let itemName = name.split('/').pop();
+	for (var i = 0; i < xlsd.length; ++i) {
+		let entry = xlsd[i];
+		if (entry.fname === itemName) {
+			if (entry.attr & 0x10) {
+				 return true;
+			} else return false;
+		}
+	}
+	return false;
+}
 
-function deleteNext (zonkList)
+function deleteNext (zonkList, dirList, doneFunc)
 {
 	if (zonkList.length === 0) {
-		upload_after();
+		doneFunc(true);
 		return;
 	}
+
 	let file = zonkList.shift();
 	let url = "/upload.cgi?DEL=" + file;
-	$.get(url).done(function(data, textStatus, jqXHR){
-		if (textStatus !== 'success') {
-			alert(textStatus);
-			upload_after();
+	// Capture closure.
+	let zonkFunc = function (status) {
+		if (!status) {// Pass failure back up the stack.
+			doneFunc(false);
 			return;
 		}
-		//alert("upload.cgi: "+data);
-		deleteNext(zonkList);
-	});
-	
+		$.get(url).done(function(data, textStatus, jqXHR){
+			if (textStatus !== 'success') {
+				alert(textStatus);
+				doneFunc(false);
+				return;
+			}
+		deleteNext(zonkList, dirList, doneFunc);
+	   });	
+	};
+
+	if (isDirectoryEntry(file, dirList)) {
+		var	dirurl = "/command.cgi?op=100&DIR=" + file +"&TIME="+(Date.now());
+		$.get(dirurl).done(function(data, textStatus, jqXHR){
+	   // Save the current path.
+		// Split lines by new line characters.
+		let xlsd = data.split(/\n/g);
+		// Ignore the first line (title) and last line (blank).
+		xlsd.shift();
+		xlsd.pop();
+		// Convert to V2 format.
+		convertFileList(xlsd);
+		subZonk = [];
+		// make a zonkList of the subdirectory contents.
+		for (var i = 0; i < xlsd.length; ++i) {
+			let subName = file + '/' + xlsd[i].fname;
+			subZonk.push(subName);
+		}
+		// and recur.
+		deleteNext(subZonk, xlsd, zonkFunc);
+	  });
+	} else zonkFunc(true);
 }
+
 
 function deleteFiles()
 {
@@ -232,7 +274,9 @@ function deleteFiles()
 	var alertList = boxList.join('\n');
 	var result = confirm( "Delete "+ alertList + "?" );
 	if (result) {
-		deleteNext(boxList);
+		deleteNext(boxList, wlansd, function () {
+			upload_after();
+		});
 	}
 }
 
