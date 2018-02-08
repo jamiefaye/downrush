@@ -50,7 +50,7 @@ Below the upload area are buttons for creating a "New Directory" and to "Remove 
 There are two ways to upload files. The first way uses a standard browser file upload dialog. Click on "Choose File" and browse around until you find the file to upload. The file name will then be visible next to the button. To actually upload a file
 click on the "Upload" button.
 
-The other way to upload files uses 'drag and drop'. Find the files you want to upload in your Finder or Explorer program and drop them into the yellow area. You can include directories too, however at this time all the files are uploaded to the destination at only one level. Directory structures are not maintained. To be improved someday.
+The other way to upload files uses 'drag and drop'. Find the files you want to upload in your Finder or Explorer program and drop them into the yellow area. You can include directories too and the folder hierarchy is preserved.
 During a 'drag an drop' upload, progress will be indicated as a percentage completed. When the upload is done, the directory should refresh. If it doesn't, use the Refresh button.
 
 ## The XML 'Edit" Button
@@ -79,7 +79,7 @@ SONG files are shown in more sophisticated way.
 
 At the top is drawn a 18 x 8 matrix showing the preview pattern for the song.
 
-Below that is the song tempo in beats per minute. If the swing value is something other than 50%, that will be shown too.
+Below that is the song tempo in beats per minute. If the swing value is something other than 50%, that will be shown too. The currently selected key and mode follow.
 
 Each track has header entry, which includes a "Copy To Clipboard" button, which copies the track data onto the system clipboard so you can paste it in somewhere else.
 
