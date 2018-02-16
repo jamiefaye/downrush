@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1, maximum-scale=1, user-scalable=no">
+		<meta charset="UTF-8">
+		<title>Waverly</title>
+<!-- https://stackoverflow.com/questions/951791/javascript-global-error-handling -->
+<div id="npoptemp" style="display: none;"></div>
+<script type="text/javascript">
+<!--
+window.onerror = function(msg, url, line, col, error) {
+   var extra = !col ? '' : '\ncolumn: ' + col;
+   extra += !error ? '' : '\nerror: ' + error;
+   alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
+   return true;
+};
+-->
+
+</script>
+
+<script type="text/javascript" src="js/ext/jquery-3.2.1.min.js"></script>
+<script type="text/javascript" src="js/ext/handlebars.min.js"></script>
+<script type="text/javascript" src="js/ext/clipboard.min.js"></script>
+<script type="text/javascript" src="js/ext/tippy.all.min.js"></script>
+
+<script type="text/javascript" src="js/ext/wavesurfer.js"></script>
+<script type="text/javascript" src="js/ext/plugins/wavesurfer.regions.js"></script>
+<script type="text/javascript" src="js/ext/plugins/wavesurfer.cursor.js"></script>
+<script type="text/javascript" src="js/ext/plugins/wavesurfer.mediasession.js"></script>
+<script type="text/javascript" src="js/ext/plugins/wavesurfer.microphone.js"></script>
+<script type="text/javascript" src="js/ext/plugins/wavesurfer.timeline.js"></script>
+<script type="text/javascript" src="templates.js"></script>
+
+<link rel="stylesheet" href="edit.css">
+
+	</head>
+	<body>
+		<div id='filegroupplace'>
+			<table id='filegroup' class='nobord'><tr>
+				<td>File:&nbsp;<input id="fname" type="text" size="24" value=""></td>
+				<td><input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"></td>
+				<td><input type="button" value="Reload(F12)" style="width:55pt" onclick="btn_load()" ></td>
+				<td><textarea id="status" rows="2"  class="statusbox" readonly></textarea></td>
+			</tr>
+			</table>
+		</div>
+
+		<div id='fileTitle'></div>
+		<p class='tinygap'/>
+		<div id='jtab'> </div>
+		<div id="waveform"></div>
+
+
+<div id="waveform"></div>
+<div id="waveform-timeline"></div>
+<div style="text-align: center">
+  <button class="btn btn-primary" onclick="wavesurfer.playPause()">
+    <i class="glyphicon glyphicon-play"></i>
+    Play
+  </button>
+
+
+  <button class="btn btn-primary" onclick="normalizer()">
+    <i class="glyphicon glyphicon-play"></i>
+    Normalize
+  </button>
+  
+  <button class="btn btn-primary" onclick="testOfflineContext()">
+    <i class="glyphicon glyphicon-play"></i>
+    Test
+  </button>
+
+  <button class="btn btn-primary" onclick="deleteSelected()">
+    <i class="glyphicon glyphicon-play"></i>
+    Delete
+  </button>
+
+  <button class="copycb btn btn-primary" onclick="copySelected()">
+    <i class="glyphicon glyphicon-play"></i>
+    Copy
+  </button>
+
+  <p class="row">
+    <div class="col-xs-1">
+      <i class="glyphicon glyphicon-zoom-in"></i>
+    </div>
+
+    <div class="col-xs-10">
+      <input id="slider" type="range" min="1" max="200" value="1" style="width: 100%" />
+    </div>
+
+    <div class="col-xs-1">
+      <i class="glyphicon glyphicon-zoom-out"></i>
+    </div>
+  </p>
+</div>
+
+
+		<script src="viewWAV.js"></script>
+
+	</body>
+	
+</html>

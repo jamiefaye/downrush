@@ -13,7 +13,7 @@
 // Set follwoing flag=true to allow Lua IDE access as well as general CodeMirror
 var INCLUDE_FTLE = false;
 
-var editWhiteList = ['xml', 'js', 'htm', 'html', 'css', 'lua'];
+var editWhiteList = ['xml', 'js', 'htm', 'html', 'css', 'lua', 'wav'];
 var editWhiteListSet = new Set(editWhiteList);
 
 // Convert data format from V1 to V2.
@@ -323,6 +323,8 @@ function openedit(file)
 	var ext = file.split('.').pop().toLowerCase();
 	if (ext === 'lua' && INCLUDE_FTLE) {
 		window.open("/FTLE/edit.htm?"+file);
+	} else if (ext === 'wav') {
+		window.open("/DR/waverly/viewWAV.htm?"+file);
 	} else if (editWhiteListSet.has(ext)) {
 		window.open("/DR/edit.htm?"+file);
 	}
