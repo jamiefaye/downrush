@@ -19,6 +19,67 @@ var fname = "";
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 var OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+
+
+class UndoStack {
+	constructor() {
+		this.stack = [];
+		this.index = -1;
+	}
+	
+	atTop() {
+		return this.index === -1;
+	}
+
+	push(item) {
+		if (this.index >= 0) {
+			while (this.index < this.stack.length) this.stack.pop();
+			this.index = -1;
+		}
+		this.stack.push(item);
+	}
+
+	undo() {
+		if (this.stack.length === 0) return undefined;
+		if (this.index === -1) { // start one behind the redo buffer
+			this.index = this.stack.length - 1;
+		}
+		if (this.index > 0) this.index--;
+		let v = this.stack[this.index];
+		return v;
+	}
+
+	redo() {
+		if (this.stack.length === 0 || this.index === -1) return undefined;
+		let nextX = this.index + 1;
+		if (nextX >= this.stack.length) return undefined;
+		this.index = nextX;
+		return this.stack[this.index];
+	}
+};
+
+var undoStack = new UndoStack();
+
+/*
+var pushBuffer = function ()
+{
+	let buffer = wavesurfer.backend.buffer;
+	let srcLen = buffer.getChannelData(0).length;
+	let {numberOfChannels, sampleRate} = buffer;
+	let saveBuffer = audioCtx.createBuffer(numberOfChannels, srcLen, sampleRate);
+
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
+		let sa = buffer.getChannelData(cx);
+		let da = nextBuffer.getChannelData(cx);
+		for(var i = 0; i < last; ++i) {
+			da[i] = sa[i];
+		}
+	}
+
+	return nextBuffer;
+}
+*/
+
 // Trigger redraw of song
 function triggerRedraw() {
 	$('#jtab').empty();
@@ -284,6 +345,24 @@ var normalize = function (buffer)
 	return buffer;
 }
 
+var applyFunction = function (buffer, f)
+{
+	let {numberOfChannels, sampleRate} = buffer;
+	let bufLen = buffer.getChannelData(0).length;
+
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
+		var minv = 1000000;
+		var maxv = -1000000;
+		let d = buffer.getChannelData(cx);
+		for (var i = 0; i < d.length; ++i) {
+			d[i] = f(d[i], i, bufLen);
+		}
+	}
+
+	return buffer;
+}
+
+
 var deleteSelected = function (e)
 {
 	let buffer = wavesurfer.backend.buffer;
@@ -307,6 +386,7 @@ var deleteSelected = function (e)
 		}
 	}
 	if(region) region.remove();
+	undoStack.push(buffer);
 	wavesurfer.backend.load(nextBuffer);
 	wavesurfer.drawBuffer();
 }
@@ -333,10 +413,10 @@ var copySelected = function (e)
 // Apply a transform function to the selected area and replace the selected area
 // with the result. The transform function can be either 'in place' or can return a
 // result buffer of any size.
-function applyTransform(f)
+function applyTransform(f, f2)
 {
 	let working = copySelected();
-	let result = f(working);
+	let result = f(working, f2);
 	pasteSelected(result);
 }
 
@@ -346,10 +426,22 @@ function normalizer(e) {
 	applyTransform(normalize);
 }
 
-function fadeUp(e) {
+function fadeIn(e) {
 	
-	
+	let f = function (s, i, len) {
+		return s * (i / len);
+	}
+	applyTransform(applyFunction, f);
 }
+
+function fadeOut(e) {
+	
+	let f = function (s, i, len) {
+		return s * (1.0 - i / len);
+	}
+	applyTransform(applyFunction, f);
+}
+
 
 var pasteSelected = function (pasteData)
 {
@@ -382,9 +474,33 @@ var pasteSelected = function (pasteData)
 			da[dx++] = sa[i];
 		}
 	}
-	if(region) region.remove();
+	//if(region) region.remove();
+	undoStack.push(buffer);
 	wavesurfer.backend.load(nextBuffer);
 	wavesurfer.drawBuffer();
+}
+
+
+function doUndo(e) {
+	console.log("Undo");
+	if (undoStack.atTop()) {
+		let buffer = wavesurfer.backend.buffer;
+		undoStack.push(buffer);
+	}
+	let unbuf = undoStack.undo();
+	if (unbuf) {
+		wavesurfer.backend.load(unbuf);
+		wavesurfer.drawBuffer();
+	}
+}
+
+function doRedo(e) {
+	console.log("Redo");
+	let redo = undoStack.redo();
+	if (redo) {
+		wavesurfer.backend.load(redo);
+		wavesurfer.drawBuffer();
+	}
 }
 
 
@@ -494,6 +610,9 @@ $(window).on('paste', pasteFromClip);
 // iOS was screwing up if the following line was not commented out.
 $(window).on('copy', copyToClip);
 $(window).on('cut', cutToClip);
+
+$(window).on('undo', doUndo);
+$(window).on('redo', doRedo);
 
 
 /*
