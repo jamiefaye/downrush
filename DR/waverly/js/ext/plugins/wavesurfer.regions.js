@@ -124,6 +124,10 @@ var Region = function () {
             return _this.updateRender();
         };
 
+        this.scroll = params.scroll !== false && ws.params.scrollParent;
+        this.scrollSpeed = params.scrollSpeed || 1;
+        this.scrollThreshold = params.scrollThreshold || 10;
+
         this.bindInOut();
         this.render();
         this.wavesurfer.on('zoom', this._onRedraw);
@@ -391,11 +395,41 @@ var Region = function () {
 
             /* Drag or resize on mousemove. */
             (this.drag || this.resize) && function () {
+                var container = _this4.wavesurfer.drawer.container;
                 var duration = _this4.wavesurfer.getDuration();
+                var scrollSpeed = _this4.scrollSpeed;
+                var scrollThreshold = _this4.scrollThreshold;
                 var startTime = void 0;
                 var touchId = void 0;
                 var drag = void 0;
+                var maxScroll = void 0;
                 var resize = void 0;
+                var scrollDirection = void 0;
+                var wrapperRect = void 0;
+
+                // Scroll when the user is dragging within the threshold
+                var edgeScroll = function edgeScroll(e) {
+                    if (!scrollDirection || !drag && !resize) {
+                        return;
+                    }
+
+                    // Update scroll position
+                    var scrollLeft = _this4.wrapper.scrollLeft + scrollSpeed * scrollDirection;
+                    _this4.wrapper.scrollLeft = scrollLeft = Math.min(maxScroll, Math.max(0, scrollLeft));
+
+                    // Update time
+                    var time = _this4.wavesurfer.drawer.handleEvent(e) * duration;
+                    var delta = time - startTime;
+                    startTime = time;
+
+                    // Continue dragging or resizing
+                    drag ? _this4.onDrag(delta) : _this4.onResize(delta, resize);
+
+                    // Repeat
+                    window.requestAnimationFrame(function () {
+                        edgeScroll(e);
+                    });
+                };
 
                 var onDown = function onDown(e) {
                     if (e.touches && e.touches.length > 1) {
@@ -405,6 +439,10 @@ var Region = function () {
 
                     e.stopPropagation();
                     startTime = _this4.wavesurfer.drawer.handleEvent(e, true) * duration;
+
+                    // Store for scroll calculations
+                    maxScroll = _this4.wrapper.scrollWidth - _this4.wrapper.clientWidth;
+                    wrapperRect = _this4.wrapper.getBoundingClientRect();
 
                     if (e.target.tagName.toLowerCase() == 'handle') {
                         if (e.target.classList.contains('wavesurfer-handle-start')) {
@@ -424,6 +462,7 @@ var Region = function () {
 
                     if (drag || resize) {
                         drag = false;
+                        scrollDirection = null;
                         resize = false;
 
                         _this4.fireEvent('update-end', e);
@@ -439,6 +478,7 @@ var Region = function () {
                     }
 
                     if (drag || resize) {
+                        var oldTime = startTime;
                         var time = _this4.wavesurfer.drawer.handleEvent(e) * duration;
                         var delta = time - startTime;
                         startTime = time;
@@ -451,6 +491,41 @@ var Region = function () {
                         // Resize
                         if (_this4.resize && resize) {
                             _this4.onResize(delta, resize);
+                        }
+
+                        if (_this4.scroll && container.clientWidth < _this4.wrapper.scrollWidth) {
+                            if (drag) {
+                                // The threshold is not between the mouse and the container edge
+                                // but is between the region and the container edge
+                                var regionRect = _this4.element.getBoundingClientRect();
+                                var x = regionRect.left - wrapperRect.left;
+
+                                // Check direction
+                                if (time < oldTime && x >= 0) {
+                                    scrollDirection = -1;
+                                } else if (time > oldTime && x + regionRect.width <= wrapperRect.right) {
+                                    scrollDirection = 1;
+                                }
+
+                                // Check that we are still beyond the threshold
+                                if (scrollDirection === -1 && x > scrollThreshold || scrollDirection === 1 && x + regionRect.width < wrapperRect.right - scrollThreshold) {
+                                    scrollDirection = null;
+                                }
+                            } else {
+                                // Mouse based threshold
+                                var _x = e.clientX - wrapperRect.left;
+
+                                // Check direction
+                                if (_x <= scrollThreshold) {
+                                    scrollDirection = -1;
+                                } else if (_x >= wrapperRect.right - scrollThreshold) {
+                                    scrollDirection = 1;
+                                } else {
+                                    scrollDirection = null;
+                                }
+                            }
+
+                            scrollDirection && edgeScroll(e);
                         }
                     }
                 };
@@ -669,11 +744,6 @@ var RegionsPlugin = function () {
 
             var region = new this.wavesurfer.Region(params, this.wavesurfer);
 
-
-            Object.keys(this.list).forEach(function (id) {
-                _this6.list[id].remove();
-            });
-
             this.list[region.id] = region;
 
             region.on('remove', function () {
@@ -700,21 +770,60 @@ var RegionsPlugin = function () {
             var _this8 = this;
 
             var slop = params.slop || 2;
+            var container = this.wavesurfer.drawer.container;
+            var scroll = params.scroll !== false && this.wavesurfer.params.scrollParent;
+            var scrollSpeed = params.scrollSpeed || 1;
+            var scrollThreshold = params.scrollThreshold || 10;
             var drag = void 0;
+            var duration = this.wavesurfer.getDuration();
+            var maxScroll = void 0;
             var start = void 0;
             var region = void 0;
             var touchId = void 0;
             var pxMove = 0;
+            var scrollDirection = void 0;
+            var wrapperRect = void 0;
+
+            // Scroll when the user is dragging within the threshold
+            var edgeScroll = function edgeScroll(e) {
+                if (!region || !scrollDirection) {
+                    return;
+                }
+
+                // Update scroll position
+                var scrollLeft = _this8.wrapper.scrollLeft + scrollSpeed * scrollDirection;
+                _this8.wrapper.scrollLeft = scrollLeft = Math.min(maxScroll, Math.max(0, scrollLeft));
+
+                // Update range
+                var end = _this8.wavesurfer.drawer.handleEvent(e);
+                region.update({
+                    start: Math.min(end * duration, start * duration),
+                    end: Math.max(end * duration, start * duration)
+                });
+
+                // Check that there is more to scroll and repeat
+                if (scrollLeft < maxScroll && scrollLeft > 0) {
+                    window.requestAnimationFrame(function () {
+                        edgeScroll(e);
+                    });
+                }
+            };
 
             var eventDown = function eventDown(e) {
                 if (e.touches && e.touches.length > 1) {
                     return;
                 }
+                duration = _this8.wavesurfer.getDuration();
                 touchId = e.targetTouches ? e.targetTouches[0].identifier : null;
+
+                // Store for scroll calculations
+                maxScroll = _this8.wrapper.scrollWidth - _this8.wrapper.clientWidth;
+                wrapperRect = _this8.wrapper.getBoundingClientRect();
 
                 drag = true;
                 start = _this8.wavesurfer.drawer.handleEvent(e, true);
                 region = null;
+                scrollDirection = null;
             };
             this.wrapper.addEventListener('mousedown', eventDown);
             this.wrapper.addEventListener('touchstart', eventDown);
@@ -730,6 +839,7 @@ var RegionsPlugin = function () {
 
                 drag = false;
                 pxMove = 0;
+                scrollDirection = null;
 
                 if (region) {
                     region.fireEvent('update-end', e);
@@ -764,12 +874,25 @@ var RegionsPlugin = function () {
                     region = _this8.add(params || {});
                 }
 
-                var duration = _this8.wavesurfer.getDuration();
                 var end = _this8.wavesurfer.drawer.handleEvent(e);
                 region.update({
                     start: Math.min(end * duration, start * duration),
                     end: Math.max(end * duration, start * duration)
                 });
+
+                // If scrolling is enabled
+                if (scroll && container.clientWidth < _this8.wrapper.scrollWidth) {
+                    // Check threshold based on mouse
+                    var x = e.clientX - wrapperRect.left;
+                    if (x <= scrollThreshold) {
+                        scrollDirection = -1;
+                    } else if (x >= wrapperRect.right - scrollThreshold) {
+                        scrollDirection = 1;
+                    } else {
+                        scrollDirection = null;
+                    }
+                    scrollDirection && edgeScroll(e);
+                }
             };
             this.wrapper.addEventListener('mousemove', eventMove);
             this.wrapper.addEventListener('touchmove', eventMove);

@@ -29,40 +29,11 @@ function triggerRedraw() {
 // Page transition warning
 
 var unexpected_close = true;
-/*
-window.onbeforeunload = function(event){
-	if(unexpected_close && !jsEditor.isClean())
-	{
-		event = event || window.event;
-		event.returnValue = "Exit?";
-	}
-}
-*/
 
-
-/*
-function openLocal(evt)
-{
-	var files = evt.target.files;
-	var f = files[0];
-	if (f === undefined) return;
-	var reader = new FileReader();
-// Closure to capture the file information.
-	reader.onload = (function(theFile) {
-		return function(e) {
-			// Display contents of file
-				let t = e.target.result;
-				setEditText(t);
-			};
-		})(f);
-
-	// Read in the image file as a data URL.
-	reader.readAsText(f);
-}
-*/
 var wavesurfer;
 var TimelinePlugin = window.WaveSurfer.timeline;
 var RegionPlugin = window.WaveSurfer.regions;
+var disableWaveTracker;
 
 function openOnBuffer(decoded)
 {
@@ -71,15 +42,19 @@ function openOnBuffer(decoded)
 	   			container: '#waveform-timeline'
 			}),
 			RegionPlugin.create({
-				dragSelection: true,
+				dragSelection: false,
 			}),
 		];
+		
+	$('#waveform').empty();
+	$('#waveform-timeline').empty();
+
 	wavesurfer = WaveSurfer.create({
 		container: '#waveform',
 		waveColor: 'violet',
 		progressColor: 'purple',
 		splitChannels: true,
-		interact: true,
+		interact: false,
 
 		plugins: plugs,
 	});
@@ -87,42 +62,9 @@ function openOnBuffer(decoded)
 	wavesurfer.loadBlob(decoded);
 
 	wavesurfer.on('ready', function () {
-
 		let buf = wavesurfer.backend.buffer;
 		let dat = buf.getChannelData(0);
-	//	let psp = plugs[1].staticProps;
-	//	psp.enableDragSelection({});
-/*
-	var timeline = TimelinePlugin.create(
-	{
-		wavesurfer: wavesurfer,
-		container: '#waveform-timeline'
-	}
-	);
-*/
-/*******
-  // Enable creating regions by dragging
- wavesurfer.enableDragSelection({});
-
-  // Add a couple of pre-defined regions
-  wavesurfer.addRegion({
-    start: 2, // time in seconds
-    end: 5, // time in seconds
-    color: 'hsla(100, 100%, 30%, 0.1)'
-  });
-
-  wavesurfer.addRegion({
-    start: 8,
-    end: 14,
-    color: 'hsla(200, 100%, 30%, 0.1)'
-  });
-  
-  wavesurfer.addRegion({
-    start: 28,
-    end: 36,
-    color: 'hsla(400, 100%, 30%, 0.1)'
-  });
-******/
+		disableWaveTracker = setupWaveTracker();
 });	
 
 
@@ -136,12 +78,118 @@ function openOnBuffer(decoded)
 
 }
 
+function getSelection() {
+	let buffer = wavesurfer.backend.buffer;
+	let srcLen = buffer.getChannelData(0).length;
+	let regionMap = wavesurfer.regions.list;
+	
+	let startT = 0;
+	let all = true;
+	let endT = wavesurfer.getDuration();
+	let progS = wavesurfer.drawer.progress() * endT;
+	let region = regionMap[function() { for (var k in regionMap) return k }()];
+
+	if (region && region.start < region.end) {
+		startT = region.start;
+		endT = region.end;
+		all = false;
+	}
+
+	let startS = secondsToSampleNum(startT, buffer);
+	let endS = secondsToSampleNum(endT, buffer);
+
+	return {
+		length: srcLen,
+		all:	all,
+		start:	startT,
+		end:	endT,
+		first:  startS,
+		last:	endS,
+		progress: progS,
+		region: region,
+	};
+}
+
+function seekCursorTo(e) {
+	let progress = wavesurfer.drawer.handleEvent(e);
+	wavesurfer.seekTo(progress);
+}
+
+function setupWaveTracker() {
+	var region;
+	var dragActive;
+	var t0;
+	var t1;
+	var duration;
+	
+	var eventDown = function (e) {
+		duration = wavesurfer.getDuration();
+
+		t0 = wavesurfer.drawer.handleEvent(e);
+		t1 = t0;
+		if (wavesurfer.isPlaying()) {
+			dragActive = false;
+			seekCursorTo(e);
+		} else {
+			dragActive = true;
+			wavesurfer.regions.clear();
+			wavesurfer.seekTo(t0);
+			let pos = {
+				start:	t0 * duration,
+				end:	t1 * duration
+			};
+			region = wavesurfer.regions.add(pos);
+		}
+		//console.log('down');
+	}
+
+	var eventMove = function (e) {
+		if (!dragActive) return;
+		t1 = wavesurfer.drawer.handleEvent(e);
+		let tS = t0;
+		let tE = t1;
+		if (t1 < t0) {
+			tS = t1;
+			tE = t0;
+			wavesurfer.seekTo(t1);
+		}
+		region.update({
+			start:	tS * duration,
+			end:	tE * duration
+		});
+		//console.log('move');
+	}
+
+	var eventUp = function (e) {
+		dragActive = false;
+		if (region) {
+			region.fireEvent('update-end', e);
+			wavesurfer.fireEvent('region-update-end', region, e);
+		}
+		region = null;
+	}
+
+	let waveElem = $('#waveform');
+	waveElem.on('mousedown', eventDown);
+	waveElem.on('touchstart', eventDown);
+	waveElem.on('mousemove', eventMove);
+	waveElem.on('touchmove', eventMove);
+	waveElem.on('mouseup', eventUp);
+	waveElem.on('touchend', eventUp);
+
+	return function() {
+		waveElem.off('mousedown', eventDown);
+		waveElem.off('touchstart', eventDown);
+		waveElem.off('mousemove', eventMove);
+		waveElem.off('touchmove', eventMove);
+		waveElem.off('mouseup', eventUp);
+		waveElem.off('touchend', eventUp);
+	 };
+}
+
 var createOfflineContext  = function (buffer) {
-	let numChannels = buffer.numberOfChannels
-	let sampleRate = buffer.sampleRate
-	let bufLen = buffer.getChannelData(0).length;
-	let offlineCtx = new OfflineContext(numChannels, bufLen, sampleRate);
-	return offlineCtx;
+	let {numberOfChannels, sampleRate} = buffer;
+	return new OfflineContext(numberOfChannels, buffer.getChannelData(0).length, sampleRate);
 }
 
 function secondsToSampleNum(t, buffer) {
@@ -151,70 +199,74 @@ function secondsToSampleNum(t, buffer) {
 	return Math.round(sn);
 }
 
-var addFiltersAndRun = function (ctx, filters, buffer) {
-	let source = ctx.createBufferSource();
 
-	// Connect all filters in the filter chain.
-	let prevFilter = source;
-
-	for (var i = 0; i < filters.length; ++i) {
-		let thisFilter = filters[i];
-		prevFilter.connect(thisFilter);
-		prevFilter = thisFilter;
-	}
-
-	prevFilter.connect(ctx.destination);
-
-	source.buffer = buffer;
-	source.start();
-
-	ctx.startRendering().then(function(renderedBuffer) {
-		console.log('Rendering completed successfully');
-		wavesurfer.backend.load(renderedBuffer);
-		wavesurfer.drawBuffer();
-	}).catch(function(err) {
-		console.log('Rendering failed: ' + err);
-	});
-}
-
-var testOfflineContext = function (e)
+var testFilterGraph = function (ctx)
 {
-	let buffer = wavesurfer.backend.buffer;
-	let ctx = createOfflineContext(buffer);
-
-
-
-//set up the different audio nodes we will use for the app
-var analyser = ctx.createAnalyser();
-var distortion = ctx.createWaveShaper();
-var gainNode = ctx.createGain();
-var biquadFilter = ctx.createBiquadFilter();
-var convolver = ctx.createConvolver();
-
+	//set up the different audio nodes we will use for the app
+	let analyser = ctx.createAnalyser();
+	let distortion = ctx.createWaveShaper();
+	let gainNode = ctx.createGain();
+	let biquadFilter = ctx.createBiquadFilter();
+	let convolver = ctx.createConvolver();
 
 	biquadFilter.type = "lowshelf";
 	biquadFilter.frequency.value = 1000; //.setValueAtTime(1000, ctx.currentTime);
 	biquadFilter.gain.value = 25; // .setValueAtTime(25, ctx.currentTime);
 
 	let filtList = [analyser, distortion, biquadFilter, gainNode];
-	addFiltersAndRun(ctx, filtList, buffer);
-
+	return filtList;
 }
 
-var normalizer = function (e)
+// Apply a filter transform implemented using the AudioContext filter system to the selected area
+// and paste back the result.
+// the setup function is called to knit together the filter graph desired.
+function applyFilterTransform(setup)
 {
-	let buffer = wavesurfer.backend.buffer;
+	let working = copySelected();
+	let ctx = createOfflineContext(working);
+	
+	let filters;
+	
+	if (setup !== undefined) {
+		filters = setup(ctx, working);
+	} 
+	
+	let source = ctx.createBufferSource();
 
-	var numChannels = buffer.numberOfChannels
-	var sampleRate = buffer.sampleRate
+	// Connect all filters in the filter chain.
+	let prevFilter = source;
+	if (filters) {
+		for (var i = 0; i < filters.length; ++i) {
+			let thisFilter = filters[i];
+			prevFilter.connect(thisFilter);
+			prevFilter = thisFilter;
+		}
+	}
+	prevFilter.connect(ctx.destination);
+
+	source.buffer = working;
+	source.start();
+
+	ctx.startRendering().then(function(renderedBuffer) {
+		pasteSelected(renderedBuffer);
+	}).catch(function(err) {
+		alert('Rendering failed: ' + err);
+	});
+}
+
+function testOfflineContext(e) {
+	applyFilterTransform(testFilterGraph);
+}
+
+var normalize = function (buffer)
+{
+	let {numberOfChannels, sampleRate} = buffer;
 	let bufLen = buffer.getChannelData(0).length;
-	let nextBuffer = audioCtx.createBuffer(numChannels, bufLen, sampleRate);
 
-	for (var cx = 0; cx < numChannels; ++cx) {
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
 		var minv = 1000000;
 		var maxv = -1000000;
 		let d = buffer.getChannelData(cx);
-		let dcd = nextBuffer.getChannelData(cx);
 		for (var i = 0; i < d.length; ++i) {
 			let s = d[i];
 			if (s < minv) minv = s;
@@ -224,44 +276,37 @@ var normalizer = function (e)
 		let oldRange = maxv - minv;
 		if (oldRange < 0.0001) continue;
 		let scaler = 2.0 / oldRange;
-		console.log("min: " + minv + " max: " + maxv + " dc: " + dcoff + " scaler: " + scaler);
 		for (var i = 0; i < d.length; ++i) {
-			dcd[i] = (d[i] - dcoff) * scaler;
+			d[i] = (d[i] - dcoff) * scaler;
 		}
 	}
-	wavesurfer.backend.load(nextBuffer);
-	wavesurfer.drawBuffer();
+
+	return buffer;
 }
 
 var deleteSelected = function (e)
 {
 	let buffer = wavesurfer.backend.buffer;
-	let srcLen = buffer.getChannelData(0).length;
-	let ws = wavesurfer;
-	let regionMap = wavesurfer.regions.list;
-	let region = regionMap[function() { for (var k in regionMap) return k }()];
-	let startS = secondsToSampleNum(region.start, buffer);
-	let endS = secondsToSampleNum(region.end, buffer);
-	if (startS > endS) return;
+	let {all, length, first, last, region} = getSelection(buffer);
+	if (all) return;
 
-	let ds = endS - startS;
-	var numChannels = buffer.numberOfChannels
-	var sampleRate = buffer.sampleRate
-	let bufLen = srcLen - ds;
-	let nextBuffer = audioCtx.createBuffer(numChannels, bufLen, sampleRate);
+	let ds = last - first;
+	let {numberOfChannels, sampleRate} = buffer;
+	let bufLen = length - ds;
+	let nextBuffer = audioCtx.createBuffer(numberOfChannels, bufLen, sampleRate);
 
-	for (var cx = 0; cx < numChannels; ++cx) {
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
 		let sa = buffer.getChannelData(cx);
 		let da = nextBuffer.getChannelData(cx);
 		let dx = 0;
-		for(var i = 0; i < startS; ++i) {
+		for(var i = 0; i < first; ++i) {
 			da[dx++] = sa[i];
 		}
-		for(var i = endS; i < srcLen; ++i) {
+		for(var i = last; i < length; ++i) {
 			da[dx++] = sa[i];
 		}
 	}
-	region.remove();
+	if(region) region.remove();
 	wavesurfer.backend.load(nextBuffer);
 	wavesurfer.drawBuffer();
 }
@@ -269,59 +314,63 @@ var deleteSelected = function (e)
 var copySelected = function (e)
 {
 	let buffer = wavesurfer.backend.buffer;
-	let srcLen = buffer.getChannelData(0).length;
-	let regionMap = wavesurfer.regions.list;
-	let region = regionMap[function() { for (var k in regionMap) return k }()];
-	let startS = secondsToSampleNum(region.start, buffer);
-	let endS = secondsToSampleNum(region.end, buffer);
-	if (startS > endS) return;
+	let {length, first, last, region} = getSelection(buffer);
+	let ds = last - first;
+	let {numberOfChannels, sampleRate} = buffer;
+	let nextBuffer = audioCtx.createBuffer(numberOfChannels, ds, sampleRate);
 
-	let ds = endS - startS;
-	var numChannels = buffer.numberOfChannels
-	var sampleRate = buffer.sampleRate
-	let bufLen = srcLen - ds;
-	let nextBuffer = audioCtx.createBuffer(numChannels, ds, sampleRate);
-
-	for (var cx = 0; cx < numChannels; ++cx) {
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
 		let sa = buffer.getChannelData(cx);
 		let da = nextBuffer.getChannelData(cx);
 		let dx = 0;
-		for(var i = startS; i < endS; ++i) {
+		for(var i = first; i < last; ++i) {
 			da[dx++] = sa[i];
 		}
 	}
 	return nextBuffer;
 }
 
+// Apply a transform function to the selected area and replace the selected area
+// with the result. The transform function can be either 'in place' or can return a
+// result buffer of any size.
+function applyTransform(f)
+{
+	let working = copySelected();
+	let result = f(working);
+	pasteSelected(result);
+}
+
+
+function normalizer(e) {
+	
+	applyTransform(normalize);
+}
+
+function fadeUp(e) {
+	
+	
+}
 
 var pasteSelected = function (pasteData)
 {
 	let buffer = wavesurfer.backend.buffer;
-	let srcLen = buffer.getChannelData(0).length;
 
-	let regionMap = wavesurfer.regions.list;
-	let region = regionMap[function() { for (var k in regionMap) return k }()];
-	let startS = secondsToSampleNum(region.start, buffer);
-	let endS = secondsToSampleNum(region.end, buffer);
-	if (startS > endS) return;
+	let {length, first, last, region} = getSelection(buffer);
 
 	let pasteLen = pasteData.getChannelData(0).length;
-
-	let dTs = endS - startS;
-
-	var numChannels = buffer.numberOfChannels;
+	let dTs = last - first;
+	let {numberOfChannels, sampleRate} = buffer;
 	let numPasteChannels = pasteData.numberOfChannels;
-	var sampleRate = buffer.sampleRate;
-	let bufLen = srcLen - dTs + pasteLen;
-	let nextBuffer = audioCtx.createBuffer(numChannels, bufLen, sampleRate);
+	let bufLen = length - dTs + pasteLen;
+	let nextBuffer = audioCtx.createBuffer(numberOfChannels, bufLen, sampleRate);
 
-	for (var cx = 0; cx < numChannels; ++cx) {
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
 		let sa = buffer.getChannelData(cx);
 		let da = nextBuffer.getChannelData(cx);
 		let pdx = cx < numPasteChannels ? cx : 0;
 		let cb = pasteData.getChannelData(pdx);
 		let dx = 0;
-		for(var i = 0; i < startS; ++i) {
+		for(var i = 0; i < first; ++i) {
 			da[dx++] = sa[i];
 		}
 
@@ -329,16 +378,14 @@ var pasteSelected = function (pasteData)
 			da[dx++] = cb[i];
 		}
 
-		for(var i = endS; i < srcLen; ++i) {
+		for(var i = last; i < length; ++i) {
 			da[dx++] = sa[i];
 		}
 	}
-	region.remove();
+	if(region) region.remove();
 	wavesurfer.backend.load(nextBuffer);
 	wavesurfer.drawBuffer();
 }
-
-
 
 
 function base64ArrayBuffer(arrayBuffer) {
@@ -389,7 +436,7 @@ function base64ArrayBuffer(arrayBuffer) {
 
     base64 += encodings[a] + encodings[b] + encodings[c] + '='
   }
-  
+
   return base64
 }
 
@@ -403,7 +450,6 @@ function base64ToArrayBuffer(base64) {
     return bytes.buffer;
 }
 
-
 function copyToClip(e) 
 {
 	let clip = e.originalEvent.clipboardData;
@@ -414,15 +460,24 @@ function copyToClip(e)
 	e.preventDefault();
 }
 
-	// Populate copy to clip board button.
+// Populate copy to clip board button.
 var clipper = new Clipboard('.copycb', {
 	text: function(trigger) {
 		let clipBuff =  copySelected();
 		let wavData = audioBufferToWav(clipBuff);
 		let asText = base64ArrayBuffer(wavData);
+		// alert(asText);
 		return asText;
 		}
-	});
+});
+
+
+
+
+function cutToClip(e) {
+	copyToClip(e);
+	deleteSelected(e);
+}
 
 function pasteFromClip(e)
 {
@@ -436,7 +491,14 @@ function pasteFromClip(e)
 }
 
 $(window).on('paste', pasteFromClip);
+// iOS was screwing up if the following line was not commented out.
 $(window).on('copy', copyToClip);
+$(window).on('cut', cutToClip);
+
+
+/*
+$('#paster').on('paste', pasteFromClip);
+*/
 //editor
 function setEditData(data)
 {
@@ -481,8 +543,6 @@ function onLoad()
 		filename_input.value = decodeURI(urlarg);
 	}
 
-//	postWorker("eva");
-//	modeChanger(filename_input.value);
 	if(!local_exec) {
 		postWorker("load");
 		fname = filename_input.value;
@@ -510,19 +570,18 @@ window.onload = onLoad;
 function audioBufferToWav (buffer, opt) {
   opt = opt || {}
 
-  var numChannels = buffer.numberOfChannels
-  var sampleRate = buffer.sampleRate
+  let {numberOfChannels, sampleRate} = buffer;
   var format = opt.float32 ? 3 : 1
   var bitDepth = format === 3 ? 32 : 16
 
   var result
-  if (numChannels === 2) {
+  if (numberOfChannels === 2) {
     result = interleave(buffer.getChannelData(0), buffer.getChannelData(1))
   } else {
     result = buffer.getChannelData(0)
   }
 
-  return encodeWAV(result, format, sampleRate, numChannels, bitDepth)
+  return encodeWAV(result, format, sampleRate, numberOfChannels, bitDepth)
 }
 
 function encodeWAV (samples, format, sampleRate, numChannels, bitDepth) {
@@ -618,12 +677,6 @@ document.onkeydown = function (e){
 		btn_load();
 		return false;		
 	}
-	if(e.keyCode == 118) //F7
-	{
-		btn_unlock();
-		return false;		
-	}
-
 };
 
 
@@ -636,7 +689,6 @@ function btn_config()
 //	if(window.confirm('Load /SD_WLAN/CONFIG?'))
 //	{
 		filename_input.value="/SD_WLAN/CONFIG";
-		modeChanger(filename_input.value);
 		postWorker("load");
 //	}
 }
@@ -646,7 +698,6 @@ function btn_load()
 {
 //	if(window.confirm('Load ?'))
 //	{
-		modeChanger(filename_input.value);
 		postWorker("load");
 		fname = filename_input.value;
 //	}
@@ -668,11 +719,6 @@ function btn_save(){
 
 	postWorker("save");
 	// jsEditor.markClean();
-}
-
-// Unlock
-function btn_unlock(){
-	postWorker("unlock");
 }
 
 //---------handler-----------
