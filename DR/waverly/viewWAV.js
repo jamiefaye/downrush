@@ -86,6 +86,12 @@ function triggerRedraw() {
 	// jsonToTopTable(jsonDocument, $('#jtab'));
 }
 
+function redrawWave()
+{
+	wavesurfer.peakCache.clearPeakCache();
+	wavesurfer.drawBuffer();
+}
+
 
 // Page transition warning
 
@@ -94,30 +100,33 @@ var unexpected_close = true;
 var wavesurfer;
 var TimelinePlugin = window.WaveSurfer.timeline;
 var RegionPlugin = window.WaveSurfer.regions;
+
 var disableWaveTracker;
 
 function openOnBuffer(decoded)
 {
 	var plugs =  [
-	   		TimelinePlugin.create({
-	   			container: '#waveform-timeline'
+		TimelinePlugin.create({
+			container: '#waveform-timeline'
 			}),
-			RegionPlugin.create({
+		RegionPlugin.create({
 				dragSelection: false,
 			}),
 		];
-		
+
 	$('#waveform').empty();
 	$('#waveform-timeline').empty();
 
 	wavesurfer = WaveSurfer.create({
-		container: '#waveform',
-		waveColor: 'violet',
-		progressColor: 'purple',
-		splitChannels: true,
-		interact: false,
-
-		plugins: plugs,
+		container:		'#waveform',
+		waveColor:		'violet',
+		progressColor:	'purple',
+		splitChannels:	true,
+		interact:		false,
+		fillParent:		false,
+		scrollParent:	true,
+		plugins:		plugs,
+		partialRender:  true,
 	});
 
 	wavesurfer.loadBlob(decoded);
@@ -125,10 +134,17 @@ function openOnBuffer(decoded)
 	wavesurfer.on('ready', function () {
 		let buf = wavesurfer.backend.buffer;
 		let dat = buf.getChannelData(0);
+		
+		let dur = wavesurfer.getDuration();
+		let w = wavesurfer.drawer.getWidth();
+		if (dur !== 0) {
+			let pps = w / dur * 0.9;
+			wavesurfer.zoom(pps);
+		}
 		disableWaveTracker = setupWaveTracker();
 });	
 
-
+/*
 	var slider = document.querySelector('#slider');
 
 	slider.oninput = function () {
@@ -136,7 +152,7 @@ function openOnBuffer(decoded)
 		console.log(zoomLevel);
 		wavesurfer.zoom(zoomLevel);
 	};
-
+*/
 }
 
 function getSelection() {
@@ -197,7 +213,9 @@ function setupWaveTracker() {
 			wavesurfer.seekTo(t0);
 			let pos = {
 				start:	t0 * duration,
-				end:	t1 * duration
+				end:	t1 * duration,
+				drag:	false,
+				resize: false,
 			};
 			region = wavesurfer.regions.add(pos);
 		}
@@ -388,7 +406,8 @@ var deleteSelected = function (e)
 	if(region) region.remove();
 	undoStack.push(buffer);
 	wavesurfer.backend.load(nextBuffer);
-	wavesurfer.drawBuffer();
+	redrawWave();
+
 }
 
 var copySelected = function (e)
@@ -477,7 +496,7 @@ var pasteSelected = function (pasteData)
 	//if(region) region.remove();
 	undoStack.push(buffer);
 	wavesurfer.backend.load(nextBuffer);
-	wavesurfer.drawBuffer();
+	redrawWave();
 }
 
 
@@ -490,7 +509,7 @@ function doUndo(e) {
 	let unbuf = undoStack.undo();
 	if (unbuf) {
 		wavesurfer.backend.load(unbuf);
-		wavesurfer.drawBuffer();
+		redrawWave();
 	}
 }
 
@@ -499,7 +518,7 @@ function doRedo(e) {
 	let redo = undoStack.redo();
 	if (redo) {
 		wavesurfer.backend.load(redo);
-		wavesurfer.drawBuffer();
+		redrawWave();
 	}
 }
 
@@ -614,6 +633,14 @@ $(window).on('cut', cutToClip);
 $(window).on('undo', doUndo);
 $(window).on('redo', doRedo);
 
+
+function zoom(amt) {
+	
+	let minPxWas = wavesurfer.params.minPxPerSec;
+	let newPx = minPxWas * amt;
+	console.log(newPx);
+	wavesurfer.zoom(newPx);
+}
 
 /*
 $('#paster').on('paste', pasteFromClip);

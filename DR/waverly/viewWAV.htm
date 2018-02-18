@@ -25,7 +25,6 @@ window.onerror = function(msg, url, line, col, error) {
 
 <script type="text/javascript" src="js/ext/wavesurfer.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.regions.js"></script>
-<script type="text/javascript" src="js/ext/plugins/wavesurfer.cursor.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.mediasession.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.microphone.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.timeline.js"></script>
@@ -52,16 +51,20 @@ window.onerror = function(msg, url, line, col, error) {
 <div id="waveform"></div>
 <div id="waveform-timeline"></div>
 <div class='butnrow'>
+<button class="butn" onclick="zoom(2)" title='Zoom in'><img src='img/glyphicons-237-zoom-in.png'/></button>
+<button class="butn" onclick="zoom(0.5)" title='Zoom out'><img src='img/glyphicons-238-zoom-out.png'/></button>
 <button class="butn" onclick="wavesurfer.playPause()" title='Play'><img src='img/glyphicons-174-play.png'/></button>
 <button class="butn" onclick="doUndo()" title='Undo'><img src='img/glyphicons-436-undo.png'/></button>
 <button class="butn" onclick="doRedo()" title='Redo'><img src='img/glyphicons-435-redo.png'/></button>
+<button class="butn" onclick="deleteSelected()" title='Delete'><img src='img/glyphicons-257-delete.png'/></button>
+<button class="butn" onclick="copySelected()" title='Copy to clipboard'><img src='img/glyphicons-512-copy.png'/></button>
 <button class="butn" onclick="normalizer()">Normalize</button>
 <button class="butn" onclick="testOfflineContext()">Test</button>
 <button class="butn" onclick="fadeIn()">Fade In</button>
 <button class="butn" onclick="fadeOut()">Fade Out</button>
-<button class="butn" onclick="deleteSelected()" title='Delete'><img src='img/glyphicons-257-delete.png'/></button>
-<button class="butn" onclick="copySelected()" title='Copy to clipboard'><img src='img/glyphicons-512-copy.png'/></button>
+
 </div>
+<!--
 <div>
     <div class="col-xs-1">
       <i class="glyphicon glyphicon-zoom-in"></i>
@@ -76,6 +79,7 @@ window.onerror = function(msg, url, line, col, error) {
     </div>
   </p>
 </div>
+-->
 <script src="viewWAV.js"></script>
 </body>
 </html>
