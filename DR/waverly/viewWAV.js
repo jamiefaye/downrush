@@ -201,6 +201,10 @@ function setupWaveTracker() {
 	
 	var eventDown = function (e) {
 		duration = wavesurfer.getDuration();
+		
+		// Filter out events intended for the scroll bar
+		let hasScroll = wavesurfer.params.scrollParent;
+		if (hasScroll && e.clientY > 160) return; // *** JFF Hack magic number.
 
 		t0 = wavesurfer.drawer.handleEvent(e);
 		t1 = t0;
@@ -620,7 +624,6 @@ var clipper = new Clipboard('.copycb', {
 
 
 
-
 function cutToClip(e) {
 	copyToClip(e);
 	deleteSelected(e);
@@ -651,7 +654,13 @@ function zoom(amt) {
 	
 	let minPxWas = wavesurfer.params.minPxPerSec;
 	let newPx = minPxWas * amt;
+
+//	let pos = wavesurfer.drawer.getScrollX();
 	wavesurfer.zoom(newPx);
+	// wavesurfer.seekTo(0);
+		
+//	wavesurfer.drawer.resetScroll(0);
+//	wavesurfer.drawer.recenterOnPosition(pos, false);
 }
 
 /*

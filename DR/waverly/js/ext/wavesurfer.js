@@ -1315,6 +1315,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * the channels of the audio
  * @property {string} waveColor='#999' The fill color of the waveform after the
  * cursor.
+ * @property {object} xhr={} XHR options.
  */
 
 /**
@@ -1515,7 +1516,8 @@ var WaveSurfer = function (_util$Observer) {
             scrollParent: false,
             skipLength: 2,
             splitChannels: false,
-            waveColor: '#999'
+            waveColor: '#999',
+            xhr: {}
         };
         _this.backends = {
             MediaElement: _mediaelement2.default,
@@ -2403,7 +2405,7 @@ var WaveSurfer = function (_util$Observer) {
             var nominalWidth = Math.round(this.getDuration() * this.params.minPxPerSec * this.params.pixelRatio);
             var parentWidth = this.drawer.getWidth();
             var width = nominalWidth;
-            var start = this.drawer.getScrollX();
+            var start = 0; // this.drawer.getScrollX();
             var end = Math.max(start + parentWidth, width);
             // Fill container
             if (this.params.fillParent && (!this.params.scrollParent || nominalWidth < parentWidth)) {
@@ -2708,7 +2710,8 @@ var WaveSurfer = function (_util$Observer) {
 
             var ajax = util.ajax({
                 url: url,
-                responseType: 'arraybuffer'
+                responseType: 'arraybuffer',
+                xhr: this.params.xhr
             });
 
             this.currentAjax = ajax;
@@ -2908,6 +2911,20 @@ function ajax(options) {
     var fired100 = false;
     xhr.open(options.method || 'GET', options.url, true);
     xhr.responseType = options.responseType || 'json';
+
+    if (options.xhr) {
+        if (options.xhr.requestHeaders) {
+            // add custom request headers
+            for (var header in options.xhr.requestHeaders) {
+                xhr.setRequestHeader(header.key, header.value);
+            }
+        }
+        if (options.xhr.withCredentials) {
+            // use credentials
+            xhr.withCredentials = true;
+        }
+    }
+
     xhr.addEventListener('progress', function (e) {
         instance.fireEvent('progress', e);
         if (e.lengthComputable && e.loaded == e.total) {
