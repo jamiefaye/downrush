@@ -88,7 +88,7 @@ function triggerRedraw() {
 
 function redrawWave()
 {
-	wavesurfer.peakCache.clearPeakCache();
+	//wavesurfer.peakCache.clearPeakCache();
 	wavesurfer.drawBuffer();
 }
 
@@ -126,7 +126,7 @@ function openOnBuffer(decoded)
 		fillParent:		false,
 		scrollParent:	true,
 		plugins:		plugs,
-		partialRender:  true,
+		partialRender:  false,
 	});
 
 	wavesurfer.loadBlob(decoded);
