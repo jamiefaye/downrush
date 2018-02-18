@@ -51,53 +51,18 @@ window.onerror = function(msg, url, line, col, error) {
 		<div id="waveform"></div>
 <div id="waveform"></div>
 <div id="waveform-timeline"></div>
-<div style="text-align: center">
-  <button class="btn btn-primary" onclick="wavesurfer.playPause()">
-    <i class="glyphicon glyphicon-play"></i>
-    Play
-  </button>
-
-  <button class="btn btn-primary" onclick="doUndo()">
-    <i class="glyphicon glyphicon-play"></i>
-    Undo
-  </button>
-
-  <button class="btn btn-primary" onclick="doRedo()">
-    <i class="glyphicon glyphicon-play"></i>
-    Redo
-  </button>
-
-  <button class="btn btn-primary" onclick="normalizer()">
-    <i class="glyphicon glyphicon-play"></i>
-    Normalize
-  </button>
-  
-  <button class="btn btn-primary" onclick="testOfflineContext()">
-    <i class="glyphicon glyphicon-play"></i>
-    Test
-  </button>
-
-  <button class="btn btn-primary" onclick="fadeIn()">
-    <i class="glyphicon glyphicon-play"></i>
-    Fade In
-  </button>
-
-  <button class="btn btn-primary" onclick="fadeOut()">
-    <i class="glyphicon glyphicon-play"></i>
-    Fade Out
-  </button>
-
-  <button class="btn btn-primary" onclick="deleteSelected()">
-    <i class="glyphicon glyphicon-play"></i>
-    Delete
-  </button>
-
-  <button class="copycb btn btn-primary" onclick="copySelected()">
-    <i class="glyphicon glyphicon-play"></i>
-    Copy
-  </button>
-
-  <p class="row">
+<div class='butnrow'>
+<button class="butn" onclick="wavesurfer.playPause()" title='Play'><img src='img/glyphicons-174-play.png'/></button>
+<button class="butn" onclick="doUndo()" title='Undo'><img src='img/glyphicons-436-undo.png'/></button>
+<button class="butn" onclick="doRedo()" title='Redo'><img src='img/glyphicons-435-redo.png'/></button>
+<button class="butn" onclick="normalizer()">Normalize</button>
+<button class="butn" onclick="testOfflineContext()">Test</button>
+<button class="butn" onclick="fadeIn()">Fade In</button>
+<button class="butn" onclick="fadeOut()">Fade Out</button>
+<button class="butn" onclick="deleteSelected()" title='Delete'><img src='img/glyphicons-257-delete.png'/></button>
+<button class="butn" onclick="copySelected()" title='Copy to clipboard'><img src='img/glyphicons-512-copy.png'/></button>
+</div>
+<div>
     <div class="col-xs-1">
       <i class="glyphicon glyphicon-zoom-in"></i>
     </div>
