@@ -381,6 +381,26 @@ var applyFunction = function (buffer, f)
 }
 
 
+function changeBuffer(buffer) {
+	if (!buffer) return;
+
+	let playState = wavesurfer.isPlaying();
+	let songPos;
+	if (playState) {
+		console.log('pausing');
+		wavesurfer.pause();
+		songPos = wavesurfer.getCurrentTime();
+	}
+
+	wavesurfer.backend.load(buffer);
+	redrawWave();
+	if (playState) {
+		wavesurfer.play(songPos);
+		console.log('playing');
+	}
+}
+
+
 var deleteSelected = function (e)
 {
 	let buffer = wavesurfer.backend.buffer;
@@ -405,9 +425,7 @@ var deleteSelected = function (e)
 	}
 	if(region) region.remove();
 	undoStack.push(buffer);
-	wavesurfer.backend.load(nextBuffer);
-	redrawWave();
-
+	changeBuffer(nextBuffer);
 }
 
 var copySelected = function (e)
@@ -495,31 +513,25 @@ var pasteSelected = function (pasteData)
 	}
 	//if(region) region.remove();
 	undoStack.push(buffer);
-	wavesurfer.backend.load(nextBuffer);
-	redrawWave();
+	changeBuffer(nextBuffer);
 }
 
 
 function doUndo(e) {
 	console.log("Undo");
+
 	if (undoStack.atTop()) {
 		let buffer = wavesurfer.backend.buffer;
 		undoStack.push(buffer);
 	}
 	let unbuf = undoStack.undo();
-	if (unbuf) {
-		wavesurfer.backend.load(unbuf);
-		redrawWave();
-	}
+	changeBuffer(unbuf);
 }
 
 function doRedo(e) {
 	console.log("Redo");
 	let redo = undoStack.redo();
-	if (redo) {
-		wavesurfer.backend.load(redo);
-		redrawWave();
-	}
+	changeBuffer(redo);
 }
 
 
