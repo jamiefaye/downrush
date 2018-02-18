@@ -632,13 +632,13 @@ $(window).on('cut', cutToClip);
 
 $(window).on('undo', doUndo);
 $(window).on('redo', doRedo);
-
+// Remove highlighting after button pushes:
+$('.butn').mouseup(function() { this.blur()});
 
 function zoom(amt) {
 	
 	let minPxWas = wavesurfer.params.minPxPerSec;
 	let newPx = minPxWas * amt;
-	console.log(newPx);
 	wavesurfer.zoom(newPx);
 }
 
