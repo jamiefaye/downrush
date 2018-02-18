@@ -204,7 +204,9 @@ function setupWaveTracker() {
 		
 		// Filter out events intended for the scroll bar
 		let hasScroll = wavesurfer.params.scrollParent;
-		if (hasScroll && e.clientY > 160) return; // *** JFF Hack magic number.
+		let r = e.target.getBoundingClientRect();
+
+		if (hasScroll && e.clientY > (r.bottom - 16)) return; // *** JFF Hack magic number.
 
 		t0 = wavesurfer.drawer.handleEvent(e);
 		t1 = t0;
