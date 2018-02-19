@@ -22,9 +22,10 @@ var OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioCont
 
 
 class UndoStack {
-	constructor() {
+	constructor(limit) {
 		this.stack = [];
 		this.index = -1;
+		this.limit = limit;
 	}
 	
 	atTop() {
@@ -35,6 +36,9 @@ class UndoStack {
 		if (this.index >= 0) {
 			while (this.index < this.stack.length) this.stack.pop();
 			this.index = -1;
+		}
+		if (this.limit && this.stack.length > this.limit) {
+			this.stack.shift();
 		}
 		this.stack.push(item);
 	}
@@ -58,7 +62,7 @@ class UndoStack {
 	}
 };
 
-var undoStack = new UndoStack();
+var undoStack = new UndoStack(10);
 
 /*
 var pushBuffer = function ()
