@@ -206,6 +206,39 @@ function setupWaveTracker() {
 	var t1;
 	var duration;
 	
+
+	var eventMove = function (e) {
+		if (!dragActive) return;
+		t1 = wavesurfer.drawer.handleEvent(e);
+		let tS = t0;
+		let tE = t1;
+		if (t1 < t0) {
+			tS = t1;
+			tE = t0;
+			wavesurfer.seekTo(t1);
+		}
+		region.update({
+			start:	tS * duration,
+			end:	tE * duration
+		});
+		//console.log('move');
+	}
+
+	var eventUp = function (e) {
+		dragActive = false;
+		if (region) {
+			region.fireEvent('update-end', e);
+			wavesurfer.fireEvent('region-update-end', region, e);
+		}
+		region = null;
+		let win = $(window); // disconnect listeners.
+		win.off('mousemove', eventMove);
+		win.off('touchmove', eventMove);
+		win.off('mouseup', eventUp);
+		win.off('touchend', eventUp);
+	}
+
+
 	var eventDown = function (e) {
 		duration = wavesurfer.getDuration();
 		
@@ -232,50 +265,22 @@ function setupWaveTracker() {
 			};
 			region = wavesurfer.regions.add(pos);
 		}
+		let win = $(window);
+		win.on('mousemove', eventMove); // dynamic listeners
+		win.on('touchmove', eventMove);
+		win.on('mouseup', eventUp);
+		win.on('touchend', eventUp);
 		//console.log('down');
 	}
 
-	var eventMove = function (e) {
-		if (!dragActive) return;
-		t1 = wavesurfer.drawer.handleEvent(e);
-		let tS = t0;
-		let tE = t1;
-		if (t1 < t0) {
-			tS = t1;
-			tE = t0;
-			wavesurfer.seekTo(t1);
-		}
-		region.update({
-			start:	tS * duration,
-			end:	tE * duration
-		});
-		//console.log('move');
-	}
-
-	var eventUp = function (e) {
-		dragActive = false;
-		if (region) {
-			region.fireEvent('update-end', e);
-			wavesurfer.fireEvent('region-update-end', region, e);
-		}
-		region = null;
-	}
-
 	let waveElem = $('#waveform');
+
 	waveElem.on('mousedown', eventDown);
 	waveElem.on('touchstart', eventDown);
-	waveElem.on('mousemove', eventMove);
-	waveElem.on('touchmove', eventMove);
-	waveElem.on('mouseup', eventUp);
-	waveElem.on('touchend', eventUp);
 
 	return function() {
 		waveElem.off('mousedown', eventDown);
 		waveElem.off('touchstart', eventDown);
-		waveElem.off('mousemove', eventMove);
-		waveElem.off('touchmove', eventMove);
-		waveElem.off('mouseup', eventUp);
-		waveElem.off('touchend', eventUp);
 	 };
 }
 
