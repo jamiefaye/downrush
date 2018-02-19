@@ -497,13 +497,13 @@ function fadeOut(e) {
 }
 
 
-var pasteSelected = function (pasteData)
+var pasteSelected = function (pasteData, checkInsert)
 {
 	let buffer = wavesurfer.backend.buffer;
 
 	let {all, cursorTime, cursorPos, length, first, last, region} = getSelection(buffer);
 
-	if (all) { // all === true means its an insertion point.
+	if (checkInsert && all) { // all === true means its an insertion point.
 		first = cursorPos;
 		last = cursorPos;
 	}
@@ -652,7 +652,7 @@ function pasteFromClip(e)
 	let clip = e.originalEvent.clipboardData.getData('text/plain');
 	let asbin = base64ToArrayBuffer(clip);
 	wavesurfer.backend.decodeArrayBuffer(asbin, function (data) {
-		pasteSelected(data);
+		pasteSelected(data, true);
 	 }, function (err) {
 		console.log('paste decode error');
 	 });
