@@ -165,13 +165,14 @@ function getSelection() {
 	let endT = wavesurfer.getDuration();
 	let progS = wavesurfer.drawer.progress() * endT;
 	let region = regionMap[function() { for (var k in regionMap) return k }()];
+	let cursorTime = wavesurfer.getCurrentTime();
 
 	if (region && region.start < region.end) {
 		startT = region.start;
 		endT = region.end;
 		all = false;
 	}
-
+	let cursorPos = secondsToSampleNum(cursorTime, buffer);
 	let startS = secondsToSampleNum(startT, buffer);
 	let endS = secondsToSampleNum(endT, buffer);
 
@@ -184,6 +185,8 @@ function getSelection() {
 		last:	endS,
 		progress: progS,
 		region: region,
+		cursorTime: cursorTime,
+		cursorPos: cursorPos,
 	};
 }
 
@@ -401,8 +404,12 @@ function changeBuffer(buffer) {
 	wavesurfer.backend.load(buffer);
 	redrawWave();
 	if (playState) {
-		wavesurfer.play(songPos);
-		console.log('playing');
+		if (songPos < 0) songPos = 0;
+		let dur = wavesurfer.getDuration();
+		if (songPos < dur) {
+			wavesurfer.play(songPos);
+			console.log('playing');
+		}
 	}
 }
 
@@ -490,7 +497,12 @@ var pasteSelected = function (pasteData)
 {
 	let buffer = wavesurfer.backend.buffer;
 
-	let {length, first, last, region} = getSelection(buffer);
+	let {all, cursorTime, cursorPos, length, first, last, region} = getSelection(buffer);
+
+	if (all) { // all === true means its an insertion point.
+		first = cursorPos;
+		last = cursorPos;
+	}
 
 	let pasteLen = pasteData.getChannelData(0).length;
 	let dTs = last - first;
