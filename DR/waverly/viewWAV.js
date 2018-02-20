@@ -20,6 +20,7 @@ var fname = "";
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 var OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
 
+var localClipboard;
 
 class UndoStack {
 	constructor(limit) {
@@ -64,36 +65,12 @@ class UndoStack {
 
 var undoStack = new UndoStack(10);
 
-/*
-var pushBuffer = function ()
-{
-	let buffer = wavesurfer.backend.buffer;
-	let srcLen = buffer.getChannelData(0).length;
-	let {numberOfChannels, sampleRate} = buffer;
-	let saveBuffer = audioCtx.createBuffer(numberOfChannels, srcLen, sampleRate);
-
-	for (var cx = 0; cx < numberOfChannels; ++cx) {
-		let sa = buffer.getChannelData(cx);
-		let da = nextBuffer.getChannelData(cx);
-		for(var i = 0; i < last; ++i) {
-			da[i] = sa[i];
-		}
-	}
-
-	return nextBuffer;
-}
-*/
-
-// Trigger redraw of song
-function triggerRedraw() {
-	$('#jtab').empty();
-	// jsonToTopTable(jsonDocument, $('#jtab'));
-}
 
 function redrawWave()
 {
 	//wavesurfer.peakCache.clearPeakCache();
 	wavesurfer.drawBuffer();
+	wavesurfer.minimap.render();
 }
 
 
@@ -105,6 +82,7 @@ var wavesurfer;
 var TimelinePlugin = window.WaveSurfer.timeline;
 var RegionPlugin = window.WaveSurfer.regions;
 var Minimap = window.WaveSurfer.minimap;
+//var Microphone = window.WaveSurfer.microphone;
 var disableWaveTracker;
 
 function openOnBuffer(decoded)
@@ -129,6 +107,7 @@ function openOnBuffer(decoded)
 
 	$('#waveform').empty();
 	$('#waveform-timeline').empty();
+	$('#minimap').empty();
 
 	wavesurfer = WaveSurfer.create({
 		container:		'#waveform',
@@ -177,8 +156,9 @@ function getSelection() {
 	let regionMap = wavesurfer.regions.list;
 	
 	let startT = 0;
-	let all = true;
-	let endT = wavesurfer.getDuration();
+	let regional = false;
+	let dur =  wavesurfer.getDuration()
+	let endT = dur;
 	let progS = wavesurfer.drawer.progress() * endT;
 	let region = regionMap[function() { for (var k in regionMap) return k }()];
 	let cursorTime = wavesurfer.getCurrentTime();
@@ -186,7 +166,7 @@ function getSelection() {
 	if (region && region.start < region.end) {
 		startT = region.start;
 		endT = region.end;
-		all = false;
+		regional = true;
 	}
 	let cursorPos = secondsToSampleNum(cursorTime, buffer);
 	let startS = secondsToSampleNum(startT, buffer);
@@ -194,7 +174,7 @@ function getSelection() {
 
 	return {
 		length: srcLen,
-		all:	all,
+		regional: regional,
 		start:	startT,
 		end:	endT,
 		first:  startS,
@@ -202,7 +182,8 @@ function getSelection() {
 		progress: progS,
 		region: region,
 		cursorTime: cursorTime,
-		cursorPos: cursorPos,
+		cursorPos: 	cursorPos,
+		duration:	dur,
 	};
 }
 
@@ -440,12 +421,19 @@ function changeBuffer(buffer) {
 	}
 }
 
+function doPlaySel(e)
+{
+	let buffer = wavesurfer.backend.buffer;
+	let {start, end} = getSelection(buffer);
+	wavesurfer.play(start, end);
+}
+
 
 var deleteSelected = function (e)
 {
 	let buffer = wavesurfer.backend.buffer;
-	let {all, length, first, last, region} = getSelection(buffer);
-	if (all) return;
+	let {regional, length, first, last, region} = getSelection(buffer);
+	if (!regional) return;
 
 	let ds = last - first;
 	let {numberOfChannels, sampleRate} = buffer;
@@ -519,14 +507,30 @@ function fadeOut(e) {
 	applyTransform(applyFunction, f);
 }
 
+function selAll(e) {
+	let {regional, start, end, duration} = getSelection(wavesurfer.backend.buffer);
+	wavesurfer.regions.clear();
+	wavesurfer.seekTo(0);
+	// If wa are alread a full selection, quit right after we cleared.
+	if (regional && start === 0 && end === duration) return;
+
+	let pos = {
+		start:	0,
+		end:	wavesurfer.getDuration(),
+		drag:	false,
+		resize: false,
+	};
+	wavesurfer.regions.add(pos);
+}
+
 
 var pasteSelected = function (pasteData, checkInsert)
 {
 	let buffer = wavesurfer.backend.buffer;
 
-	let {all, cursorTime, cursorPos, length, first, last, region} = getSelection(buffer);
+	let {regional, cursorTime, cursorPos, length, first, last, region} = getSelection(buffer);
 
-	if (checkInsert && all) { // all === true means its an insertion point.
+	if (checkInsert && !regional) { // regionl === false means its an insertion point.
 		first = cursorPos;
 		last = cursorPos;
 	}
@@ -584,18 +588,22 @@ function base64ArrayBuffer(arrayBuffer) {
   var base64    = ''
   var encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
-  var bytes         = new Uint8Array(arrayBuffer)
-  var byteLength    = bytes.byteLength
-  var byteRemainder = byteLength % 3
-  var mainLength    = byteLength - byteRemainder
+  var bytes         = new Uint8Array(arrayBuffer);
+  var byteLength    = bytes.byteLength;
+  var byteRemainder = byteLength % 3;
+  var mainLength    = byteLength - byteRemainder;
 
-  var a, b, c, d
-  var chunk
+  var a, b, c, d;
+  var chunk;
 
   // Main loop deals with bytes in chunks of 3
   for (var i = 0; i < mainLength; i = i + 3) {
+    // Insert newlines to avoid super-long strings.
+  	if ((i !== 0) && ((i % 72) === 0)) {
+    	base64 += '\n';
+    }
     // Combine the three bytes into a single integer
-    chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2]
+    chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
 
     // Use bitmasks to extract 6-bit segments from the triplet
     a = (chunk & 16515072) >> 18 // 16515072 = (2^6 - 1) << 18
@@ -604,7 +612,7 @@ function base64ArrayBuffer(arrayBuffer) {
     d = chunk & 63               // 63       = 2^6 - 1
 
     // Convert the raw binary segments to the appropriate ASCII encoding
-    base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d]
+    base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d];
   }
 
   // Deal with the remaining bytes and padding
@@ -645,25 +653,27 @@ function base64ToArrayBuffer(base64) {
 function copyToClip(e) 
 {
 	let clip = e.originalEvent.clipboardData;
+
 	let clipBuff =  copySelected();
 	let wavData = audioBufferToWav(clipBuff);
 	let asText = base64ArrayBuffer(wavData);
-	clip.setData('text/plain', asText);
+	localClipboard = clipBuff;
+	if (clip) clip.setData('text/plain', asText);
 	e.preventDefault();
 }
-
+/********
 // Populate copy to clip board button.
-var clipper = new Clipboard('.copycb', {
+var clipper = new Clipboard('#copybut', {
 	text: function(trigger) {
 		let clipBuff =  copySelected();
 		let wavData = audioBufferToWav(clipBuff);
 		let asText = base64ArrayBuffer(wavData);
 		// alert(asText);
+		console.log("returning clipboard data");
 		return asText;
 		}
 });
-
-
+*********/
 
 function cutToClip(e) {
 	copyToClip(e);
@@ -672,24 +682,21 @@ function cutToClip(e) {
 
 function pasteFromClip(e)
 {
-	let clip = e.originalEvent.clipboardData.getData('text/plain');
+	let clipBd = e.originalEvent.clipboardData;
+
+	if (!clipBd)  {
+		pasteSelected(localClipboard, true);
+		return;
+	}
+	let clip = clipBd.getData('text/plain');
+
 	let asbin = base64ToArrayBuffer(clip);
 	wavesurfer.backend.decodeArrayBuffer(asbin, function (data) {
 		pasteSelected(data, true);
 	 }, function (err) {
 		console.log('paste decode error');
-	 });
+	});
 }
-
-$(window).on('paste', pasteFromClip);
-// iOS was screwing up if the following line was not commented out.
-$(window).on('copy', copyToClip);
-$(window).on('cut', cutToClip);
-
-$(window).on('undo', doUndo);
-$(window).on('redo', doRedo);
-// Remove highlighting after button pushes:
-$('.butn').mouseup(function() { this.blur()});
 
 function zoom(amt) {
 	
@@ -706,6 +713,46 @@ function zoom(amt) {
 	console.log(newPx);
 	wavesurfer.zoom(newPx);
 }
+
+
+$(window).on('paste', pasteFromClip);
+// iOS was screwing up if the following line was not commented out.
+$(window).on('copy', copyToClip);
+$(window).on('cut', cutToClip);
+
+$(window).on('undo', doUndo);
+$(window).on('redo', doRedo);
+// Remove highlighting after button pushes:
+$('.butn').mouseup(function() { this.blur()});
+
+$('#plsybut').on('click',(e)=>{wavesurfer.playPause(e)});
+$('#rewbut').on('click', (e)=>{wavesurfer.seekTo(0)});
+$('#plsyselbut').on('click', doPlaySel);
+$('#undobut').on('click', doUndo);
+$('#redobut').on('click', doRedo);
+$('#delbut').on('click', deleteSelected);
+$('#cutbut').on('click', cutToClip);
+$('#copybut').on('click', copyToClip);
+$('#pastebut').on('click',pasteFromClip);
+$('#normbut').on('click',normalizer);
+$('#testbut').on('click',testOfflineContext);
+$('#fadeinbut').on('click',fadeIn);
+$('#fadeoutbut').on('click',fadeOut);
+$('#selallbut').on('click',selAll);
+
+/*
+// Chrome decided to only allow the browser access to the microphone when the page has been served-up via https
+// since the FlashAir card doesn't do that, we can't record audio. Another annoying browser incapacity.
+function record()
+{
+	var mike = new Microphone({}, wavesurfer);
+
+	mike.start();
+}
+*/
+
+// data = DOMException: Only secure origins are allowed (see: https://goo.gl/Y0ZkNV).
+
 
 //editor
 function setEditData(data)

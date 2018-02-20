@@ -20,17 +20,18 @@ window.onerror = function(msg, url, line, col, error) {
 
 <script type="text/javascript" src="js/ext/jquery-3.2.1.min.js"></script>
 <script type="text/javascript" src="js/ext/handlebars.min.js"></script>
-<script type="text/javascript" src="js/ext/clipboard.min.js"></script>
+<!--
+<script type="text/javascript" src="js/ext/clipboard.js"></script>
+-->
+
 <script type="text/javascript" src="js/ext/tippy.all.min.js"></script>
 <script type="text/javascript" src="js/ext/wavesurfer.js"></script>
 <script type="text/javascript" src="jffRenderer.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.regions.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.mediasession.js"></script>
-<script type="text/javascript" src="js/ext/plugins/wavesurfer.microphone.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.timeline.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.minimap.js"></script>
 <script type="text/javascript" src="js/ext/jquery.knob.js"></script>
-
 <script type="text/javascript" src="templates.js"></script>
 
 <link rel="stylesheet" href="edit.css">
@@ -40,8 +41,8 @@ window.onerror = function(msg, url, line, col, error) {
 		<div id='filegroupplace'>
 			<table id='filegroup' class='nobord'><tr>
 				<td>File:&nbsp;<input id="fname" type="text" size="24" value=""></td>
-				<td><input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"></td>
-				<td><input type="button" value="Reload(F12)" style="width:55pt" onclick="btn_load()" ></td>
+				<td><input type="button" value="Save" style="width:55pt" onclick="btn_save()"></td>
+				<td><input type="button" value="Reload" style="width:55pt" onclick="btn_load()" ></td>
 				<td><textarea id="status" rows="2"  class="statusbox" readonly></textarea></td>
 			</tr>
 			</table>
@@ -57,16 +58,22 @@ window.onerror = function(msg, url, line, col, error) {
 <div class='butnrow'>
 <button class="butn" onclick="zoom(2)" title='Zoom in'><img src='img/glyphicons-237-zoom-in.png'/></button>
 <button class="butn" onclick="zoom(0.5)" title='Zoom out'><img src='img/glyphicons-238-zoom-out.png'/></button>
-<button class="butn" onclick="wavesurfer.playPause()" title='Play'><img src='img/glyphicons-174-play.png'/></button>
-<button class="butn" onclick="doUndo()" title='Undo'><img src='img/glyphicons-436-undo.png'/></button>
-<button class="butn" onclick="doRedo()" title='Redo'><img src='img/glyphicons-435-redo.png'/></button>
-<button class="butn" onclick="deleteSelected()" title='Delete'><img src='img/glyphicons-257-delete.png'/></button>
-<button class="butn" onclick="copySelected()" title='Copy to clipboard'><img src='img/glyphicons-512-copy.png'/></button>
-<button class="butn" onclick="normalizer()">Normalize</button>
-<button class="butn" onclick="testOfflineContext()">Test</button>
-<button class="butn" onclick="fadeIn()">Fade In</button>
-<button class="butn" onclick="fadeOut()">Fade Out</button>
+<button class="butn" id='rewbut' title='Back to start'><img src='img/glyphicons-172-fast-backward.png'/></button>
+<button class="butn" id='plsybut' title='Play'><img src='img/glyphicons-174-play.png'/></button>
+<button class="butn" id='plsyselbut' title='Play selected'><img src='img/glyphicons-221-play-button.png'/></button>
+<button class="butn" id='undobut' title='Undo'><img src='img/glyphicons-436-undo.png'/></button>
+<button class="butn" id='redobut' title='Redo'><img src='img/glyphicons-435-redo.png'/></button>
+<button class="butn" id='selallbut' title='Select All'><img src='img/glyphicons-729-resize-horizontal.png'/></button>
+<button class="butn" id='delbut' title='Delete'>DEL</button>
+<button class="butn" id='cutbut' title='Cut to clipboard'><img src='img/glyphicons-599-scissors-alt.png'/></button>
+<button class="butn" id='copybut' title='Copy to clipboard'><img src='img/glyphicons-512-copy.png'/></button>
+<button class="butn" id='pastebut' title='Paste from clipboard'><img src='img/glyphicons-513-paste.png'/></button>
 
+
+<button class="butn" id='normbut'>Normalize</button>
+<button class="butn" id='testbut'>Test</button>
+<button class="butn" id='fadeinbut'>Fade In</button>
+<button class="butn" id='fadeoutbut'>Fade Out</button>
 </div>
 <!--
 <input type="text" value="75" class="dial">
