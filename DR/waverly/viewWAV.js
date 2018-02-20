@@ -131,7 +131,10 @@ function openOnBuffer(decoded)
 		scrollParent:	true,
 		plugins:		plugs,
 		partialRender:  false,
+		renderer:	JFFCanvas,
 	});
+// Patch in an override to the drawBuffer function.
+wavesurfer.drawBuffer = overDrawBuffer;
 
 	wavesurfer.loadBlob(decoded);
 
@@ -677,18 +680,18 @@ function zoom(amt) {
 	
 	let minPxWas = wavesurfer.params.minPxPerSec;
 	let newPx = minPxWas * amt;
-
+	let zoomLimit = 44100;
+	let dur = wavesurfer.getDuration();
+	if (dur > 60) zoomLimit = 2756.25; 
+		else if (dur > 30) zoomLimit = 5512.5;
+			else if (dur > 16) zoomLimit = 11025;
+				else if (dur > 10) zoomLimit = 22050;
+	if (newPx > zoomLimit) newPx = zoomLimit;
 //	let pos = wavesurfer.drawer.getScrollX();
+	console.log(newPx);
 	wavesurfer.zoom(newPx);
-	// wavesurfer.seekTo(0);
-		
-//	wavesurfer.drawer.resetScroll(0);
-//	wavesurfer.drawer.recenterOnPosition(pos, false);
 }
 
-/*
-$('#paster').on('paste', pasteFromClip);
-*/
 //editor
 function setEditData(data)
 {
