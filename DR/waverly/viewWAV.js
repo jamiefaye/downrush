@@ -304,7 +304,7 @@ var createOfflineContext  = function (buffer) {
 function secondsToSampleNum(t, buffer) {
 	let sn = t * buffer.sampleRate;
 	if (sn < 0) return 0;
-	if (sn > buffer.getChannelData(0).length) return getChannelData(0).length
+	if (sn > buffer.getChannelData(0).length) return buffer.getChannelData(0).length
 	return Math.round(sn);
 }
 
@@ -356,11 +356,17 @@ function applyFilterTransform(setup)
 	source.buffer = working;
 	source.start();
 
+	ctx.oncomplete = function (e) {
+		pasteSelected(e.renderedBuffer);
+	}
+	ctx.startRendering();
+/*
 	ctx.startRendering().then(function(renderedBuffer) {
 		pasteSelected(renderedBuffer);
 	}).catch(function(err) {
 		alert('Rendering failed: ' + err);
 	});
+*/
 }
 
 function testOfflineContext(e) {
