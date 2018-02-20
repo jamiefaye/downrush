@@ -104,7 +104,7 @@ var unexpected_close = true;
 var wavesurfer;
 var TimelinePlugin = window.WaveSurfer.timeline;
 var RegionPlugin = window.WaveSurfer.regions;
-
+var Minimap = window.WaveSurfer.minimap;
 var disableWaveTracker;
 
 function openOnBuffer(decoded)
@@ -114,9 +114,18 @@ function openOnBuffer(decoded)
 			container: '#waveform-timeline'
 			}),
 		RegionPlugin.create({
-				dragSelection: false,
+			dragSelection: false,
 			}),
+			
+		Minimap.create({
+			container: '#minimap',
+			height: 30,
+			barHeight: 1.4,
+			interact:	true,
+			// showOverview: true,
+			})
 		];
+
 
 	$('#waveform').empty();
 	$('#waveform-timeline').empty();
