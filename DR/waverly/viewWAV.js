@@ -33,6 +33,17 @@ class UndoStack {
 		return this.index === -1;
 	}
 
+	canUndo() {
+		if(this.stack.length === 0) return false;
+		return this.index === -1 || this.index > 0;
+	}
+
+
+	canRedo() {
+		if(this.stack.length === 0 || this.index === -1) return false;
+		return this.index < this.stack.length - 1;
+	}
+
 	push(item) {
 		if (this.index >= 0) {
 			while (this.index < this.stack.length) this.stack.pop();
@@ -64,6 +75,7 @@ class UndoStack {
 };
 
 var undoStack = new UndoStack(10);
+
 
 
 function redrawWave()
@@ -438,6 +450,7 @@ var deleteSelected = function (e)
 	let ds = last - first;
 	let {numberOfChannels, sampleRate} = buffer;
 	let bufLen = length - ds;
+	if (bufLen === 0) bufLen = 1;
 	let nextBuffer = audioCtx.createBuffer(numberOfChannels, bufLen, sampleRate);
 
 	for (var cx = 0; cx < numberOfChannels; ++cx) {
@@ -683,19 +696,19 @@ function cutToClip(e) {
 function pasteFromClip(e)
 {
 	let clipBd = e.originalEvent.clipboardData;
-
-	if (!clipBd)  {
-		pasteSelected(localClipboard, true);
-		return;
+	if (clipBd) {
+		let clip = clipBd.getData('text/plain');
+		if (clip.startsWith('Ukl')) {
+			let asbin = base64ToArrayBuffer(clip);
+			wavesurfer.backend.decodeArrayBuffer(asbin, function (data) {
+			if (data) pasteSelected(data, true);
+	 	  }, function (err) {
+			alert('paste decode error');
+		  });
+		  return;
+		}
 	}
-	let clip = clipBd.getData('text/plain');
-
-	let asbin = base64ToArrayBuffer(clip);
-	wavesurfer.backend.decodeArrayBuffer(asbin, function (data) {
-		pasteSelected(data, true);
-	 }, function (err) {
-		console.log('paste decode error');
-	});
+	if (localClipboard) pasteSelected(localClipboard, true);
 }
 
 function zoom(amt) {
@@ -739,6 +752,37 @@ $('#testbut').on('click',testOfflineContext);
 $('#fadeinbut').on('click',fadeIn);
 $('#fadeoutbut').on('click',fadeOut);
 $('#selallbut').on('click',selAll);
+
+
+var playBtnImg = $('#playbutimg');
+var undoBtn = $('#undobut');
+var redoBtn = $('#redobut');
+
+function setDisable(item, state)
+{
+	item.prop("disabled", state);
+	item.css('opacity', state ? 0.3: 1.0);
+}
+
+function updateGui()
+{
+	if(!wavesurfer) return;
+	let playState = wavesurfer.isPlaying();
+
+	let newPlayImg = "img/glyphicons-174-play.png"
+	if (playState) newPlayImg = "img/glyphicons-175-pause.png";
+	if (playBtnImg.attr('src') !== newPlayImg) {
+		playBtnImg.attr('src',newPlayImg);
+	}
+
+	let canUndo = undoStack.canUndo();
+	setDisable(undoBtn, !canUndo);
+
+	let canRedo = undoStack.canRedo();
+	setDisable(redoBtn, !canRedo);
+}
+
+var guiCheck = setInterval(updateGui, 200);
 
 /*
 // Chrome decided to only allow the browser access to the microphone when the page has been served-up via https
@@ -818,7 +862,6 @@ function onLoad()
 	}
 }
 window.onload = onLoad;
-
 
 
 // Snarfed from: https://github.com/Jam3/audiobuffer-to-wav/blob/master/index.js
