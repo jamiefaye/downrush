@@ -38,7 +38,6 @@ class UndoStack {
 		return this.index === -1 || this.index > 0;
 	}
 
-
 	canRedo() {
 		if(this.stack.length === 0 || this.index === -1) return false;
 		return this.index < this.stack.length - 1;

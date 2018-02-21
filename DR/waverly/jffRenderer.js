@@ -581,6 +581,9 @@ util.frame = function (func) {
  * MultiCanvas renderer for wavesurfer. Is currently the default and sole built
  * in renderer.
  */
+
+ var canvasLimit = 500;
+
 /* export default */ class JFFCanvas extends JFDrawer {
 	/**
 	 * @param {HTMLElement} container The container node of the wavesurfer instance
@@ -619,6 +622,7 @@ util.frame = function (func) {
 		this.canvases = [];
 		/** @private */
 		this.progressWave = null;
+		this.tiledRendering = false;
 	}
 
 	/**
@@ -674,26 +678,31 @@ util.frame = function (func) {
 			totalWidth / this.maxCanvasElementWidth
 		);
 
-		while (this.canvases.length < requiredCanvases) {
+		let canvasCount = (this.tiledRendering && canvasLimit < requiredCanvases) ? canvasLimit : requiredCanvases;
+
+		while (this.canvases.length < canvasCount) {
 			this.addCanvas();
 		}
 
-		while (this.canvases.length > requiredCanvases) {
+		while (this.canvases.length > canvasCount) {
 			this.removeCanvas();
 		}
 
 		this.canvases.forEach((entry, i) => {
+			// 	reflow canvases in order
+			let leftOffset = this.maxCanvasElementWidth * i;
 			// Add some overlap to prevent vertical white stripes, keep the width even for simplicity.
 			let canvasWidth =
 				this.maxCanvasWidth + 2 * Math.ceil(this.params.pixelRatio / 2);
 
-			if (i == this.canvases.length - 1) {
+//			if (!this.tiledRendering && i === this.canvases.length - 1) {
+			if (i === this.canvases.length - 1) {
 				canvasWidth =
 					this.width -
 					this.maxCanvasWidth * (this.canvases.length - 1);
 			}
 
-			this.updateDimensions(entry, canvasWidth, this.height);
+			this.updateDimensions(entry, canvasWidth, this.height, leftOffset);
 			this.clearWaveForEntry(entry);
 		});
 	}
@@ -757,17 +766,20 @@ util.frame = function (func) {
 	 * @param {number} width The new width of the element
 	 * @param {number} height The new height of the element
 	 */
-	updateDimensions(entry, width, height) {
+	updateDimensions(entry, width, height, offset) {
 		const elementWidth = Math.round(width / this.params.pixelRatio);
 		const totalWidth = Math.round(this.width / this.params.pixelRatio);
 
 		// Where the canvas starts and ends in the waveform, represented as a decimal between 0 and 1.
+		// entry.start = offset / totalWidth || 0;
 		entry.start = entry.waveCtx.canvas.offsetLeft / totalWidth || 0;
 		entry.end = entry.start + elementWidth / totalWidth;
 
 		entry.waveCtx.canvas.width = width;
 		entry.waveCtx.canvas.height = height;
-		this.style(entry.waveCtx.canvas, { width: elementWidth + 'px' });
+		this.style(entry.waveCtx.canvas, { width: elementWidth + 'px',
+		//	 left: offset + 'px'
+		});
 
 		this.style(this.progressWave, { display: 'block' });
 
@@ -775,7 +787,8 @@ util.frame = function (func) {
 			entry.progressCtx.canvas.width = width;
 			entry.progressCtx.canvas.height = height;
 			this.style(entry.progressCtx.canvas, {
-				width: elementWidth + 'px'
+				width: elementWidth + 'px',
+			//	left:  offset + 'px'
 			});
 		}
 	}
@@ -1183,10 +1196,13 @@ util.frame = function (func) {
 	updateProgress(position) {
 		this.style(this.progressWave, { width: position + 'px' });
 	}
-	
+
  drawSamples(surfer, width, start, end)
   {
-  	
+	const requiredCanvases = Math.ceil(
+		width / this.maxCanvasElementWidth
+	);
+
 	this.setWidth(width);
 	this.clearWave();
 
@@ -1194,15 +1210,16 @@ util.frame = function (func) {
   	let buffer = backend.buffer;
 	let {numberOfChannels, sampleRate} = buffer;
 	let nSamps = buffer.getChannelData(0);
-	let spDx = sampleRate / this.params.minPxPerSec * this.params.pixelRatio;
+	let spDx = sampleRate / this.params.minPxPerSec; // ?
 
-	const height = Math.round(this.params.height * this.params.pixelRatio);
+	const height = Math.round(this.params.height * this.params.pixelRatio); // ?
 	const halfH = Math.round(height / 2);
 	const pixH = 2;
 	const pixW = Math.ceil(1/spDx) + 1;
 	let ySc = -halfH;
-	let durScale = surfer.getDuration() * this.params.minPxPerSec * this.params.pixelRatio;
-	
+	let duration = surfer.getDuration();
+	let durScale = duration * this.params.minPxPerSec; // ?
+
 	let cursorTime = surfer.getCurrentTime();
 
 	for (var c = 0; c < numberOfChannels; ++c) {
@@ -1213,9 +1230,9 @@ util.frame = function (func) {
 			let {progressCtx, waveCtx}  = entry;
 			let lhs = Math.round(entry.start * durScale);
 			let rhs = Math.round(entry.end * durScale);
-			// console.log(lhs + ", " + rhs + " " + entry.end);
+			console.log(lhs + ", " + rhs + " " + entry.start + " " + entry.end);
 			this.setFillStyles(entry);
-			let sx = entry.start * sampleRate;
+			let sx = entry.start * duration * sampleRate;
 			let x = 0;
 			for (var xx = lhs; xx < rhs; ++xx) {
 				let sxi = Math.round(sx);
@@ -1234,17 +1251,45 @@ util.frame = function (func) {
 	}
   }
 
+// periodic function called in order to maintain the tile strip
+	scrollCheck(surfer) {
+		let nowX = surfer.drawer.getScrollX();
+		// Track derivative.
+		if (this.lastScrollX === undefined) this.lastScrollX = 0;
+		lastX = this.lastScrollX;
+		this.lastScrollX = nowX;
+
+		let duration = surfer.getDuration();
+		let playState = surfer.isPlaying();
+		let normX = nowX / duration;
+		let durScale = duration * this.params.minPxPerSec * this.params.pixelRatio; // ?
+		
+		// Strategy:
+		// Find the canvas which is visable.
+		// If it isn't there, make that one.
+		// If it is there and we are playing, walk forward in time, making sure future
+		// canvases are there.
+		// If it is there and we are not playing, walk backward and forward, filling the first gap you find.
+		// If we have a first derivative of the scroll position we can give priority to the scroll derivative 
+		// direction. On huerstic would be to favor the derivative direction x 2.
+	}
+
 }
-
-
 
 // A hacked-up version of the drawBuffer routine defined in	wavesurfer.js
 // The idea	is that	at a suitably high level of	magnification, say 11025
 // we should plot samples directly rather than deal	with peak data.
 var	overDrawBuffer = function () {
-	var	nominalWidth = Math.round(this.getDuration() * this.params.minPxPerSec * this.params.pixelRatio);
+	var	nominalWidth = Math.round(this.getDuration() * this.params.minPxPerSec);
 	var	parentWidth	= this.drawer.getWidth();
 	var	width =	nominalWidth;
+
+	// If we need more than a certain number of canvases, then we will render them dynamically
+	// using a coroutine
+	const requiredCanvases = Math.ceil( width / this.params.maxCanvasElementWidth );
+
+	this.drawer.tiledRendering = this.params.minPxPerSec > 11025 || requiredCanvases >= canvasLimit; // only for tile check
+
 	var	start =	0; // this.drawer.getScrollX();
 	var	end	= Math.max(start + parentWidth,	width);
 
@@ -1272,3 +1317,4 @@ var	overDrawBuffer = function () {
 }
 	this.fireEvent('redraw', peaks,	width);
  }
+ 
