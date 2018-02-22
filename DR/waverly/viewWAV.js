@@ -137,6 +137,7 @@ wavesurfer.drawBuffer = overDrawBuffer;
 
 	wavesurfer.loadBlob(decoded);
 
+
 	wavesurfer.on('ready', function () {
 		let buf = wavesurfer.backend.buffer;
 		let dat = buf.getChannelData(0);
@@ -253,6 +254,15 @@ function setupWaveTracker() {
 		if (hasScroll && e.clientY > (r.bottom - 16)) return; // *** JFF Hack magic number.
 
 		t0 = wavesurfer.drawer.handleEvent(e);
+
+		let xD = e.clientX;
+
+		if (hasScroll) {
+			xD += wavesurfer.drawer.wrapper.scrollLeft;
+		}
+	//	let can = wavesurfer.drawer.calcCanvasInfo(xD);
+	//	console.log(Math.round(xD) + " " + can.number + " " + can.left + " " + can.right + " " + can.canvasWidth + " " + can.start + " " + can.end);
+
 		t1 = t0;
 		if (wavesurfer.isPlaying()) {
 			dragActive = false;
@@ -716,13 +726,14 @@ function zoom(amt) {
 	let newPx = minPxWas * amt;
 	let zoomLimit = 44100;
 	let dur = wavesurfer.getDuration();
+	/*
 	if (dur > 60) zoomLimit = 2756.25; 
 		else if (dur > 30) zoomLimit = 5512.5;
 			else if (dur > 16) zoomLimit = 11025;
 				else if (dur > 10) zoomLimit = 22050;
+	*/
 	if (newPx > zoomLimit) newPx = zoomLimit;
 //	let pos = wavesurfer.drawer.getScrollX();
-	console.log(newPx);
 	wavesurfer.zoom(newPx);
 }
 

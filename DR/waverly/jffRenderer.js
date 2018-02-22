@@ -582,7 +582,7 @@ util.frame = function (func) {
  * in renderer.
  */
 
- var canvasLimit = 500;
+ var canvasLimit = 6;
 
 /* export default */ class JFFCanvas extends JFDrawer {
 	/**
@@ -677,9 +677,9 @@ util.frame = function (func) {
 		const requiredCanvases = Math.ceil(
 			totalWidth / this.maxCanvasElementWidth
 		);
-
+		console.log("update size");
 		let canvasCount = (this.tiledRendering && canvasLimit < requiredCanvases) ? canvasLimit : requiredCanvases;
-
+		console.log(canvasCount);
 		while (this.canvases.length < canvasCount) {
 			this.addCanvas();
 		}
@@ -695,11 +695,12 @@ util.frame = function (func) {
 			let canvasWidth =
 				this.maxCanvasWidth + 2 * Math.ceil(this.params.pixelRatio / 2);
 
-//			if (!this.tiledRendering && i === this.canvases.length - 1) {
-			if (i === this.canvases.length - 1) {
-				canvasWidth =
-					this.width -
-					this.maxCanvasWidth * (this.canvases.length - 1);
+			if (!this.tiledRendering && i === this.canvases.length - 1) {
+				if (i === this.canvases.length - 1) {
+					canvasWidth =
+						this.width -
+						this.maxCanvasWidth * (this.canvases.length - 1);
+				}
 			}
 
 			this.updateDimensions(entry, canvasWidth, this.height, leftOffset);
@@ -771,14 +772,18 @@ util.frame = function (func) {
 		const totalWidth = Math.round(this.width / this.params.pixelRatio);
 
 		// Where the canvas starts and ends in the waveform, represented as a decimal between 0 and 1.
-		// entry.start = offset / totalWidth || 0;
-		entry.start = entry.waveCtx.canvas.offsetLeft / totalWidth || 0;
+		
+		if (!entry) {
+			console.log("Null entry!");
+		}
+		entry.start = offset / totalWidth || 0;
+		// entry.start = entry.waveCtx.canvas.offsetLeft / totalWidth || 0;
 		entry.end = entry.start + elementWidth / totalWidth;
 
 		entry.waveCtx.canvas.width = width;
 		entry.waveCtx.canvas.height = height;
 		this.style(entry.waveCtx.canvas, { width: elementWidth + 'px',
-		//	 left: offset + 'px'
+			left: offset + 'px'
 		});
 
 		this.style(this.progressWave, { display: 'block' });
@@ -788,11 +793,29 @@ util.frame = function (func) {
 			entry.progressCtx.canvas.height = height;
 			this.style(entry.progressCtx.canvas, {
 				width: elementWidth + 'px',
-			//	left:  offset + 'px'
+				left:  offset + 'px',
 			});
 		}
-	}
 
+// Create an empty <div> to hold open
+	if (this.tiledRendering && !this.spacer) {
+	 this.spacer = this.wrapper.appendChild(
+	  this.style(document.createElement('div'), {
+		id: 'spacerdiv',
+		position: 'absolute',
+		zIndex: 2,
+		top: 0,
+		bottom: '1px',
+		width: '1px',
+		left: totalWidth + 'px',
+		height: '100%',
+		pointerEvents: 'none'
+		}));
+	  }
+	  if (this.spacer) {
+	  	this.style(this.spacer, {left: totalWidth + 'px'});
+	  }
+	}
 	/**
 	 * Clear the whole waveform
 	 */
@@ -942,6 +965,7 @@ util.frame = function (func) {
 	 */
 	drawLine(peaks, absmax, halfH, offsetY, start, end) {
 		this.canvases.forEach(entry => {
+			// let t0 = performance.now();
 			this.setFillStyles(entry);
 			this.drawLineToContext(
 				entry,
@@ -963,6 +987,9 @@ util.frame = function (func) {
 				start,
 				end
 			);
+			// let t1 = performance.now();
+			// let dT = t1 - t0;
+			// console.log(dT);
 		});
 	}
 
@@ -1197,84 +1224,169 @@ util.frame = function (func) {
 		this.style(this.progressWave, { width: position + 'px' });
 	}
 
- drawSamples(surfer, width, start, end)
-  {
-	const requiredCanvases = Math.ceil(
-		width / this.maxCanvasElementWidth
-	);
 
-	this.setWidth(width);
-	this.clearWave();
+	calcCanvasInfo(x) {
+		let x1 = x / this.params.pixelRatio;
+		let canN = Math.floor(x1 / this.maxCanvasElementWidth);
+		let lhs = canN * this.maxCanvasElementWidth;
+		let rhs = lhs + this.maxCanvasElementWidth;
+		let canvasWidth = this.maxCanvasWidth + 2 * Math.ceil(this.params.pixelRatio / 2);
 
-  	let backend = surfer.backend;
-  	let buffer = backend.buffer;
+		const elementWidth = Math.round(canvasWidth / this.params.pixelRatio);
+		const totalWidth = Math.round(this.width / this.params.pixelRatio);
+
+		// Where the canvas starts and ends in the waveform, represented as a decimal between 0 and 1.
+		let start = lhs / totalWidth || 0;
+		// entry.start = entry.waveCtx.canvas.offsetLeft / totalWidth || 0;
+		let end = start + elementWidth / totalWidth;
+
+		return {
+			number: canN,
+			left:	lhs,
+			right:	rhs,
+			canvasWidth:  canvasWidth,
+			start:	start,
+			end:	end,
+		}
+	}
+
+  imageSampleCanvas(surfer, entry) {
+	let t0 = performance.now();
+	let buffer = surfer.backend.buffer;
 	let {numberOfChannels, sampleRate} = buffer;
-	let nSamps = buffer.getChannelData(0);
-	let spDx = sampleRate / this.params.minPxPerSec; // ?
-
+	let spDx = sampleRate / this.params.minPxPerSec;
 	const height = Math.round(this.params.height * this.params.pixelRatio); // ?
 	const halfH = Math.round(height / 2);
 	const pixH = 2;
 	const pixW = Math.ceil(1/spDx) + 1;
-	let ySc = -halfH;
-	let duration = surfer.getDuration();
-	let durScale = duration * this.params.minPxPerSec; // ?
-
-	let cursorTime = surfer.getCurrentTime();
+	const ySc = -halfH;
+	const duration = surfer.getDuration();
+	const durScale = duration * this.params.minPxPerSec;
 
 	for (var c = 0; c < numberOfChannels; ++c) {
-		const offsetY = height * c || 0;
 		var chan = buffer.getChannelData(c);
-		let yoff = halfH + c * height;
-		this.canvases.forEach(entry => {
-			let {progressCtx, waveCtx}  = entry;
-			let lhs = Math.round(entry.start * durScale);
-			let rhs = Math.round(entry.end * durScale);
-			console.log(lhs + ", " + rhs + " " + entry.start + " " + entry.end);
-			this.setFillStyles(entry);
-			let sx = entry.start * duration * sampleRate;
-			let x = 0;
-			for (var xx = lhs; xx < rhs; ++xx) {
-				let sxi = Math.round(sx);
-				let y = yoff + Math.round(chan[sxi] * ySc);
+		let yoff = halfH + c * height;		
+		let {progressCtx, waveCtx}  = entry;
+		let lhs = Math.round(entry.start * durScale);
+		let rhs = Math.round(entry.end * durScale);
 
-				sx += spDx;
-				//waveCtx.fillRect(x, y, width, height);
-				waveCtx.fillRect(
-					x, y, pixW, pixH);
-				progressCtx.fillRect(
-					x, y, pixW, pixH);	
-					
-				x++;
-			}
-		});
+		console.log(lhs + ", " + rhs + " " + entry.start + " " + entry.end);
+
+		this.setFillStyles(entry);
+		let sx = entry.start * duration * sampleRate;
+		let w = rhs - lhs;
+		for (var x = 0; x < w; ++x) {
+			let y = yoff + Math.round(chan[Math.round(sx)] * ySc);
+			sx += spDx;
+			waveCtx.fillRect(x, y, pixW, pixH);
+			if(progressCtx) progressCtx.fillRect(x, y, pixW, pixH);		
+		}
 	}
-  }
+	let t1 = performance.now();
+	let dT = t1 - t0;
+	//console.log(dT);
+}
 
 // periodic function called in order to maintain the tile strip
 	scrollCheck(surfer) {
-		let nowX = surfer.drawer.getScrollX();
+		let nowX = surfer.drawer.getScrollX(); // NowX should be in canvas coordinates.
 		// Track derivative.
 		if (this.lastScrollX === undefined) this.lastScrollX = 0;
-		lastX = this.lastScrollX;
+		let lastX = this.lastScrollX;
 		this.lastScrollX = nowX;
 
 		let duration = surfer.getDuration();
 		let playState = surfer.isPlaying();
-		let normX = nowX / duration;
-		let durScale = duration * this.params.minPxPerSec * this.params.pixelRatio; // ?
-		
-		// Strategy:
+
+		let durScale = duration * this.params.minPxPerSec;
+		let normX = nowX / durScale;
+		// console.log(normX);
+		let foundCan;
+		let canvToFill;
+		let maxDist = 0;
 		// Find the canvas which is visable.
+
+		this.canvases.forEach(entry => {
+			if (normX >= entry.start && normX < entry.end) {
+				foundCan = entry;
+			} else {
+				let midPt = (entry.start + entry.end ) / 2;
+				let dist = Math.abs(normX - midPt);
+				if (dist >= maxDist) {
+					maxDist = dist;
+					canvToFill = entry;
+				}
+			}
+		});
+
+		let that = this;
+		var whereX = -1;
 		// If it isn't there, make that one.
+		 // If it is already there, find the next one
+		if (foundCan) {
+			let ourWid = foundCan.end - foundCan.start;
+			let ourMid = foundCan.start + ourWid / 2;
+			let seekX = ourMid + ourWid;
+			let nextCan = that.canvases.find(function(can) {
+				return seekX >= can.start && seekX < can.end
+			});
+			if (!nextCan) {
+				console.log("Filling forward.");
+				whereX = seekX * durScale;
+			} else {
+				seekX = ourMid - ourWid;
+				nextCan = that.canvases.find(function(can) {
+					return seekX >= can.start && seekX < can.end
+				});
+				if(!nextCan) {
+					whereX = seekX  * durScale;
+					console.log("Filling backward.");
+				}
+			}
+		} else {
+			whereX = nowX;
+			console.log("Filling missing.");
+		}
+
+		if (whereX >= 0 && canvToFill) {
+			let can = wavesurfer.drawer.calcCanvasInfo(whereX);
+			let {canvasWidth, left} = can;
+			this.updateDimensions(canvToFill, canvasWidth, this.height, left);
+			if (whereX < canvToFill.start || whereX > canvToFill.end) {
+				console.log("whereX out of range: " + whereX);
+			}
+			console.log("imagining: " + Math.round(whereX) + " " + can.number + " " + can.left + " " + can.right + " " + can.canvasWidth + " " + can.start + " " + can.end);
+			this.clearWaveForEntry(canvToFill);
+			this.imageSampleCanvas(surfer, canvToFill);
+		}
+
+		// Strategy:
+
 		// If it is there and we are playing, walk forward in time, making sure future
 		// canvases are there.
 		// If it is there and we are not playing, walk backward and forward, filling the first gap you find.
 		// If we have a first derivative of the scroll position we can give priority to the scroll derivative 
-		// direction. On huerstic would be to favor the derivative direction x 2.
+		// direction. On heuristic would be to favor the derivative direction x 2.
 	}
 
-}
+ 	drawSamples(surfer, width)
+  	{
+		console.log("drawSampes " + this.maxCanvasElementWidth + " " + this.maxCanvasWidth);
+		this.setWidth(width);
+		this.clearWave();
+		this.canvases.forEach(entry => {this.imageSampleCanvas(surfer, entry)});
+		let that = this;
+		if (!this.scrollingSetUp) {
+			this.scrollingSetUp = true;
+			surfer.on('scroll', function (screvt) {
+				if (that.tiledRendering) {
+					that.scrollCheck(surfer);
+				}
+			});
+		}
+	}
+
+} // End of class.
 
 // A hacked-up version of the drawBuffer routine defined in	wavesurfer.js
 // The idea	is that	at a suitably high level of	magnification, say 11025
@@ -1286,9 +1398,9 @@ var	overDrawBuffer = function () {
 
 	// If we need more than a certain number of canvases, then we will render them dynamically
 	// using a coroutine
-	const requiredCanvases = Math.ceil( width / this.params.maxCanvasElementWidth );
+	const requiredCanvases = Math.ceil( width / this.params.maxCanvasWidth * this.params.pixelRatio);
 
-	this.drawer.tiledRendering = this.params.minPxPerSec > 11025 || requiredCanvases >= canvasLimit; // only for tile check
+	this.drawer.tiledRendering = this.params.minPxPerSec >= 5512 && requiredCanvases > canvasLimit; // only for tile check
 
 	var	start =	0; // this.drawer.getScrollX();
 	var	end	= Math.max(start + parentWidth,	width);
@@ -1300,8 +1412,8 @@ var	overDrawBuffer = function () {
 		end	= width;
 	}
 	var	peaks =	void 0;
-	if (this.params.minPxPerSec	>= 11025) {
-		this.drawer.drawSamples(this, width, start, end);
+	if (this.params.minPxPerSec	>= 2560) {
+		this.drawer.drawSamples(this, width);
 	} else {
 	  if (this.params.partialRender) {
 		var	newRanges =	this.peakCache.addRangeToPeakCache(width, start, end);
@@ -1316,5 +1428,6 @@ var	overDrawBuffer = function () {
 	 }
 }
 	this.fireEvent('redraw', peaks,	width);
+
  }
  
