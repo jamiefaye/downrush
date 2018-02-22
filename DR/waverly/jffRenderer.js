@@ -677,9 +677,9 @@ util.frame = function (func) {
 		const requiredCanvases = Math.ceil(
 			totalWidth / this.maxCanvasElementWidth
 		);
-		console.log("update size");
+//		console.log("update size");
 		let canvasCount = (this.tiledRendering && canvasLimit < requiredCanvases) ? canvasLimit : requiredCanvases;
-		console.log(canvasCount);
+
 		while (this.canvases.length < canvasCount) {
 			this.addCanvas();
 		}
@@ -1270,7 +1270,7 @@ util.frame = function (func) {
 		let lhs = Math.round(entry.start * durScale);
 		let rhs = Math.round(entry.end * durScale);
 
-		console.log(lhs + ", " + rhs + " " + entry.start + " " + entry.end);
+//		console.log(lhs + ", " + rhs + " " + entry.start + " " + entry.end);
 
 		this.setFillStyles(entry);
 		let sx = entry.start * duration * sampleRate;
@@ -1331,7 +1331,7 @@ util.frame = function (func) {
 				return seekX >= can.start && seekX < can.end
 			});
 			if (!nextCan) {
-				console.log("Filling forward.");
+//				console.log("Filling forward.");
 				whereX = seekX * durScale;
 			} else {
 				seekX = ourMid - ourWid;
@@ -1340,12 +1340,12 @@ util.frame = function (func) {
 				});
 				if(!nextCan) {
 					whereX = seekX  * durScale;
-					console.log("Filling backward.");
+//					console.log("Filling backward.");
 				}
 			}
 		} else {
 			whereX = nowX;
-			console.log("Filling missing.");
+//			console.log("Filling missing.");
 		}
 
 		if (whereX >= 0 && canvToFill) {
@@ -1355,23 +1355,15 @@ util.frame = function (func) {
 			if (whereX < canvToFill.start || whereX > canvToFill.end) {
 				console.log("whereX out of range: " + whereX);
 			}
-			console.log("imagining: " + Math.round(whereX) + " " + can.number + " " + can.left + " " + can.right + " " + can.canvasWidth + " " + can.start + " " + can.end);
+//			console.log("imagining: " + Math.round(whereX) + " " + can.number + " " + can.left + " " + can.right + " " + can.canvasWidth + " " + can.start + " " + can.end);
 			this.clearWaveForEntry(canvToFill);
 			this.imageSampleCanvas(surfer, canvToFill);
 		}
-
-		// Strategy:
-
-		// If it is there and we are playing, walk forward in time, making sure future
-		// canvases are there.
-		// If it is there and we are not playing, walk backward and forward, filling the first gap you find.
-		// If we have a first derivative of the scroll position we can give priority to the scroll derivative 
-		// direction. On heuristic would be to favor the derivative direction x 2.
 	}
 
  	drawSamples(surfer, width)
   	{
-		console.log("drawSampes " + this.maxCanvasElementWidth + " " + this.maxCanvasWidth);
+//		console.log("drawSampes " + this.maxCanvasElementWidth + " " + this.maxCanvasWidth);
 		this.setWidth(width);
 		this.clearWave();
 		this.canvases.forEach(entry => {this.imageSampleCanvas(surfer, entry)});
