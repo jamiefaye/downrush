@@ -426,7 +426,7 @@ util.frame = function (func) {
 	 * @param {number} width
 	 */
 	setWidth(width) {
-		if (this.width == width) {
+		if (!this.tiledRendering && this.width == width) {
 			return false;
 		}
 
@@ -1224,10 +1224,12 @@ util.frame = function (func) {
 		this.style(this.progressWave, { width: position + 'px' });
 	}
 
-
-	calcCanvasInfo(x) {
-		let x1 = x / this.params.pixelRatio;
+	calcCanvasInfo(surfer, xN) {
+		const duration = surfer.getDuration();
+		const durScale = duration * this.params.minPxPerSec;
+		let x1 = xN * durScale / this.params.pixelRatio;
 		let canN = Math.floor(x1 / this.maxCanvasElementWidth);
+		
 		let lhs = canN * this.maxCanvasElementWidth;
 		let rhs = lhs + this.maxCanvasElementWidth;
 		let canvasWidth = this.maxCanvasWidth + 2 * Math.ceil(this.params.pixelRatio / 2);
@@ -1287,19 +1289,27 @@ util.frame = function (func) {
 	//console.log(dT);
 }
 
-// periodic function called in order to maintain the tile strip
+// periodic function called in order to maintain the tile strip.
+// return true if a canvas to reimage was found.
 	scrollCheck(surfer) {
-		let nowX = surfer.drawer.getScrollX(); // NowX should be in canvas coordinates.
+
+		let scrX = surfer.drawer.getScrollX(); // scrX should be in canvas coordinates.
 		// Track derivative.
 		if (this.lastScrollX === undefined) this.lastScrollX = 0;
 		let lastX = this.lastScrollX;
-		this.lastScrollX = nowX;
+		this.lastScrollX = scrX;
 
 		let duration = surfer.getDuration();
+		let durScale = duration * this.params.minPxPerSec;
+		let normX = scrX / durScale;
+
 		let playState = surfer.isPlaying();
 
-		let durScale = duration * this.params.minPxPerSec;
-		let normX = nowX / durScale;
+		if (normX > 1.0) {
+			console.log("clipping normX from: " + normX);
+			normX = 1.0;
+		}
+
 		// console.log(normX);
 		let foundCan;
 		let canvToFill;
@@ -1307,14 +1317,19 @@ util.frame = function (func) {
 		// Find the canvas which is visable.
 
 		this.canvases.forEach(entry => {
-			if (normX >= entry.start && normX < entry.end) {
+			if (normX >= entry.start && normX < entry.end && !entry.hidden) {
 				foundCan = entry;
 			} else {
-				let midPt = (entry.start + entry.end ) / 2;
-				let dist = Math.abs(normX - midPt);
-				if (dist >= maxDist) {
-					maxDist = dist;
+				if (entry.hidden) { // first hidden entry found always wins.
 					canvToFill = entry;
+					maxDist = -1; // use -1 as a flag to stop compares.
+				} else if (maxDist >= 0) {
+					let midPt = (entry.start + entry.end ) / 2;
+					let dist = Math.abs(normX - midPt);
+					if (dist >= maxDist) {
+						maxDist = dist;
+						canvToFill = entry;
+					}
 				}
 			}
 		});
@@ -1323,56 +1338,82 @@ util.frame = function (func) {
 		var whereX = -1;
 		// If it isn't there, make that one.
 		 // If it is already there, find the next one
-		if (foundCan) {
+
+		if (!foundCan) {
+			whereX = normX;
+//			console.log("Filling missing.");
+		} else {
 			let ourWid = foundCan.end - foundCan.start;
 			let ourMid = foundCan.start + ourWid / 2;
 			let seekX = ourMid + ourWid;
-			let nextCan = that.canvases.find(function(can) {
+			if (seekX > 1.0) seekX = 1.0;
+
+			let foundUp = that.canvases.find(function(can) {
 				return seekX >= can.start && seekX < can.end
 			});
-			if (!nextCan) {
+			if (!foundUp) {
 //				console.log("Filling forward.");
-				whereX = seekX * durScale;
+				whereX = seekX;
 			} else {
 				seekX = ourMid - ourWid;
-				nextCan = that.canvases.find(function(can) {
+				if (seekX < 0) seekX == 0;
+					let foundDn = that.canvases.find(function(can) {
 					return seekX >= can.start && seekX < can.end
 				});
-				if(!nextCan) {
-					whereX = seekX  * durScale;
+				if(!foundDn) {
+					whereX = seekX;
 //					console.log("Filling backward.");
 				}
 			}
-		} else {
-			whereX = nowX;
-//			console.log("Filling missing.");
 		}
 
 		if (whereX >= 0 && canvToFill) {
-			let can = wavesurfer.drawer.calcCanvasInfo(whereX);
+			let can = wavesurfer.drawer.calcCanvasInfo(surfer, whereX);
 			let {canvasWidth, left} = can;
 			this.updateDimensions(canvToFill, canvasWidth, this.height, left);
 			if (whereX < canvToFill.start || whereX > canvToFill.end) {
-				console.log("whereX out of range: " + whereX);
+				console.log("whereX out of range: " + whereX + " start: " + canvToFill.start + " end: " + canvToFill.end);
 			}
-//			console.log("imagining: " + Math.round(whereX) + " " + can.number + " " + can.left + " " + can.right + " " + can.canvasWidth + " " + can.start + " " + can.end);
+			console.log("imagining: " + Math.round(whereX) + " " + can.number + " " + can.left + " " + can.right + " " + can.canvasWidth + " " + can.start + " " + can.end);
 			this.clearWaveForEntry(canvToFill);
 			this.imageSampleCanvas(surfer, canvToFill);
+			canvToFill.hidden = false;
+			return true;
 		}
+
+		return false;
 	}
 
- 	drawSamples(surfer, width)
-  	{
+	drawSamples(surfer, width)
+	{
 //		console.log("drawSampes " + this.maxCanvasElementWidth + " " + this.maxCanvasWidth);
 		this.setWidth(width);
 		this.clearWave();
-		this.canvases.forEach(entry => {this.imageSampleCanvas(surfer, entry)});
 		let that = this;
-		if (!this.scrollingSetUp) {
+		if (this.tiledRendering) {
+			// Mark all canvases as hidden.
+			this.canvases.forEach(entry => entry.hidden = true);
+
+			let repaint = function () {
+				let ctr = 0;
+				while (that.scrollCheck(surfer)) {
+					console.log('Imaging tile ' + ctr);
+					if (ctr++ > canvasLimit) {
+						let cat = 2;
+						alert('over limit imaging tile');
+					}
+				}
+			}
+			setTimeout(repaint);
+		} else {
+			this.canvases.forEach(entry => {that.imageSampleCanvas(surfer, entry)});
+		}
+
+		if (!this.scrollingSetUp && this.tiledRendering) {
 			this.scrollingSetUp = true;
 			surfer.on('scroll', function (screvt) {
 				if (that.tiledRendering) {
-					that.scrollCheck(surfer);
+					if(that.scrollCheck(surfer)) that.scrollCheck(surfer);
 				}
 			});
 		}
