@@ -115,7 +115,6 @@ function openOnBuffer(decoded)
 			})
 		];
 
-
 	$('#waveform').empty();
 	$('#waveform-timeline').empty();
 	$('#minimap').empty();
@@ -131,6 +130,7 @@ function openOnBuffer(decoded)
 		plugins:		plugs,
 		partialRender:  false,
 		renderer:	JFFCanvas,
+	//	barWidth:	1,
 	});
 // Patch in an override to the drawBuffer function.
 wavesurfer.drawBuffer = overDrawBuffer;

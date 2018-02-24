@@ -149,6 +149,7 @@ util.max = function max(values) {
 	return largest;
 }
 
+/*
 var reqAnimationFrame = window.requestAnimationFrame ||
 	window.webkitRequestAnimationFrame ||
 	window.mozRequestAnimationFrame ||
@@ -160,7 +161,7 @@ var reqAnimationFrame = window.requestAnimationFrame ||
 util.frame = function (func) {
 	return (...args) => reqAnimationFrame(() => func(...args));
 }
-
+*/
 
 /*** End of import hack ***/
 
@@ -326,10 +327,11 @@ util.frame = function (func) {
 		if (!this.setWidth(length)) {
 			this.clearWave();
 		}
-
+		let can = this.canvases[0];
+		
 		this.params.barWidth
-			? this.drawBars(peaks, 0, start, end)
-			: this.drawWave(peaks, 0, start, end);
+			? this.drawBars(peaks, 0, start, end, can)
+			: this.drawWave(peaks, 0, start, end, can);
 	}
 
 	/**
@@ -423,7 +425,7 @@ util.frame = function (func) {
 	/**
 	 * Set the width of the container
 	 *
-	 * @param {number} width
+	 * @param {number} width (in canvas units)
 	 */
 	setWidth(width) {
 		if (!this.tiledRendering && this.width == width) {
@@ -703,7 +705,7 @@ util.frame = function (func) {
 				}
 			}
 
-			this.updateDimensions(entry, canvasWidth, this.height, leftOffset);
+			this.updateDimensions(entry, canvasWidth, this.height, leftOffset, this.maxCanvasWidth * i);
 			this.clearWaveForEntry(entry);
 		});
 	}
@@ -764,13 +766,14 @@ util.frame = function (func) {
 	 *
 	 * @private
 	 * @param {CanvasEntry} entry
-	 * @param {number} width The new width of the element
+	 * @param {number} width The new width of the element in canvas coordinates
 	 * @param {number} height The new height of the element
+	 * @param {number} offset Offset of the element in css coordinates
+	 * @param {number} leftCanX Offset of the element in canvas coordinates.
 	 */
-	updateDimensions(entry, width, height, offset) {
-		const elementWidth = Math.round(width / this.params.pixelRatio);
+	updateDimensions(entry, width, height, offset, leftCanX) {
 		const totalWidth = Math.round(this.width / this.params.pixelRatio);
-
+		const elementWidth = Math.round(width / this.params.pixelRatio);
 		// Where the canvas starts and ends in the waveform, represented as a decimal between 0 and 1.
 		
 		if (!entry) {
@@ -779,7 +782,7 @@ util.frame = function (func) {
 		entry.start = offset / totalWidth || 0;
 		// entry.start = entry.waveCtx.canvas.offsetLeft / totalWidth || 0;
 		entry.end = entry.start + elementWidth / totalWidth;
-
+		entry.leftX = leftCanX;
 		entry.waveCtx.canvas.width = width;
 		entry.waveCtx.canvas.height = height;
 		this.style(entry.waveCtx.canvas, { width: elementWidth + 'px',
@@ -858,8 +861,8 @@ util.frame = function (func) {
 	 * @param {number} end The x-offset of the end of the area that should be
 	 * rendered
 	 */
-	drawBars(peaks, channelIndex, start, end) {
-		return this.prepareDraw(
+	drawBars(peaks, channelIndex, start, end, canvas) {
+		this.prepareDraw(
 			peaks,
 			channelIndex,
 			start,
@@ -896,10 +899,11 @@ util.frame = function (func) {
 						i + this.halfPixel,
 						halfH - h + offsetY,
 						bar + this.halfPixel,
-						h * 2
+						h * 2,
+						canvas
 					);
 				}
-			}
+			}, canvas
 		);
 	}
 
@@ -915,8 +919,8 @@ util.frame = function (func) {
 	 * @param {number?} end The x-offset of the end of the area that should be
 	 * rendered
 	 */
-	drawWave(peaks, channelIndex, start, end) {
-		return this.prepareDraw(
+	drawWave(peaks, channelIndex, start, end, canvas) {
+		this.prepareDraw(
 			peaks,
 			channelIndex,
 			start,
@@ -936,7 +940,7 @@ util.frame = function (func) {
 				// if drawWave was called within ws.empty we don't pass a start and
 				// end and simply want a flat line
 				if (start !== undefined) {
-					this.drawLine(peaks, absmax, halfH, offsetY, start, end);
+					this.drawLine(peaks, absmax, halfH, offsetY, start, end, canvas);
 				}
 
 				// Always draw a median line
@@ -944,9 +948,11 @@ util.frame = function (func) {
 					0,
 					halfH + offsetY - this.halfPixel,
 					this.width,
-					this.halfPixel
+					this.halfPixel,
+					canvas
 				);
-			}
+			},
+			canvas
 		);
 	}
 
@@ -963,34 +969,31 @@ util.frame = function (func) {
 	 * @param {number} end The x-offset of the end of the area that
 	 * should be rendered
 	 */
-	drawLine(peaks, absmax, halfH, offsetY, start, end) {
-		this.canvases.forEach(entry => {
-			// let t0 = performance.now();
-			this.setFillStyles(entry);
-			this.drawLineToContext(
-				entry,
-				entry.waveCtx,
-				peaks,
-				absmax,
-				halfH,
-				offsetY,
-				start,
-				end
-			);
-			this.drawLineToContext(
-				entry,
-				entry.progressCtx,
-				peaks,
-				absmax,
-				halfH,
-				offsetY,
-				start,
-				end
-			);
-			// let t1 = performance.now();
-			// let dT = t1 - t0;
-			// console.log(dT);
-		});
+	drawLine(peaks, absmax, halfH, offsetY, start, end, entry) {     		// let t0 = performance.now();
+		this.setFillStyles(entry);
+		this.drawLineToContext(
+			entry,
+			entry.waveCtx,
+			peaks,
+			absmax,
+			halfH,
+			offsetY,
+			start,
+			end
+		);
+		this.drawLineToContext(
+			entry,
+			entry.progressCtx,
+			peaks,
+			absmax,
+			halfH,
+			offsetY,
+			start,
+			end
+		);
+		// let t1 = performance.now();
+		// let dT = t1 - t0;
+		// console.log(dT);
 	}
 
 	/**
@@ -1014,6 +1017,8 @@ util.frame = function (func) {
 		}
 
 		const length = peaks.length / 2;
+	//	const scale = this.width != length ? this.width / length : 1;
+		
 		const scale =
 			this.params.fillParent && this.width != length
 				? this.width / length
@@ -1024,7 +1029,7 @@ util.frame = function (func) {
 		// of course, this is the last canvas.
 		const last = Math.round(length * entry.end) + 1;
 		if (first > end || last < start) {
-			return;
+//			return;
 		}
 		const canvasStart = Math.min(first, start);
 		const canvasEnd = Math.max(last, end);
@@ -1069,47 +1074,24 @@ util.frame = function (func) {
 	 * @param {number} width
 	 * @param {number} height
 	 */
-	fillRect(x, y, width, height) {
-		const startCanvas = Math.floor(x / this.maxCanvasWidth);
-		const endCanvas = Math.min(
-			Math.ceil((x + width) / this.maxCanvasWidth) + 1,
-			this.canvases.length
+	fillRect(x, y, width, height, entry) {
+		this.setFillStyles(entry);
+
+		this.fillRectToContext(
+			entry.waveCtx,
+			x,
+			y,
+			width,
+			height
 		);
-		let i;
-		for (i = startCanvas; i < endCanvas; i++) {
-			const entry = this.canvases[i];
-			const leftOffset = i * this.maxCanvasWidth;
 
-			const intersection = {
-				x1: Math.max(x, i * this.maxCanvasWidth),
-				y1: y,
-				x2: Math.min(
-					x + width,
-					i * this.maxCanvasWidth + entry.waveCtx.canvas.width
-				),
-				y2: y + height
-			};
-
-			if (intersection.x1 < intersection.x2) {
-				this.setFillStyles(entry);
-
-				this.fillRectToContext(
-					entry.waveCtx,
-					intersection.x1 - leftOffset,
-					intersection.y1,
-					intersection.x2 - intersection.x1,
-					intersection.y2 - intersection.y1
-				);
-
-				this.fillRectToContext(
-					entry.progressCtx,
-					intersection.x1 - leftOffset,
-					intersection.y1,
-					intersection.x2 - intersection.x1,
-					intersection.y2 - intersection.y1
-				);
-			}
-		}
+		this.fillRectToContext(
+			entry.progressCtx,
+			x,
+			y,
+			width,
+			height
+		);
 	}
 
 	/**
@@ -1126,49 +1108,54 @@ util.frame = function (func) {
 	 * rendered
 	 * @param {function} fn The render function to call
 	 */
-	prepareDraw(peaks, channelIndex, start, end, fn) {
-		return util.frame(() => {
-			// Split channels and call this function with the channelIndex set
-			if (peaks[0] instanceof Array) {
-				const channels = peaks;
-				if (this.params.splitChannels) {
-					this.setHeight(
-						channels.length *
-							this.params.height *
-							this.params.pixelRatio
-					);
-					return channels.forEach((channelPeaks, i) =>
-						this.prepareDraw(channelPeaks, i, start, end, fn)
-					);
-				}
-				peaks = channels[0];
-			}
-			// calculate maximum modulation value, either from the barHeight
-			// parameter or if normalize=true from the largest value in the peak
-			// set
-			let absmax = 1 / this.params.barHeight;
-			if (this.params.normalize) {
-				const max = util.max(peaks);
-				const min = util.min(peaks);
-				absmax = -min > max ? -min : max;
-			}
+	prepareDraw(peaks, channelIndex, start, end, fn, canvas) {
+//		if (!peaks) {
+//			let cat = 2;
+//		}
+	// Split channels and call this function with the channelIndex set
+	if (!peaks) {
+		let cat = 3;
+	}
+	if (peaks[0] instanceof Array) {
+		const channels = peaks;
+		if (this.params.splitChannels) {
+			this.setHeight(
+				channels.length *
+					this.params.height *
+					this.params.pixelRatio
+			);
+			return channels.forEach((channelPeaks, i) =>
+				this.prepareDraw(channelPeaks, i, start, end, fn, canvas)
+			);
+		}
+		peaks = channels[0];
+	}
+	// calculate maximum modulation value, either from the barHeight
+	// parameter or if normalize=true from the largest value in the peak
+	// set
+	let absmax = 1 / this.params.barHeight;
+	if (this.params.normalize) {
+		const max = util.max(peaks);
+		const min = util.min(peaks);
+		absmax = -min > max ? -min : max;
+	}
 
-			// Bar wave draws the bottom only as a reflection of the top,
-			// so we don't need negative values
-			const hasMinVals = [].some.call(peaks, val => val < 0);
-			const height = this.params.height * this.params.pixelRatio;
-			const offsetY = height * channelIndex || 0;
-			const halfH = height / 2;
+	// Bar wave draws the bottom only as a reflection of the top,
+	// so we don't need negative values
+	const hasMinVals = [].some.call(peaks, val => val < 0);
+	const height = this.params.height * this.params.pixelRatio;
+	const offsetY = height * channelIndex || 0;
+	const halfH = height / 2;
 
-			return fn({
-				absmax: absmax,
-				hasMinVals: hasMinVals,
-				height: height,
-				offsetY: offsetY,
-				halfH: halfH,
-				peaks: peaks
-			});
-		})();
+	return fn({
+		absmax: absmax,
+		hasMinVals: hasMinVals,
+		height: height,
+		offsetY: offsetY,
+		halfH: halfH,
+		peaks: peaks,
+		entry: canvas,
+	});
 	}
 
 	/**
@@ -1227,32 +1214,29 @@ util.frame = function (func) {
 	calcCanvasInfo(surfer, xN) {
 		const duration = surfer.getDuration();
 		const durScale = duration * this.params.minPxPerSec;
-		let x1 = xN * durScale / this.params.pixelRatio;
+		let x1 = xN * durScale / this.params.pixelRatio;;
 		let canN = Math.floor(x1 / this.maxCanvasElementWidth);
-		
-		let lhs = canN * this.maxCanvasElementWidth;
-		let rhs = lhs + this.maxCanvasElementWidth;
+
+		let lhs = canN * this.maxCanvasElementWidth; // lhs in css coordinates
+		let leftOff = canN * this.maxCanvasWidth;
 		let canvasWidth = this.maxCanvasWidth + 2 * Math.ceil(this.params.pixelRatio / 2);
 
-		const elementWidth = Math.round(canvasWidth / this.params.pixelRatio);
-		const totalWidth = Math.round(this.width / this.params.pixelRatio);
+		// If this is the last canvas position, trim its size back so as to not overhang
+		let rhsc = (canN + 1) *  this.maxCanvasWidth;
+		if (rhsc > this.width){
+			canvasWidth = this.width - this.maxCanvasWidth * canN	
+		}
 
-		// Where the canvas starts and ends in the waveform, represented as a decimal between 0 and 1.
-		let start = lhs / totalWidth || 0;
-		// entry.start = entry.waveCtx.canvas.offsetLeft / totalWidth || 0;
-		let end = start + elementWidth / totalWidth;
-
+// actually used: canvasWidth, left, leftOff;
 		return {
 			number: canN,
 			left:	lhs,
-			right:	rhs,
 			canvasWidth:  canvasWidth,
-			start:	start,
-			end:	end,
+			leftOff: leftOff,
 		}
 	}
 
-  imageSampleCanvas(surfer, entry) {
+  imageSingleCanvas(surfer, entry, peaks) {
 	let t0 = performance.now();
 	let buffer = surfer.backend.buffer;
 	let {numberOfChannels, sampleRate} = buffer;
@@ -1265,12 +1249,23 @@ util.frame = function (func) {
 	const duration = surfer.getDuration();
 	const durScale = duration * this.params.minPxPerSec;
 
+	let lhs = Math.round(entry.start * durScale);
+	let rhs = Math.round(entry.end * durScale);
+	if (!entry) {
+		let cat = 3;
+	}
+	if (this.params.minPxPerSec < 2560) {
+	// Image bars or peaks
+		console.log("peaks: " + lhs + " durScale: " + durScale);
+		this.params.barWidth ? this.drawBars(peaks, 0, lhs, rhs, entry)
+			: this.drawWave(peaks, 0, lhs, rhs, entry);
+		return;
+	}
+
 	for (var c = 0; c < numberOfChannels; ++c) {
 		var chan = buffer.getChannelData(c);
-		let yoff = halfH + c * height;		
+		let yoff = halfH + c * height;
 		let {progressCtx, waveCtx}  = entry;
-		let lhs = Math.round(entry.start * durScale);
-		let rhs = Math.round(entry.end * durScale);
 
 //		console.log(lhs + ", " + rhs + " " + entry.start + " " + entry.end);
 
@@ -1289,10 +1284,10 @@ util.frame = function (func) {
 	//console.log(dT);
 }
 
+
 // periodic function called in order to maintain the tile strip.
 // return true if a canvas to reimage was found.
-	scrollCheck(surfer) {
-
+	scrollCheck(surfer, peaks) {
 		let scrX = surfer.drawer.getScrollX(); // scrX should be in canvas coordinates.
 		// Track derivative.
 		if (this.lastScrollX === undefined) this.lastScrollX = 0;
@@ -1369,14 +1364,14 @@ util.frame = function (func) {
 
 		if (whereX >= 0 && canvToFill) {
 			let can = wavesurfer.drawer.calcCanvasInfo(surfer, whereX);
-			let {canvasWidth, left} = can;
-			this.updateDimensions(canvToFill, canvasWidth, this.height, left);
+			let {canvasWidth, left, leftOff} = can;
+			this.updateDimensions(canvToFill, canvasWidth, this.height, left, leftOff);
 			if (whereX < canvToFill.start || whereX > canvToFill.end) {
 				console.log("whereX out of range: " + whereX + " start: " + canvToFill.start + " end: " + canvToFill.end);
 			}
-			console.log("imagining: " + Math.round(whereX) + " " + can.number + " " + can.left + " " + can.right + " " + can.canvasWidth + " " + can.start + " " + can.end);
+			console.log("imaging: " + whereX + " " + can.number + " " + can.left + " " + can.canvasWidth + " " + canvToFill.start + " " + canvToFill.end);
 			this.clearWaveForEntry(canvToFill);
-			this.imageSampleCanvas(surfer, canvToFill);
+			this.imageSingleCanvas(surfer, canvToFill, peaks);
 			canvToFill.hidden = false;
 			return true;
 		}
@@ -1384,7 +1379,7 @@ util.frame = function (func) {
 		return false;
 	}
 
-	drawSamples(surfer, width)
+	drawTiles(surfer, width, peaks)
 	{
 //		console.log("drawSampes " + this.maxCanvasElementWidth + " " + this.maxCanvasWidth);
 		this.setWidth(width);
@@ -1396,55 +1391,68 @@ util.frame = function (func) {
 
 			let repaint = function () {
 				let ctr = 0;
-				while (that.scrollCheck(surfer)) {
+				while (that.scrollCheck(surfer, peaks)) {
 					console.log('Imaging tile ' + ctr);
 					if (ctr++ > canvasLimit) {
 						let cat = 2;
-						alert('over limit imaging tile');
+						// alert('over limit imaging tile');
+						return;
 					}
 				}
 			}
 			setTimeout(repaint);
 		} else {
-			this.canvases.forEach(entry => {that.imageSampleCanvas(surfer, entry)});
+			this.canvases.forEach(entry => {that.imageSingleCanvas(surfer, entry, peaks)});
 		}
-
-		if (!this.scrollingSetUp && this.tiledRendering) {
-			this.scrollingSetUp = true;
-			surfer.on('scroll', function (screvt) {
+		// Csncel any existing scroll watcher.
+		if (this.scrollWatcher) {
+			surfer.un('scroll', this.scrollWatcher);
+			this.scrollWatcher = undefined;
+		}
+		// Make a new scroll watcher if we need it.
+		if (this.tiledRendering) {
+			this.scrollWatcher = surfer.on('scroll', function (screvt) {
 				if (that.tiledRendering) {
-					if(that.scrollCheck(surfer)) that.scrollCheck(surfer);
+					if(that.scrollCheck(surfer, peaks)) that.scrollCheck(surfer, peaks);
 				}
 			});
 		}
 	}
-
 } // End of class.
+
 
 // A hacked-up version of the drawBuffer routine defined in	wavesurfer.js
 // The idea	is that	at a suitably high level of	magnification, say 11025
 // we should plot samples directly rather than deal	with peak data.
 var	overDrawBuffer = function () {
-	var	nominalWidth = Math.round(this.getDuration() * this.params.minPxPerSec);
+	var nominalWidth = Math.round(this.getDuration() * this.params.minPxPerSec);
 	var	parentWidth	= this.drawer.getWidth();
 	var	width =	nominalWidth;
 
 	// If we need more than a certain number of canvases, then we will render them dynamically
-	// using a coroutine
-	const requiredCanvases = Math.ceil( width / this.params.maxCanvasWidth * this.params.pixelRatio);
+	const requiredCanvases = Math.ceil( width / this.params.maxCanvasWidth);
+	this.drawer.tiledRendering = requiredCanvases > canvasLimit;
+	let needPeaks = this.params.minPxPerSec < 2560;
 
-	this.drawer.tiledRendering = this.params.minPxPerSec >= 5512 && requiredCanvases > canvasLimit; // only for tile check
+	var	end	= Math.max(parentWidth,	width);
 
-	var	start =	0; // this.drawer.getScrollX();
-	var	end	= Math.max(start + parentWidth,	width);
-
+	console.log("*** overDrawBuffer w:" + width + " end: " + end);
+	
 	// Fill	container
+/*
 	if (this.params.fillParent && (!this.params.scrollParent ||	nominalWidth < parentWidth)) {
 		width =	parentWidth;
 		start =	0;
 		end	= width;
 	}
+*/
+	this.peaks = undefined;
 	var	peaks =	void 0;
+	if (needPeaks) {
+		peaks =	this.backend.getPeaks(width, 0, end);
+	}
+	this.drawer.drawTiles(this, width, peaks);
+/*
 	if (this.params.minPxPerSec	>= 2560) {
 		this.drawer.drawSamples(this, width);
 	} else {
@@ -1459,7 +1467,7 @@ var	overDrawBuffer = function () {
 		peaks =	this.backend.getPeaks(width, start,	end);
 		this.drawer.drawPeaks(peaks, width,	start, end);
 	 }
-}
+*/
 	this.fireEvent('redraw', peaks,	width);
 
  }
