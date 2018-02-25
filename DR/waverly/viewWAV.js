@@ -439,6 +439,26 @@ var normalize = function (buffer)
 	return buffer;
 }
 
+
+function reverse (buffer)
+{
+	let {numberOfChannels, sampleRate} = buffer;
+	let bufLen = buffer.getChannelData(0).length;
+	let halfbuf = bufLen / 2;
+
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
+		let d = buffer.getChannelData(cx);
+		let td = bufLen - 1;
+		for (var i = 0; i < halfbuf; ++i) {
+			let s = d[i];
+			d[i] = d[td];
+			d[td--] = s;
+		}
+	}
+
+	return buffer;
+}
+
 var applyFunction = function (buffer, f)
 {
 	let {numberOfChannels, sampleRate} = buffer;
@@ -545,6 +565,9 @@ function applyTransform(f, f2)
 	pasteSelected(result);
 }
 
+function reverser(e) {
+	applyTransform(reverse);
+}
 
 function normalizer(e) {
 	
@@ -797,6 +820,7 @@ $('#copybut').on('click', copyToClip);
 $('#pastebut').on('click',pasteFromClip);
 $('#normbut').on('click',normalizer);
 $('#testbut').on('click',testOfflineContext);
+$('#reversebut').on('click',reverser);
 $('#fadeinbut').on('click',fadeIn);
 $('#fadeoutbut').on('click',fadeOut);
 $('#selallbut').on('click',selAll);
