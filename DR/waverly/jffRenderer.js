@@ -373,7 +373,7 @@ util.frame = function (func) {
 		}
 
 		// if the cursor is currently visible...
-		if (!immediate && -half <= offset && offset < half) {
+		if (!immediate && -half <= offset && offset < half && this.params.minPxPerSec < 400) {
 			// we'll limit the "re-center" rate.
 			const rate = 5;
 			offset = Math.max(-rate, Math.min(rate, offset));
@@ -679,7 +679,6 @@ util.frame = function (func) {
 		const requiredCanvases = Math.ceil(
 			totalWidth / this.maxCanvasElementWidth
 		);
-//		console.log("update size");
 		let canvasCount = (this.tiledRendering && canvasLimit < requiredCanvases) ? canvasLimit : requiredCanvases;
 
 		while (this.canvases.length < canvasCount) {
@@ -775,10 +774,6 @@ util.frame = function (func) {
 		const totalWidth = Math.round(this.width / this.params.pixelRatio);
 		const elementWidth = Math.round(width / this.params.pixelRatio);
 		// Where the canvas starts and ends in the waveform, represented as a decimal between 0 and 1.
-		
-		if (!entry) {
-			console.log("Null entry!");
-		}
 		entry.start = offset / totalWidth || 0;
 		// entry.start = entry.waveCtx.canvas.offsetLeft / totalWidth || 0;
 		entry.end = entry.start + elementWidth / totalWidth;
@@ -1029,7 +1024,7 @@ util.frame = function (func) {
 		// of course, this is the last canvas.
 		const last = Math.round(length * entry.end) + 1;
 		if (first > end || last < start) {
-//			return;
+			return;
 		}
 		const canvasStart = Math.min(first, start);
 		const canvasEnd = Math.max(last, end);
@@ -1255,8 +1250,12 @@ util.frame = function (func) {
 		let cat = 3;
 	}
 	if (this.params.minPxPerSec < 2560) {
+//		if (!peaks) {
+//			console.log("Peaks missing");
+//			return;
+//		}
 	// Image bars or peaks
-		console.log("peaks: " + lhs + " durScale: " + durScale);
+		// console.log("peaks: " + lhs + " durScale: " + durScale);
 		this.params.barWidth ? this.drawBars(peaks, 0, lhs, rhs, entry)
 			: this.drawWave(peaks, 0, lhs, rhs, entry);
 		return;
@@ -1341,12 +1340,12 @@ util.frame = function (func) {
 			let ourWid = foundCan.end - foundCan.start;
 			let ourMid = foundCan.start + ourWid / 2;
 			let seekX = ourMid + ourWid;
-			if (seekX > 1.0) seekX = 1.0;
-
-			let foundUp = that.canvases.find(function(can) {
+			let foundUp;
+			if (seekX < 1.0) {foundUp = that.canvases.find(function(can) {
 				return seekX >= can.start && seekX < can.end
-			});
-			if (!foundUp) {
+				});
+			}
+			if (!foundUp && seekX < 1.0) {
 //				console.log("Filling forward.");
 				whereX = seekX;
 			} else {
@@ -1366,10 +1365,10 @@ util.frame = function (func) {
 			let can = wavesurfer.drawer.calcCanvasInfo(surfer, whereX);
 			let {canvasWidth, left, leftOff} = can;
 			this.updateDimensions(canvToFill, canvasWidth, this.height, left, leftOff);
-			if (whereX < canvToFill.start || whereX > canvToFill.end) {
+			if (whereX < canvToFill.start || whereX > (canvToFill.end + 0.0001)) {
 				console.log("whereX out of range: " + whereX + " start: " + canvToFill.start + " end: " + canvToFill.end);
 			}
-			console.log("imaging: " + whereX + " " + can.number + " " + can.left + " " + can.canvasWidth + " " + canvToFill.start + " " + canvToFill.end);
+//			console.log("imaging: " + whereX + " " + can.number + " " + can.left + " " + can.canvasWidth + " " + canvToFill.start + " " + canvToFill.end);
 			this.clearWaveForEntry(canvToFill);
 			this.imageSingleCanvas(surfer, canvToFill, peaks);
 			canvToFill.hidden = false;
@@ -1385,16 +1384,23 @@ util.frame = function (func) {
 		this.setWidth(width);
 		this.clearWave();
 		let that = this;
+
+		// Csncel any existing scroll watcher.
+		if (this.scrollWatcher) {
+		//	console.log("Cancelling existing scrollWatcher");
+			surfer.un('scroll', this.scrollWatcher);
+			this.scrollWatcher = undefined;
+		}
 		if (this.tiledRendering) {
 			// Mark all canvases as hidden.
 			this.canvases.forEach(entry => entry.hidden = true);
-
 			let repaint = function () {
 				let ctr = 0;
 				while (that.scrollCheck(surfer, peaks)) {
-					console.log('Imaging tile ' + ctr);
+				//	console.log('Imaging tile ' + ctr);
 					if (ctr++ > canvasLimit) {
 						let cat = 2;
+						console.log("Over limit imaging tiles");
 						// alert('over limit imaging tile');
 						return;
 					}
@@ -1404,18 +1410,20 @@ util.frame = function (func) {
 		} else {
 			this.canvases.forEach(entry => {that.imageSingleCanvas(surfer, entry, peaks)});
 		}
-		// Csncel any existing scroll watcher.
-		if (this.scrollWatcher) {
-			surfer.un('scroll', this.scrollWatcher);
-			this.scrollWatcher = undefined;
-		}
+
 		// Make a new scroll watcher if we need it.
 		if (this.tiledRendering) {
-			this.scrollWatcher = surfer.on('scroll', function (screvt) {
+			let watchFun = function (screvt) {
 				if (that.tiledRendering) {
+						if (that.params.minPxPerSec < 2560 && !peaks) {
+							return;
+						}
+					//console.log("Peaks Length at scrollcheck: " + peaks[0].length);
 					if(that.scrollCheck(surfer, peaks)) that.scrollCheck(surfer, peaks);
 				}
-			});
+			};
+			surfer.on('scroll', watchFun);
+			this.scrollWatcher = watchFun;
 		}
 	}
 } // End of class.
@@ -1429,6 +1437,7 @@ var	overDrawBuffer = function () {
 	var	parentWidth	= this.drawer.getWidth();
 	var	width =	nominalWidth;
 
+
 	// If we need more than a certain number of canvases, then we will render them dynamically
 	const requiredCanvases = Math.ceil( width / this.params.maxCanvasWidth);
 	this.drawer.tiledRendering = requiredCanvases > canvasLimit;
@@ -1436,8 +1445,8 @@ var	overDrawBuffer = function () {
 
 	var	end	= Math.max(parentWidth,	width);
 
-	console.log("*** overDrawBuffer w:" + width + " end: " + end);
-	
+	// console.log("*** overDrawBuffer w:" + width + " end: " + end + " minxPxPerSec: " + this.params.minPxPerSec);
+
 	// Fill	container
 /*
 	if (this.params.fillParent && (!this.params.scrollParent ||	nominalWidth < parentWidth)) {
@@ -1449,6 +1458,8 @@ var	overDrawBuffer = function () {
 	this.peaks = undefined;
 	var	peaks =	void 0;
 	if (needPeaks) {
+		this.backend.peaks = undefined;
+		this.backend.mergedPeaks = undefined;
 		peaks =	this.backend.getPeaks(width, 0, end);
 	}
 	this.drawer.drawTiles(this, width, peaks);

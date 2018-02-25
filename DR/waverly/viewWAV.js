@@ -733,7 +733,7 @@ function zoom(amt) {
 				else if (dur > 10) zoomLimit = 22050;
 	*/
 	if (newPx > zoomLimit) newPx = zoomLimit;
-//	let pos = wavesurfer.drawer.getScrollX();
+// console.log('zoom rate: ' + newPx);
 	wavesurfer.zoom(newPx);
 }
 
