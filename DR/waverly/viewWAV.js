@@ -414,26 +414,25 @@ function testOfflineContext(e) {
 	applyFilterTransform(testFilterGraph);
 }
 
+// Simplified to just multiply by 1/max(abs(buffer))
+// (which preserves any existing DC offset).
 var normalize = function (buffer)
 {
 	let {numberOfChannels, sampleRate} = buffer;
 	let bufLen = buffer.getChannelData(0).length;
 
 	for (var cx = 0; cx < numberOfChannels; ++cx) {
-		var minv = 1000000;
 		var maxv = -1000000;
 		let d = buffer.getChannelData(cx);
 		for (var i = 0; i < d.length; ++i) {
 			let s = d[i];
-			if (s < minv) minv = s;
-			 else if (s > maxv) maxv = s;
+			if (s < 0) s = -s;
+			if (s > maxv) maxv = s;
 		}
-		let dcoff = (maxv + minv) / 2;
-		let oldRange = maxv - minv;
-		if (oldRange < 0.0001) continue;
-		let scaler = 2.0 / oldRange;
+		if (maxv === 0) return;
+		let scaler = 1.0 / maxv;
 		for (var i = 0; i < d.length; ++i) {
-			d[i] = (d[i] - dcoff) * scaler;
+			d[i] = d[i]* scaler;
 		}
 	}
 
