@@ -1285,7 +1285,7 @@ util.frame = function (func) {
 
 
 // periodic function called in order to maintain the tile strip.
-// return true if a canvas to reimage was found.
+// returns true if a canvas to reimage was found.
 	scrollCheck(surfer, peaks) {
 		let scrX = surfer.drawer.getScrollX(); // scrX should be in canvas coordinates.
 		// Track derivative.
@@ -1314,7 +1314,7 @@ util.frame = function (func) {
 			if (normX >= entry.start && normX < entry.end && !entry.hidden) {
 				foundCan = entry;
 			} else {
-				if (entry.hidden) { // first hidden entry found always wins.
+				if (entry.hidden) { // hidden entries always win.
 					canvToFill = entry;
 					maxDist = -1; // use -1 as a flag to stop compares.
 				} else if (maxDist >= 0) {
@@ -1342,7 +1342,7 @@ util.frame = function (func) {
 			let seekX = ourMid + ourWid;
 			let foundUp;
 			if (seekX < 1.0) {foundUp = that.canvases.find(function(can) {
-				return seekX >= can.start && seekX < can.end
+				return seekX >= can.start && seekX < can.end && !can.hidden;
 				});
 			}
 			if (!foundUp && seekX < 1.0) {
@@ -1352,7 +1352,7 @@ util.frame = function (func) {
 				seekX = ourMid - ourWid;
 				if (seekX < 0) seekX == 0;
 					let foundDn = that.canvases.find(function(can) {
-					return seekX >= can.start && seekX < can.end
+					return seekX >= can.start && seekX < can.end && !can.hidden;
 				});
 				if(!foundDn) {
 					whereX = seekX;

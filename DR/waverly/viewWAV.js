@@ -210,10 +210,16 @@ function setupWaveTracker() {
 	var t0;
 	var t1;
 	var duration;
-	
+	var scroll = wavesurfer.params.scrollParent;
+	var scrollSpeed = wavesurfer.params.scrollSpeed || 1;
+	var scrollThreshold = wavesurfer.params.scrollThreshold || 10;
+	var maxScroll = void 0;
+	var scrollDirection = void 0;
+	var wrapperRect = void 0;
+	var wrapper = wavesurfer.drawer.wrapper;
+	var repeater;
 
-	var eventMove = function (e) {
-		if (!dragActive) return;
+	var rangeUpdater = function(e) {
 		t1 = wavesurfer.drawer.handleEvent(e);
 		let tS = t0;
 		let tE = t1;
@@ -226,7 +232,40 @@ function setupWaveTracker() {
 			start:	tS * duration,
 			end:	tE * duration
 		});
-		//console.log('move');
+	}
+
+	var edgeScroll = function edgeScroll(e) {
+		if (!region || !scrollDirection) return;
+
+	// Update scroll position
+		var scrollLeft = wrapper.scrollLeft + scrollSpeed * scrollDirection;
+		var nextLeft =  Math.min(maxScroll, Math.max(0, scrollLeft));
+		wrapper.scrollLeft = scrollLeft = Math.min(maxScroll, Math.max(0, scrollLeft));
+		rangeUpdater(e);
+		// Check that there is more to scroll and repeat
+		if(scrollLeft < maxScroll && scrollLeft > 0) {
+			window.requestAnimationFrame(function () {
+			edgeScroll(e);
+			});
+		}
+	};
+
+	var eventMove = function (e) {
+		if (!dragActive) return;
+		rangeUpdater(e);
+		// If scrolling is enabled
+		if (scroll && wavesurfer.drawer.container.clientWidth < wrapper.scrollWidth) {
+			// Check threshold based on mouse
+			var x = e.clientX - wrapperRect.left;
+			if (x <= scrollThreshold) {
+				scrollDirection = -1;
+			} else if (x >= wrapperRect.right - scrollThreshold) {
+				scrollDirection = 1;
+			} else {
+				scrollDirection = null;
+			}
+			scrollDirection && edgeScroll(e);
+		}
 	}
 
 	var eventUp = function (e) {
@@ -246,22 +285,22 @@ function setupWaveTracker() {
 
 	var eventDown = function (e) {
 		duration = wavesurfer.getDuration();
-		
 		// Filter out events intended for the scroll bar
 		let hasScroll = wavesurfer.params.scrollParent;
 		let r = e.target.getBoundingClientRect();
 
 		if (hasScroll && e.clientY > (r.bottom - 16)) return; // *** JFF Hack magic number.
 
+		maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+		wrapperRect = wrapper.getBoundingClientRect();
+
 		t0 = wavesurfer.drawer.handleEvent(e);
 
 		let xD = e.clientX;
 
 		if (hasScroll) {
-			xD += wavesurfer.drawer.wrapper.scrollLeft;
+			xD += wrapper.scrollLeft;
 		}
-	//	let can = wavesurfer.drawer.calcCanvasInfo(xD);
-	//	console.log(Math.round(xD) + " " + can.number + " " + can.left + " " + can.right + " " + can.canvasWidth + " " + can.start + " " + can.end);
 
 		t1 = t0;
 		if (wavesurfer.isPlaying()) {
