@@ -2405,7 +2405,7 @@ var WaveSurfer = function (_util$Observer) {
             var nominalWidth = Math.round(this.getDuration() * this.params.minPxPerSec * this.params.pixelRatio);
             var parentWidth = this.drawer.getWidth();
             var width = nominalWidth;
-            var start = 0; // this.drawer.getScrollX();
+            var start = this.drawer.getScrollX();
             var end = Math.max(start + parentWidth, width);
             // Fill container
             if (this.params.fillParent && (!this.params.scrollParent || nominalWidth < parentWidth)) {
