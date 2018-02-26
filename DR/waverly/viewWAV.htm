@@ -41,9 +41,9 @@ window.onerror = function(msg, url, line, col, error) {
 	<body>
 		<div id='filegroupplace'>
 			<table id='filegroup' class='nobord'><tr>
-				<td>File:&nbsp;<input id="fname" type="text" size="24" value=""></td>
-				<td><input class="butn" type="button" value="Save" style="width:55pt" onclick="btn_save()"></td>
-				<td><input class="butn" type="button" value="Reload" style="width:55pt" onclick="btn_load()" ></td>
+				<td><input id="fname" type="text" size="32" value=""></td>
+				<td><button class="butn" title="save" onclick="btn_save()">Save</button></td>
+				<td><button class="butn" title="reload" onclick="btn_load()">Reload</button></td>
 				<td><div id="statind"></div></td>
 			</tr>
 			</table>

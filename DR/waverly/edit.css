@@ -6,9 +6,7 @@
   width: 90vw;
   height: 80vh;
 }
-.statusbox {
-  width: 30vw;
-}
+
 .tinybox {
   width: 30vw;
 }
@@ -21,6 +19,10 @@
 .tinygap {
 	font-size: 2pt;
 }
+
+#statind {
+	font-size: 9pt;
+};
 
 .butn {
 vertical-align: top;

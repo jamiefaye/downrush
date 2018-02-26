@@ -5,7 +5,6 @@ var local_exec_head = Handlebars.compile(`			<table class='nobord'><tr>
 				<!--
 				<td><input type="button" value="Open" style="width:55pt" onclick="btn_open()" ></td>
 				<td><input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"></td>
-				<td><textarea id="status" rows="2"  class="statusbox" readonly></textarea></td>
 				-->
 			</tr>
 			</table>`);
