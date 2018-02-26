@@ -21,6 +21,7 @@ var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 var OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
 
 var localClipboard;
+var loadStartTime;
 
 class UndoStack {
 	constructor(limit) {
@@ -874,6 +875,9 @@ function record()
 function setEditData(data)
 {
 	openOnBuffer(data);
+	
+	let loadEndTime = performance.now();
+	console.log("Load time: " + (loadEndTime - loadStartTime));
 }
 
 function openLocal(evt)
@@ -915,8 +919,7 @@ function onLoad()
 	}
 
 	if(!local_exec) {
-		postWorker("load");
-		fname = filename_input.value;
+		loadLocal();
 	} else {
 		$('#filegroup').remove();
 		$('#filegroupplace').append(local_exec_head());
@@ -1030,7 +1033,77 @@ function writeString (view, offset, string) {
   }
 }
 
+// use ajax to load wav data, instead of web worker.
+function loadLocal()
+{
+	loadStartTime = performance.now();
+	let fname = filename_input.value;
+	$("#statind").text("Loading: " +  fname);
+	$.ajax({
+	url         : fname,
+	cache       : false,
+	processData : false,
+	method:		'GET',
+	type        : 'GET',
+	success     : function(data, textStatus, jqXHR){
+		setEditData(data);
+		$("#statind").text(fname + " loaded.");
+	},
 
+	error: function (data, textStatus, jqXHR) {
+		console.log("Error: " + textStatus);
+	},
+
+	xhr: function() {
+		var xhr = new window.XMLHttpRequest();
+		xhr.responseType= 'blob';
+		return xhr;
+	},
+
+	});
+}
+
+// use ajax to save-back wav data, instead of web worker.
+function saveLocal(filepath, data)
+{
+	$.ajax(filepath, {
+	headers:	{'Overwrite': 't', 'Content-type': 'audio/wav'},
+	cache:		false,
+	contentType: false,
+	data:		data,
+	processData : false,
+	method:		'PUT',
+	error:		function(jqXHR, textStatus, errorThrown) {
+		alert(textStatus + "\n" + errorThrown);
+	},
+	success: function(data, textStatus, jqXHR){
+		console.log("Save OK");
+		$.ajax("/upload.cgi?WRITEPROTECT=OFF",{
+			error:	function(jqXHR, textStatus, errorThrown) {
+				alert(textStatus + "\n" + errorThrown);
+			},
+			headers: {"If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT"},
+			success: function(data, textStatus, jqXHR){
+				console.log("save and unlock done");
+				$("#statind").text(fName + " saved.");
+			},
+		})
+	},
+
+	xhr: function() {
+		var xhr = new window.XMLHttpRequest();
+	  	xhr.upload.addEventListener("progress", function(evt){
+		  if (evt.lengthComputable) {
+			  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
+			  //Do something with upload progress
+			 $("#statind").text(fName + " " + percentComplete + "%");
+			 //console.log(percentComplete);
+		  }
+		}, false);
+	 	return xhr;
+	 }
+	});
+}
 
 //-------keyin--------
 document.onkeydown = function (e){
@@ -1050,26 +1123,17 @@ document.onkeydown = function (e){
 };
 
 
-
 //---------Button-----------
-
-//CONFIG
-function btn_config()
-{
-//	if(window.confirm('Load /SD_WLAN/CONFIG?'))
-//	{
-		filename_input.value="/SD_WLAN/CONFIG";
-		postWorker("load");
-//	}
-}
 
 //Load
 function btn_load()
 {
 //	if(window.confirm('Load ?'))
 //	{
-		postWorker("load");
+		// postWorker("load"); // 4306
+		loadLocal();
 		fname = filename_input.value;
+
 //	}
 	// jsEditor.markClean();
 }
@@ -1080,86 +1144,16 @@ function btn_save(){
 
 	if(fname != filename_input.value)
 	{
-		if(!window.confirm('Are you sure you want to save it? \n(Target file name has changed !)'))
+		if(!window.confirm('Are you sure you want to save it?\n(Target file name has changed!)'))
 		{
 			return;
 		}
 	}
 	fname = filename_input.value;
 
-	postWorker("save");
+	let aBuf = wavesurfer.backend.buffer;
+	let saveData = audioBufferToWav(aBuf);
+	saveLocal(fname, saveData);
+	// postWorker("save");
 	// jsEditor.markClean();
-}
-
-//---------handler-----------
-
-var status_str="";
-//status
-function clrStat()
-{
-	status_str="";
-	stat_output.value = status_str;
-}
-
-// add one line to status
-function addStat(x)
-{
-	status_str += "\n" + x;
-	stat_output.value = status_str;
-	stat_output.scrollTop = stat_output.scrollHeight;
-}
-
-//Worker
-function postWorker(mode)
-{
-	var saveData  = "";
-	if(mode === 'save') {
-		let aBuf = wavesurfer.backend.buffer;
-		saveData = audioBufferToWav(aBuf);
-	}
-
-	var msg = {
-		filepath: filename_input.value,
-		arg: "", // arg_input.value,
-		mode: mode,
-		edit: saveData,
-	};
-	worker.postMessage(msg);
-}
-
-//------------Worker---------------
-if (!local_exec && !window.Worker) {
-	alert("Web Worker disabled! Editor won't work!")
-}
-
-var worker;
-
-if (!local_exec) {
-try {
-	worker = new Worker("WAVworker.js");
-}catch (e) {
-	addStat("Exception!(UI): "+e.message);
-}
-worker.onmessage = function(e) {
-	// RPC outfitting
-
-	//debug
-	if(e.data.func == "console.log")
-	{
-		console.log(e.data.arg);
-	}
-	if(e.data.func == "clearStatus")
-	{
-		clrStat();
-	}
-	if(e.data.func == "addStatus" || e.data.func == "setResponse")
-	{
-		addStat(e.data.arg);
-	}
-	if(e.data.func == "setEditor")
-	{
-		setEditData(e.data.arg);
-	}
-};
-
 }

@@ -22,13 +22,14 @@ window.onerror = function(msg, url, line, col, error) {
 <script type="text/javascript" src="js/ext/handlebars.min.js"></script>
 <!--
 <script type="text/javascript" src="js/ext/clipboard.js"></script>
+<script type="text/javascript" src="js/ext/tippy.all.min.js"></script>
+<script type="text/javascript" src="js/ext/plugins/wavesurfer.mediasession.js"></script>
 -->
 
-<script type="text/javascript" src="js/ext/tippy.all.min.js"></script>
+
 <script type="text/javascript" src="js/ext/wavesurfer.js"></script>
 <script type="text/javascript" src="jffRenderer.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.regions.js"></script>
-<script type="text/javascript" src="js/ext/plugins/wavesurfer.mediasession.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.timeline.js"></script>
 <script type="text/javascript" src="js/ext/plugins/wavesurfer.minimap.js"></script>
 <script type="text/javascript" src="js/ext/jquery.knob.js"></script>
@@ -43,7 +44,7 @@ window.onerror = function(msg, url, line, col, error) {
 				<td>File:&nbsp;<input id="fname" type="text" size="24" value=""></td>
 				<td><input type="button" value="Save" style="width:55pt" onclick="btn_save()"></td>
 				<td><input type="button" value="Reload" style="width:55pt" onclick="btn_load()" ></td>
-				<td><textarea id="status" rows="2"  class="statusbox" readonly></textarea></td>
+				<td><div id="statind"></div></td>
 			</tr>
 			</table>
 		</div>
