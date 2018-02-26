@@ -919,7 +919,7 @@ function onLoad()
 	}
 
 	if(!local_exec) {
-		loadLocal();
+		loadFile();
 	} else {
 		$('#filegroup').remove();
 		$('#filegroupplace').append(local_exec_head());
@@ -1034,10 +1034,10 @@ function writeString (view, offset, string) {
 }
 
 // use ajax to load wav data, instead of web worker.
-function loadLocal()
+function loadFile()
 {
 	loadStartTime = performance.now();
-	let fname = filename_input.value;
+	fname = filename_input.value;
 	$("#statind").text("Loading: " +  fname);
 	$.ajax({
 	url         : fname,
@@ -1064,44 +1064,56 @@ function loadLocal()
 }
 
 // use ajax to save-back wav data, instead of web worker.
-function saveLocal(filepath, data)
+function saveFile(filepath, data)
 {
-	$.ajax(filepath, {
-	headers:	{'Overwrite': 't', 'Content-type': 'audio/wav'},
-	cache:		false,
-	contentType: false,
-	data:		data,
-	processData : false,
-	method:		'PUT',
-	error:		function(jqXHR, textStatus, errorThrown) {
-		alert(textStatus + "\n" + errorThrown);
-	},
-	success: function(data, textStatus, jqXHR){
-		console.log("Save OK");
-		$.ajax("/upload.cgi?WRITEPROTECT=OFF",{
-			error:	function(jqXHR, textStatus, errorThrown) {
-				alert(textStatus + "\n" + errorThrown);
-			},
-			headers: {"If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT"},
-			success: function(data, textStatus, jqXHR){
-				console.log("save and unlock done");
-				$("#statind").text(fName + " saved.");
-			},
-		})
-	},
-
-	xhr: function() {
-		var xhr = new window.XMLHttpRequest();
-	  	xhr.upload.addEventListener("progress", function(evt){
-		  if (evt.lengthComputable) {
-			  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
-			  //Do something with upload progress
-			 $("#statind").text(fName + " " + percentComplete + "%");
-			 //console.log(percentComplete);
-		  }
-		}, false);
-	 	return xhr;
-	 }
+	var timestring;
+	var dt = new Date();
+	var year = (dt.getFullYear() - 1980) << 9;
+	var month = (dt.getMonth() + 1) << 5;
+	var date = dt.getDate();
+	var hours = dt.getHours() << 11;
+	var minutes = dt.getMinutes() << 5;
+	var seconds = Math.floor(dt.getSeconds() / 2);
+	var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
+	var urlDateSet = '/upload.cgi?FTIME=' + timestring + "&TIME="+(Date.now());;
+	$.get(urlDateSet, function() {
+		$.ajax(filepath, {
+		headers:	{'Overwrite': 't', 'Content-type': 'audio/wav'},
+		cache:		false,
+		contentType: false,
+		data:		data,
+		processData : false,
+		method:		'PUT',
+		error:		function(jqXHR, textStatus, errorThrown) {
+			alert(textStatus + "\n" + errorThrown);
+		},
+		success: function(data, textStatus, jqXHR){
+			console.log("Save OK");
+			$.ajax("/upload.cgi?WRITEPROTECT=OFF",{
+				error:	function(jqXHR, textStatus, errorThrown) {
+					alert(textStatus + "\n" + errorThrown);
+				},
+				headers: {"If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT"},
+				success: function(data, textStatus, jqXHR){
+					console.log("save and unlock done");
+					$("#statind").text(filepath + " saved.");
+				},
+			})
+		},
+		
+		xhr: function() {
+			var xhr = new window.XMLHttpRequest();
+		  	xhr.upload.addEventListener("progress", function(evt){
+			  if (evt.lengthComputable) {
+				  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
+				  //Do something with upload progress
+				 $("#statind").text(filepath + " " + percentComplete + "%");
+				 //console.log(percentComplete);
+			  }
+			}, false);
+		 	return xhr;
+		 }
+		});
 	});
 }
 
@@ -1131,7 +1143,7 @@ function btn_load()
 //	if(window.confirm('Load ?'))
 //	{
 		// postWorker("load"); // 4306
-		loadLocal();
+		loadFile();
 		fname = filename_input.value;
 
 //	}
@@ -1153,7 +1165,7 @@ function btn_save(){
 
 	let aBuf = wavesurfer.backend.buffer;
 	let saveData = audioBufferToWav(aBuf);
-	saveLocal(fname, saveData);
+	saveFile(fname, saveData);
 	// postWorker("save");
 	// jsEditor.markClean();
 }
