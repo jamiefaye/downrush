@@ -368,6 +368,62 @@ var testFilterGraph = function (ctx)
 	return filtList;
 }
 
+// disconnectFilters
+// setFilters (listoffilters);
+var testFilterButton = function(e)
+{
+	let biquadFilter = wavesurfer.backend.ac.createBiquadFilter();
+	let filterGUI = quadfilter_template();
+	$('#procmods').empty();
+	wavesurfer.backend.setFilters();
+	$('#procmods').append (filterGUI);
+	$(".dial").knob({change: function (v) {
+		let inp = this.i[0];
+		let ctlId = inp.getAttribute('id').substring(3);
+//		if (ctlId === 'gain') {
+//			biquadFilter.gain.value = v;
+//		} else {
+			biquadFilter[ctlId].value = v;
+//		}
+//		console.log(ctlId + " " + v);
+	}  });
+	$('#qf_type').change( e=> {
+		let picked = $("select option:selected" )[0];
+		let fkind = $(picked).text();
+		biquadFilter.type = fkind;
+		//console.log($(picked).text());
+	});
+	$('#fl_cancel').on('click', e=>{
+		$('#procmods').empty();
+		wavesurfer.backend.setFilters();
+	});
+
+	$('#fl_audition').on('click', e=>{
+		if (e.target.checked) {
+			wavesurfer.backend.setFilters([biquadFilter]);
+		} else {
+			wavesurfer.backend.setFilters();
+		}
+	});
+
+	$('#fl_apply').on('click', e=>{
+		$('#fl_audition').prop('checked', false);
+		applyFilterTransform(function (ctx) {
+			let bqf = ctx.createBiquadFilter();
+			bqf.type = biquadFilter.type;
+			bqf.frequency.value = biquadFilter.frequency.value;
+			bqf.detune.value = biquadFilter.detune.value;
+			bqf.Q.value = biquadFilter.Q.value;
+			bqf.gain.value = biquadFilter.gain.value;
+			return [bqf];
+		});
+
+		wavesurfer.backend.setFilters();
+	});
+	wavesurfer.backend.setFilters([biquadFilter]);
+}
+
+
 // Apply a filter transform implemented using the AudioContext filter system to the selected area
 // and paste back the result.
 // the setup function is called to knit together the filter graph desired.
@@ -820,12 +876,17 @@ $('#cutbut').on('click', cutToClip);
 $('#copybut').on('click', copyToClip);
 $('#pastebut').on('click',pasteFromClip);
 $('#normbut').on('click',normalizer);
-$('#testbut').on('click',testOfflineContext);
+$('#testbut').on('click',testFilterButton);
 $('#reversebut').on('click',reverser);
 $('#fadeinbut').on('click',fadeIn);
 $('#fadeoutbut').on('click',fadeOut);
 $('#selallbut').on('click',selAll);
 
+/*
+$(function() {
+	$(".dial").knob();
+});
+*/
 
 var playBtnImg = $('#playbutimg');
 var undoBtn = $('#undobut');

@@ -16,6 +16,48 @@ var track_copy_template = Handlebars.compile(`<button class='clipbtn'trackno='{{
 Handlebars.registerPartial("getcopytoclip", track_copy_template);
 
 
+var filterheader = Handlebars.compile(`<div id='filterhdr'>
+<button class="butn" id='fl_apply'>Apply</button>
+<button class="butn" id='fl_cancel'>Close</button>
+<input type='checkbox' id='fl_audition' checked>Audition</input>
+</div>
+`);
+
+Handlebars.registerPartial("filterheader", filterheader);
+
+var quadfilter_template = Handlebars.compile(`<div id='quadfilter'>
+{{> filterheader}}
+<table><tr>
+<th>Kind</th>
+<th>Frequency</th>
+<th>Detune</th>
+<th>Q</th>
+<th>Gain</th>
+</tr>
+<tr>
+<td>
+<select id='qf_type'>
+  <option value="lowpass">lowpass</option>
+  <option value="highpass">highpass</option>
+  <option value="bandpass">bandpass</option>
+  <option value="lowshelf">lowshelf</option>
+  <option value="highshelf">highshelf</option>
+  <option value="peaking">peaking</option>
+  <option value="notch">notch</option>
+  <option value="allpass">allpass</option>
+</select>
+</td>
+
+<td><input id='qf_frequency' type="text" value="440" class="dial" data-min="1" data-max="8000" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'></td>
+<td><input id='qf_detune' type="text" value="0" class="dial" data-min="-100" data-max="100" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'></td>
+<td><input id='qf_Q' type="text" value="1" class="dial" data-min="0" data-max="50" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'></td>
+<td><input id='qf_gain' type="text" value="0" class="dial" data-min="-40" data-max="40" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'></td>
+</tr>
+</table>
+</div>
+`);
+
+
 /* Template for Note tooltip
 */
 var note_tip_template = Handlebars.compile(`
