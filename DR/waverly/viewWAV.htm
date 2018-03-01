@@ -28,11 +28,12 @@ window.onerror = function(msg, url, line, col, error) {
 
 
 <script type="text/javascript" src="js/wavesurfer.js"></script>
-<script type="text/javascript" src="jffRenderer.js"></script>
+<script type="text/javascript" src="js/plugins/wavesurfer.tiledrenderer.js"></script>
 <script type="text/javascript" src="js/plugins/wavesurfer.regions.js"></script>
 <script type="text/javascript" src="js/plugins/wavesurfer.timeline.js"></script>
 <script type="text/javascript" src="js/plugins/wavesurfer.minimap.js"></script>
 <script type="text/javascript" src="js/jquery.knob.js"></script>
+<script type="text/javascript" src="js/nouislider.js"></script>
 <script type="text/javascript" src="templates.js"></script>
 
 <link rel="stylesheet" href="css/edit.css">
@@ -67,12 +68,14 @@ window.onerror = function(msg, url, line, col, error) {
 <button class="butn" id='cutbut' title='Cut to clipboard'><img src='img/glyphicons-599-scissors-alt.png'/></button>
 <button class="butn" id='copybut' title='Copy to clipboard'><img src='img/glyphicons-512-copy.png'/></button>
 <button class="butn" id='pastebut' title='Paste from clipboard'><img src='img/glyphicons-513-paste.png'/></button>
-
-<button class="butn" id='normbut'>Normalize</button>
-<button class="butn" id='testbut'>Test</button>
-<button class="butn" id='reversebut'>Reverse</button>
-<button class="butn" id='fadeinbut'>Fade In</button>
-<button class="butn" id='fadeoutbut'>Fade Out</button>
+<table><tr>
+<td><div id='dropdn'></div></td>
+<td><button class="butn" id='normbut'>Normalize</button></td>
+<td><button class="butn" id='reversebut'>Reverse</button></td>
+<td><button class="butn" id='fadeinbut'>Fade In</button></td>
+<td><button class="butn" id='fadeoutbut'>Fade Out</button></td>
+</tr>
+</table>
 </div>
 
 <div id='procmods'>

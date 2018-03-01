@@ -94,11 +94,13 @@ var wavesurfer;
 var TimelinePlugin = window.WaveSurfer.timeline;
 var RegionPlugin = window.WaveSurfer.regions;
 var Minimap = window.WaveSurfer.minimap;
+var TiledRenderer = window.WaveSurfer.tiledrenderer;
 //var Microphone = window.WaveSurfer.microphone;
 var disableWaveTracker;
 
 function openOnBuffer(decoded)
 {
+//	var tiledRenderer = new TiledRenderer.default();
 	var plugs =  [
 		TimelinePlugin.create({
 			container: '#waveform-timeline'
@@ -130,11 +132,11 @@ function openOnBuffer(decoded)
 		scrollParent:	true,
 		plugins:		plugs,
 		partialRender:  false,
-		renderer:	JFFCanvas,
+		renderer:		 TiledRenderer.default,
 	//	barWidth:	1,
 	});
 // Patch in an override to the drawBuffer function.
-wavesurfer.drawBuffer = overDrawBuffer;
+	wavesurfer.drawBuffer = TiledRenderer.tiledDrawBuffer;
 
 	wavesurfer.loadBlob(decoded);
 
@@ -876,11 +878,32 @@ $('#cutbut').on('click', cutToClip);
 $('#copybut').on('click', copyToClip);
 $('#pastebut').on('click',pasteFromClip);
 $('#normbut').on('click',normalizer);
-$('#testbut').on('click',testFilterButton);
 $('#reversebut').on('click',reverser);
 $('#fadeinbut').on('click',fadeIn);
 $('#fadeoutbut').on('click',fadeOut);
 $('#selallbut').on('click',selAll);
+
+
+
+
+var sfxdd = sfx_dropdn_template();
+$('#dropdn').append(sfxdd);
+$('#dropbtn').on('click', function (e) {
+	console.log('clicked!');
+	$('#droplist').toggleClass('show');
+});
+
+function closeDropDown() {
+	$(".dropdown-content").removeClass('show');
+}
+
+
+function openFilter(filterName) {
+	closeDropDown();
+	if (filterName === 'filter') {
+		testFilterButton();
+	}
+}
 
 /*
 $(function() {
