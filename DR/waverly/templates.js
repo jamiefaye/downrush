@@ -57,6 +57,20 @@ var quadfilter_template = Handlebars.compile(`<div id='quadfilter'>
 </div>
 `);
 
+var sfx_dropdn_template = Handlebars.compile(`<button id='dropbtn' class="dropbtn">Effects &#x25bc;</button>
+  <div id="droplist" class="dropdown-content">
+	<a onclick="openFilter('filter')">Filter</a>
+	<a onclick="openFilter('reverb')">Reverb</a>
+	<a onclick="openFilter('delay')">Delay</a>
+	<a onclick="openFilter('lowpass')">Lowpass Filter</a>
+	<a onclick="openFilter('highpass')">Highpass Filter</a>
+	<a onclick="openFilter('bandpass')">Bandpass Filter</a>
+	<a onclick="openFilter('lowshelf')">Lowshelf Filter</a>
+	<a onclick="openFilter('highshelf')">Highshelf Filter</a>
+	<a onclick="openFilter('peaking')">Peaking Filter</a>
+	<a onclick="openFilter('notch')">Notch Filter</a>
+	<a onclick="openFilter('allpass')">Allpass Filter</a>
+ </div>`);
 
 /* Template for Note tooltip
 */
