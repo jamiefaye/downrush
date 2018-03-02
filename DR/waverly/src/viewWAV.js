@@ -1,340 +1,46 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import WaveSurfer from './js/wavesurfer.js';
-import TimelinePlugin from'./js/plugins/wavesurfer.timeline.js';
-import RegionPlugin  from'./js/plugins/wavesurfer.regions.js';
-import Minimap from'./js/plugins/wavesurfer.minimap.js';
+import Wave from './Wave.js';
+
 import knob from'./js/jquery.knob.js';
 import {sfx_dropdn_template, quadfilter_template, local_exec_head, local_exec_info} from'./templates.js';
-import {TiledRenderer, tiledDrawBuffer} from './js/plugins/wavesurfer.tiledrenderer.js';
+
 import UndoStack from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import {audioBufferToWav} from './audioBufferToWav.js';
 
 "use strict";
 
-// Change the following line as needed to point to the parent directory containing your sample directory.
-// If you leave it undefined, our code will make an informed guess as to where your samples are located.
-// You probably don't need to change it.
-var custom_sample_path = undefined;
-
 // Flag to enable local execution (not via the FlashAir web server)
 var local_exec = document.URL.indexOf('file:') == 0;
 
 var sample_path_prefix = '/';
 var filename_input = document.getElementById ("fname");//.value
-// var arg_input = document.getElementById ("line");//.value
-
-var stat_output = document.getElementById ("status")//.value
-var respons_output = document.getElementById( "res" )//.innerHTML;
-
 var fname = "";
 
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 var OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
 
 var localClipboard;
-var loadStartTime;
-
 
 var undoStack = new UndoStack(10);
 
-var wavesurfer;
-
-function redrawWave()
-{
-	wavesurfer.drawBuffer();
-	wavesurfer.minimap.render();
-}
-
-// Page transition warning
-
-var unexpected_close = true;
-
-//var Microphone = window.WaveSurfer.microphone;
-var disableWaveTracker;
-
-function openOnBuffer(decoded)
-{
-//	var tiledRenderer = new TiledRenderer.default();
-	var plugs =  [
-		TimelinePlugin.create({
-			container: '#waveform-timeline'
-			}),
-		RegionPlugin.create({
-			dragSelection: false,
-			}),
-			
-		Minimap.create({
-			container: '#minimap',
-			height: 30,
-			barHeight: 1.4,
-			interact:	true,
-			// showOverview: true,
-			})
-		];
-
-	$('#waveform').empty();
-	$('#waveform-timeline').empty();
-	$('#minimap').empty();
-
-	wavesurfer = WaveSurfer.create({
-		container:		'#waveform',
-		waveColor:		'violet',
-		progressColor:	'purple',
-		splitChannels:	true,
-		interact:		false,
-		fillParent:		false,
-		scrollParent:	true,
-		plugins:		plugs,
-		partialRender:  false,
-		renderer:		 TiledRenderer,
-	//	barWidth:	1,
-	});
-// Patch in an override to the drawBuffer function.
-	wavesurfer.drawBuffer = tiledDrawBuffer;
-
-	wavesurfer.loadBlob(decoded);
-
-
-	wavesurfer.on('ready', function () {
-		let buf = wavesurfer.backend.buffer;
-		let dat = buf.getChannelData(0);
-		
-		let dur = wavesurfer.getDuration();
-		let w = wavesurfer.drawer.getWidth();
-		if (dur !== 0) {
-			let pps = w / dur * 0.9;
-			wavesurfer.zoom(pps);
-		}
-		disableWaveTracker = setupWaveTracker();
-
-		startGuiCheck();
-});	
-
-/*
-	var slider = document.querySelector('#slider');
-
-	slider.oninput = function () {
-		var zoomLevel = Number(slider.value);
-		console.log(zoomLevel);
-		wavesurfer.zoom(zoomLevel);
-	};
-*/
-}
-
-function getSelection() {
-	let buffer = wavesurfer.backend.buffer;
-	let srcLen = buffer.getChannelData(0).length;
-	let regionMap = wavesurfer.regions.list;
-	
-	let startT = 0;
-	let regional = false;
-	let dur =  wavesurfer.getDuration()
-	let endT = dur;
-	let progS = wavesurfer.drawer.progress() * endT;
-	let region = regionMap[function() { for (var k in regionMap) return k }()];
-	let cursorTime = wavesurfer.getCurrentTime();
-
-	if (region && region.start < region.end) {
-		startT = region.start;
-		endT = region.end;
-		regional = true;
-	}
-	let cursorPos = secondsToSampleNum(cursorTime, buffer);
-	let startS = secondsToSampleNum(startT, buffer);
-	let endS = secondsToSampleNum(endT, buffer);
-
-	return {
-		length: srcLen,
-		regional: regional,
-		start:	startT,
-		end:	endT,
-		first:  startS,
-		last:	endS,
-		progress: progS,
-		region: region,
-		cursorTime: cursorTime,
-		cursorPos: 	cursorPos,
-		duration:	dur,
-	};
-}
-
-function seekCursorTo(e) {
-	let progress = wavesurfer.drawer.handleEvent(e);
-	wavesurfer.seekTo(progress);
-}
-
-function setupWaveTracker() {
-	var region;
-	var dragActive;
-	var t0;
-	var t1;
-	var duration;
-	var scroll = wavesurfer.params.scrollParent;
-	var scrollSpeed = wavesurfer.params.scrollSpeed || 1;
-	var scrollThreshold = wavesurfer.params.scrollThreshold || 10;
-	var maxScroll = void 0;
-	var scrollDirection = void 0;
-	var wrapperRect = void 0;
-	var wrapper = wavesurfer.drawer.wrapper;
-	var repeater;
-
-	var rangeUpdater = function(e) {
-		t1 = wavesurfer.drawer.handleEvent(e);
-		let tS = t0;
-		let tE = t1;
-		if (t1 < t0) {
-			tS = t1;
-			tE = t0;
-			wavesurfer.seekTo(t1);
-		}
-		region.update({
-			start:	tS * duration,
-			end:	tE * duration
-		});
-	}
-
-	var edgeScroll = function edgeScroll(e) {
-		if (!region || !scrollDirection) return;
-
-	// Update scroll position
-		var scrollLeft = wrapper.scrollLeft + scrollSpeed * scrollDirection;
-		var nextLeft =  Math.min(maxScroll, Math.max(0, scrollLeft));
-		wrapper.scrollLeft = scrollLeft = Math.min(maxScroll, Math.max(0, scrollLeft));
-		rangeUpdater(e);
-		// Check that there is more to scroll and repeat
-		if(scrollLeft < maxScroll && scrollLeft > 0) {
-			window.requestAnimationFrame(function () {
-			edgeScroll(e);
-			});
-		}
-	};
-
-	var eventMove = function (e) {
-		if (!dragActive) return;
-		rangeUpdater(e);
-		// If scrolling is enabled
-		if (scroll && wavesurfer.drawer.container.clientWidth < wrapper.scrollWidth) {
-			// Check threshold based on mouse
-			var x = e.clientX - wrapperRect.left;
-			if (x <= scrollThreshold) {
-				scrollDirection = -1;
-			} else if (x >= wrapperRect.right - scrollThreshold) {
-				scrollDirection = 1;
-			} else {
-				scrollDirection = null;
-			}
-			scrollDirection && edgeScroll(e);
-		}
-	}
-
-	var eventUp = function (e) {
-		dragActive = false;
-		if (region) {
-			region.fireEvent('update-end', e);
-			wavesurfer.fireEvent('region-update-end', region, e);
-		}
-		region = null;
-		let win = $(window); // disconnect listeners.
-		win.off('mousemove', eventMove);
-		win.off('touchmove', eventMove);
-		win.off('mouseup', eventUp);
-		win.off('touchend', eventUp);
-	}
-
-
-	var eventDown = function (e) {
-		duration = wavesurfer.getDuration();
-		// Filter out events intended for the scroll bar
-		let hasScroll = wavesurfer.params.scrollParent;
-		let r = e.target.getBoundingClientRect();
-
-		if (hasScroll && e.clientY > (r.bottom - 16)) return; // *** JFF Hack magic number.
-
-		maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
-		wrapperRect = wrapper.getBoundingClientRect();
-
-		t0 = wavesurfer.drawer.handleEvent(e);
-
-		let xD = e.clientX;
-
-		if (hasScroll) {
-			xD += wrapper.scrollLeft;
-		}
-
-		t1 = t0;
-		if (wavesurfer.isPlaying()) {
-			dragActive = false;
-			seekCursorTo(e);
-		} else {
-			dragActive = true;
-			wavesurfer.regions.clear();
-			wavesurfer.seekTo(t0);
-			let pos = {
-				start:	t0 * duration,
-				end:	t1 * duration,
-				drag:	false,
-				resize: false,
-			};
-			region = wavesurfer.regions.add(pos);
-		}
-		let win = $(window);
-		win.on('mousemove', eventMove); // dynamic listeners
-		win.on('touchmove', eventMove);
-		win.on('mouseup', eventUp);
-		win.on('touchend', eventUp);
-		//console.log('down');
-	}
-
-	let waveElem = $('#waveform');
-
-	waveElem.on('mousedown', eventDown);
-	waveElem.on('touchstart', eventDown);
-
-	return function() {
-		waveElem.off('mousedown', eventDown);
-		waveElem.off('touchstart', eventDown);
-	 };
-}
+var wave;
 
 var createOfflineContext  = function (buffer) {
 	let {numberOfChannels, sampleRate} = buffer;
 	return new OfflineContext(numberOfChannels, buffer.getChannelData(0).length, sampleRate);
 }
 
-function secondsToSampleNum(t, buffer) {
-	let sn = t * buffer.sampleRate;
-	if (sn < 0) return 0;
-	if (sn > buffer.getChannelData(0).length) return buffer.getChannelData(0).length
-	return Math.round(sn);
-}
 
-
-var testFilterGraph = function (ctx)
-{
-	//set up the different audio nodes we will use for the app
-	let analyser = ctx.createAnalyser();
-	let distortion = ctx.createWaveShaper();
-	let gainNode = ctx.createGain();
-	let biquadFilter = ctx.createBiquadFilter();
-	let convolver = ctx.createConvolver();
-
-	biquadFilter.type = "lowshelf";
-	biquadFilter.frequency.value = 1000; //.setValueAtTime(1000, ctx.currentTime);
-	biquadFilter.gain.value = 25; // .setValueAtTime(25, ctx.currentTime);
-
-	let filtList = [analyser, distortion, biquadFilter, gainNode];
-	return filtList;
-}
 
 // disconnectFilters
 // setFilters (listoffilters);
 var testFilterButton = function(e)
 {
-	let biquadFilter = wavesurfer.backend.ac.createBiquadFilter();
+	let biquadFilter = wave.audioContext.createBiquadFilter();
 	let filterGUI = quadfilter_template();
 	$('#procmods').empty();
-	wavesurfer.backend.setFilters();
+	wave.backend.setFilters();
 	$('#procmods').append (filterGUI);
 	$(".dial").knob({change: function (v) {
 		let inp = this.i[0];
@@ -354,14 +60,14 @@ var testFilterButton = function(e)
 	});
 	$('#fl_cancel').on('click', e=>{
 		$('#procmods').empty();
-		wavesurfer.backend.setFilters();
+		wave.backend.setFilters();
 	});
 
 	$('#fl_audition').on('click', e=>{
 		if (e.target.checked) {
-			wavesurfer.backend.setFilters([biquadFilter]);
+			wave.backend.setFilters([biquadFilter]);
 		} else {
-			wavesurfer.backend.setFilters();
+			wave.backend.setFilters();
 		}
 	});
 
@@ -377,9 +83,9 @@ var testFilterButton = function(e)
 			return [bqf];
 		});
 
-		wavesurfer.backend.setFilters();
+		wave.backend.setFilters();
 	});
-	wavesurfer.backend.setFilters([biquadFilter]);
+	wave.backend.setFilters([biquadFilter]);
 }
 
 
@@ -424,10 +130,6 @@ function applyFilterTransform(setup)
 		alert('Rendering failed: ' + err);
 	});
 */
-}
-
-function testOfflineContext(e) {
-	applyFilterTransform(testFilterGraph);
 }
 
 // Simplified to just multiply by 1/max(abs(buffer))
@@ -493,41 +195,18 @@ var applyFunction = function (buffer, f)
 }
 
 
-function changeBuffer(buffer) {
-	if (!buffer) return;
-
-	let playState = wavesurfer.isPlaying();
-	let songPos;
-	if (playState) {
-		console.log('pausing');
-		wavesurfer.pause();
-		songPos = wavesurfer.getCurrentTime();
-	}
-
-	wavesurfer.backend.load(buffer);
-	redrawWave();
-	if (playState) {
-		if (songPos < 0) songPos = 0;
-		let dur = wavesurfer.getDuration();
-		if (songPos < dur) {
-			wavesurfer.play(songPos);
-			console.log('playing');
-		}
-	}
-}
 
 function doPlaySel(e)
 {
-	let buffer = wavesurfer.backend.buffer;
-	let {start, end} = getSelection(buffer);
-	wavesurfer.play(start, end);
+	let {start, end} = wave.getSelection();
+	wave.surfer.play(start, end);
 }
 
 
 var deleteSelected = function (e)
 {
-	let buffer = wavesurfer.backend.buffer;
-	let {regional, length, first, last, region} = getSelection(buffer);
+	let buffer = wave.backend.buffer;
+	let {regional, length, first, last, region} = wave.getSelection();
 	if (!regional) return;
 
 	let ds = last - first;
@@ -549,13 +228,13 @@ var deleteSelected = function (e)
 	}
 	if(region) region.remove();
 	undoStack.push(buffer);
-	changeBuffer(nextBuffer);
+	wave.changeBuffer(nextBuffer);
 }
 
 var copySelected = function (e)
 {
-	let buffer = wavesurfer.backend.buffer;
-	let {length, first, last, region} = getSelection(buffer);
+	let buffer = wave.backend.buffer;
+	let {length, first, last, region} = wave.getSelection();
 	let ds = last - first;
 	let {numberOfChannels, sampleRate} = buffer;
 	let nextBuffer = audioCtx.createBuffer(numberOfChannels, ds, sampleRate);
@@ -607,27 +286,27 @@ function fadeOut(e) {
 }
 
 function selAll(e) {
-	let {regional, start, end, duration} = getSelection(wavesurfer.backend.buffer);
-	wavesurfer.regions.clear();
-	wavesurfer.seekTo(0);
+	let {regional, start, end, duration} = wave.getSelection();
+	wave.surfer.regions.clear();
+	wave.surfer.seekTo(0);
 	// If wa are alread a full selection, quit right after we cleared.
 	if (regional && start === 0 && end === duration) return;
 
 	let pos = {
 		start:	0,
-		end:	wavesurfer.getDuration(),
+		end:	wave.surfer.getDuration(),
 		drag:	false,
 		resize: false,
 	};
-	wavesurfer.regions.add(pos);
+	wave.surfer.regions.add(pos);
 }
 
 
 var pasteSelected = function (pasteData, checkInsert)
 {
-	let buffer = wavesurfer.backend.buffer;
+	let buffer = wave.backend.buffer;
 
-	let {regional, cursorTime, cursorPos, length, first, last, region} = getSelection(buffer);
+	let {regional, cursorTime, cursorPos, length, first, last, region} = wave.getSelection();
 
 	if (checkInsert && !regional) { // regionl === false means its an insertion point.
 		first = cursorPos;
@@ -661,7 +340,7 @@ var pasteSelected = function (pasteData, checkInsert)
 	}
 	//if(region) region.remove();
 	undoStack.push(buffer);
-	changeBuffer(nextBuffer);
+	wave.changeBuffer(nextBuffer);
 }
 
 
@@ -669,17 +348,17 @@ function doUndo(e) {
 	console.log("Undo");
 
 	if (undoStack.atTop()) {
-		let buffer = wavesurfer.backend.buffer;
+		let buffer = wave.backend.buffer;
 		undoStack.push(buffer);
 	}
 	let unbuf = undoStack.undo();
-	changeBuffer(unbuf);
+	wave.changeBuffer(unbuf);
 }
 
 function doRedo(e) {
 	console.log("Redo");
 	let redo = undoStack.redo();
-	changeBuffer(redo);
+	wave.changeBuffer(redo);
 }
 
 function copyToClip(e) 
@@ -706,7 +385,7 @@ function pasteFromClip(e)
 		let clip = clipBd.getData('text/plain');
 		if (clip.startsWith('Ukl')) {
 			let asbin = base64ToArrayBuffer(clip);
-			wavesurfer.backend.decodeArrayBuffer(asbin, function (data) {
+			wave.backend.decodeArrayBuffer(asbin, function (data) {
 			if (data) pasteSelected(data, true);
 	 	  }, function (err) {
 			alert('paste decode error');
@@ -719,12 +398,12 @@ function pasteFromClip(e)
 
 function zoom(amt) {
 	
-	let minPxWas = wavesurfer.params.minPxPerSec;
+	let minPxWas = wave.surfer.params.minPxPerSec;
 	let newPx = minPxWas * amt;
 	let zoomLimit = 44100;
 	if (newPx > zoomLimit) newPx = zoomLimit;
 // console.log('zoom rate: ' + newPx);
-	wavesurfer.zoom(newPx);
+	wave.surfer.zoom(newPx);
 }
 
 function bindGui() {
@@ -740,8 +419,8 @@ function bindGui() {
 	
 	$('#loadbut').on('click',btn_load);
 	$('#savebut').on('click',btn_save);
-	$('#plsybut').on('click',(e)=>{wavesurfer.playPause(e)});
-	$('#rewbut').on('click', (e)=>{wavesurfer.seekTo(0)});
+	$('#plsybut').on('click',(e)=>{wave.surfer.playPause(e)});
+	$('#rewbut').on('click', (e)=>{wave.surfer.seekTo(0)});
 	$('#plsyselbut').on('click', doPlaySel);
 	$('#undobut').on('click', doUndo);
 	$('#redobut').on('click', doRedo);
@@ -779,12 +458,6 @@ function openFilter(filterName) {
 	}
 }
 
-/*
-$(function() {
-	$(".dial").knob();
-});
-*/
-
 var playBtnImg = $('#playbutimg');
 var undoBtn = $('#undobut');
 var redoBtn = $('#redobut');
@@ -797,8 +470,8 @@ function setDisable(item, state)
 
 function updateGui()
 {
-	if(!wavesurfer) return;
-	let playState = wavesurfer.isPlaying();
+	if(!wave || !wave.surfer) return;
+	let playState = wave.surfer.isPlaying();
 
 	let newPlayImg = "img/glyphicons-174-play.png"
 	if (playState) newPlayImg = "img/glyphicons-175-pause.png";
@@ -824,7 +497,7 @@ function startGuiCheck() {
 // since the FlashAir card doesn't do that, we can't record audio. Another annoying browser incapacity.
 function record()
 {
-	var mike = new Microphone({}, wavesurfer);
+	var mike = new Microphone({}, wave.surfer);
 
 	mike.start();
 }
@@ -836,10 +509,13 @@ function record()
 //editor
 function setEditData(data)
 {
-	openOnBuffer(data);
-	
-	let loadEndTime = performance.now();
-	console.log("Load time: " + (loadEndTime - loadStartTime));
+	if(!wave) {
+		wave = new Wave();
+	}
+	wave.openOnBuffer(data);
+	startGuiCheck();
+	// let loadEndTime = performance.now();
+	// console.log("Load time: " + (loadEndTime - loadStartTime));
 }
 
 function openLocal(evt)
@@ -852,21 +528,10 @@ function openLocal(evt)
 // Closure to capture the file information.
 	reader.onloadend = (function(theFile) {
 		return openOnBuffer(theFile);
-	/*
-		return function(e) {
-			// Display contents of file
-				let buffer = e.target.result;
-				openOnBuffer(buffer);
-			//	audioCtx.decodeAudioData(buffer).then(function (decoded) {
-			//		openOnbuffer(decoded);
-			//	});
-			};
-			*/
-		})(f);
+	})(f);
 	// Read in the image file as a data URL.
 	reader.readAsBinaryString(f);
 }
-
 
 
 //---------- When reading page -------------
@@ -882,33 +547,20 @@ function onLoad()
 
 	if(!local_exec) {
 		loadFile();
-	} else {
+	} else { // We are running as a 'file://', so change the GUI to reflect that.
 		$('#filegroup').remove();
 		$('#filegroupplace').append(local_exec_head());
 		$('#jtab').append (local_exec_info());
 		$('#opener').on('change', openLocal);
-		if (custom_sample_path) {
-			sample_path_prefix = custom_sample_path;
-		} else {
-			if (document.URL.indexOf('DR/xmlView')> 0) {
-				sample_path_prefix = '../../';
-			} else if (document.URL.indexOf('xmlView')> 0) {
-				sample_path_prefix = '../';
-			} else sample_path_prefix = '';
-		}
 	}
 	bindGui();
 }
 
 window.onload = onLoad;
 
-
-
-
-// use ajax to load wav data, instead of web worker.
+// use ajax to load wav data (instead of a web worker).
 function loadFile()
 {
-	loadStartTime = performance.now();
 	fname = filename_input.value;
 	$("#statind").text("Loading: " +  fname);
 	$.ajax({
@@ -935,7 +587,7 @@ function loadFile()
 	});
 }
 
-// use ajax to save-back wav data, instead of web worker.
+// use ajax to save-back wav data (instead of a web worker).
 function saveFile(filepath, data)
 {
 	var timestring;
@@ -1035,7 +687,7 @@ function btn_save(){
 	}
 	fname = filename_input.value;
 
-	let aBuf = wavesurfer.backend.buffer;
+	let aBuf = wave.backend.buffer;
 	let saveData = audioBufferToWav(aBuf);
 	saveFile(fname, saveData);
 	// jsEditor.markClean();

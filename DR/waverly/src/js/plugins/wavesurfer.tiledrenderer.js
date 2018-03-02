@@ -1,5 +1,5 @@
 /*!
- * wavesurfer.js 2.0.4 (Thu Mar 01 2018 15:47:56 GMT-0800 (PST))
+ * wavesurfer.js 2.0.4 (Fri Mar 02 2018 13:13:39 GMT-0800 (PST))
  * https://github.com/katspaugh/wavesurfer.js
  * @license BSD-3-Clause
  */
@@ -437,8 +437,9 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
  */
 
 /**
- * MultiCanvas renderer for wavesurfer. Is currently the default and sole built
- * in renderer.
+ * TiledRenderer for wavesurfer. Based on the MultiCanvas renderer bundled with WaveSurfer.
+ * TiledRenderer works with a pool of Canvas objects, automatically drawing and positioning them
+ * as needed.
  */
 
 var TiledRenderer = function (_Drawer) {
@@ -828,7 +829,7 @@ var TiledRenderer = function (_Drawer) {
                 for (i = first; i < last; i += step) {
                     var peak = peaks[Math.floor(i * scale * peakIndexScale)] || 0;
                     var h = Math.round(peak / absmax * halfH);
-                    _this4.fillRect(i + _this4.halfPixel, halfH - h + offsetY, bar + _this4.halfPixel, h * 2, canvas);
+                    _this4.fillRect(i - first + _this4.halfPixel, halfH - h + offsetY, bar + _this4.halfPixel, h * 2, canvas);
                 }
             }, canvas);
         }
