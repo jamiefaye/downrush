@@ -17,25 +17,6 @@ window.onerror = function(msg, url, line, col, error) {
 -->
 
 </script>
-
-<script type="text/javascript" src="js/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="js/handlebars.min.js"></script>
-<!--
-<script type="text/javascript" src="js/ext/clipboard.js"></script>
-<script type="text/javascript" src="js/ext/tippy.all.min.js"></script>
-<script type="text/javascript" src="js/ext/plugins/wavesurfer.mediasession.js"></script>
--->
-
-
-<script type="text/javascript" src="js/wavesurfer.js"></script>
-<script type="text/javascript" src="js/plugins/wavesurfer.tiledrenderer.js"></script>
-<script type="text/javascript" src="js/plugins/wavesurfer.regions.js"></script>
-<script type="text/javascript" src="js/plugins/wavesurfer.timeline.js"></script>
-<script type="text/javascript" src="js/plugins/wavesurfer.minimap.js"></script>
-<script type="text/javascript" src="js/jquery.knob.js"></script>
-<script type="text/javascript" src="js/nouislider.js"></script>
-<script type="text/javascript" src="templates.js"></script>
-
 <link rel="stylesheet" href="css/edit.css">
 	</head>
 	<body>
@@ -55,8 +36,8 @@ window.onerror = function(msg, url, line, col, error) {
 <div id="waveform-timeline"></div>
 <div id="minimap"></div>
 <div class='butnrow'>
-<button class="butn" onclick="zoom(2)" title='Zoom in'><img src='img/glyphicons-237-zoom-in.png'/></button>
-<button class="butn" onclick="zoom(0.5)" title='Zoom out'><img src='img/glyphicons-238-zoom-out.png'/></button>
+<button class="butn" id='zoominbut' title='Zoom in'><img src='img/glyphicons-237-zoom-in.png'/></button>
+<button class="butn" id='zoomoutbut'  title='Zoom out'><img src='img/glyphicons-238-zoom-out.png'/></button>
 <button class="butn" id='rewbut' title='Back to start'><img src='img/glyphicons-172-fast-backward.png'/></button>
 <button class="butn" id='plsybut' title='Play'><img width='16px'height='18px' id='playbutimg' src='img/glyphicons-174-play.png'/></button>
 <button class="butn" id='plsyselbut' title='Play selected'><img src='img/glyphicons-221-play-button.png'/></button>
@@ -97,6 +78,6 @@ window.onerror = function(msg, url, line, col, error) {
   </p>
 </div>
 -->
-<script src="viewWAV.js"></script>
+<script src="waverly.js"></script>
 </body>
 </html>

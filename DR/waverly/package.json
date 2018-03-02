@@ -1,0 +1,19 @@
+{
+  "name": "waverly",
+  "version": "1.0.0",
+  "description": "wav editor",
+  "main": "src/viewWAV.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack --mode development",
+    "build": "webpack --mode production"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "webpack": "^4.0.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^2.0.9"
+  }
+}
