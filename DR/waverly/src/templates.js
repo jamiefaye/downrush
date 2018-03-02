@@ -17,6 +17,9 @@ You are running the local version of Waverly.
 var sfx_dropdn_template = Handlebars.compile(`<button id='dropbtn' class="dropbtn">Effects</button>
 	<div id="droplist" class="dropdown-content">
 	<a id='openfilter'>Filter</a>
+
+ </div>`);
+
 /*
 	<a onclick="openFilter('reverb')">Reverb</a>
 	<a onclick="openFilter('delay')">Delay</a>
@@ -29,7 +32,6 @@ var sfx_dropdn_template = Handlebars.compile(`<button id='dropbtn' class="dropbt
 	<a onclick="openFilter('notch')">Notch Filter</a>
 	<a onclick="openFilter('allpass')">Allpass Filter</a>
 */
- </div>`);
 
 var filterheader = Handlebars.compile(`<div id='filterhdr'>
 <button class="butn" id='fl_apply'>Apply</button>
