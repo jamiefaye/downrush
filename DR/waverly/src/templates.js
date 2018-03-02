@@ -16,7 +16,7 @@ You are running the local version of Waverly.
 
 var sfx_dropdn_template = Handlebars.compile(`<button id='dropbtn' class="dropbtn">Effects</button>
 	<div id="droplist" class="dropdown-content">
-	<a id='openfilter'>Filter</a>
+	<a id='openfilter'>Quad Filter</a>
 
  </div>`);
 

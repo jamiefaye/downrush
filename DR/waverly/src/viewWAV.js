@@ -1,12 +1,15 @@
-var $ = require('./js/jquery-3.2.1.min.js');
-var WaveSurfer = require('./js/wavesurfer.js');
-var TimelinePlugin = require('./js/plugins/wavesurfer.timeline.js');
-var RegionPlugin  = require('./js/plugins/wavesurfer.regions.js');
-var Minimap = require('./js/plugins/wavesurfer.minimap.js');
-var knob = require('./js/jquery.knob.js');
-var {sfx_dropdn_template, quadfilter_template, local_exec_head, local_exec_info} = require('./templates.js');
+import $ from'./js/jquery-3.2.1.min.js';
+import WaveSurfer from './js/wavesurfer.js';
+import TimelinePlugin from'./js/plugins/wavesurfer.timeline.js';
+import RegionPlugin  from'./js/plugins/wavesurfer.regions.js';
+import Minimap from'./js/plugins/wavesurfer.minimap.js';
+import knob from'./js/jquery.knob.js';
+import {sfx_dropdn_template, quadfilter_template, local_exec_head, local_exec_info} from'./templates.js';
+import {TiledRenderer, tiledDrawBuffer} from './js/plugins/wavesurfer.tiledrenderer.js';
+import UndoStack from './UndoStack.js';
+import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
+import {audioBufferToWav} from './audioBufferToWav.js';
 
-var {TiledRenderer, tiledDrawBuffer} = require('./js/plugins/wavesurfer.tiledrenderer.js');
 "use strict";
 
 // Change the following line as needed to point to the parent directory containing your sample directory.
@@ -32,68 +35,16 @@ var OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioCont
 var localClipboard;
 var loadStartTime;
 
-class UndoStack {
-	constructor(limit) {
-		this.stack = [];
-		this.index = -1;
-		this.limit = limit;
-	}
-	
-	atTop() {
-		return this.index === -1;
-	}
-
-	canUndo() {
-		if(this.stack.length === 0) return false;
-		return this.index === -1 || this.index > 0;
-	}
-
-	canRedo() {
-		if(this.stack.length === 0 || this.index === -1) return false;
-		return this.index < this.stack.length - 1;
-	}
-
-	push(item) {
-		if (this.index >= 0) {
-			while (this.index < this.stack.length) this.stack.pop();
-			this.index = -1;
-		}
-		if (this.limit && this.stack.length > this.limit) {
-			this.stack.shift();
-		}
-		this.stack.push(item);
-	}
-
-	undo() {
-		if (this.stack.length === 0) return undefined;
-		if (this.index === -1) { // start one behind the redo buffer
-			this.index = this.stack.length - 1;
-		}
-		if (this.index > 0) this.index--;
-		let v = this.stack[this.index];
-		return v;
-	}
-
-	redo() {
-		if (this.stack.length === 0 || this.index === -1) return undefined;
-		let nextX = this.index + 1;
-		if (nextX >= this.stack.length) return undefined;
-		this.index = nextX;
-		return this.stack[this.index];
-	}
-};
 
 var undoStack = new UndoStack(10);
 
-
+var wavesurfer;
 
 function redrawWave()
 {
-	//wavesurfer.peakCache.clearPeakCache();
 	wavesurfer.drawBuffer();
 	wavesurfer.minimap.render();
 }
-
 
 // Page transition warning
 
@@ -156,7 +107,7 @@ function openOnBuffer(decoded)
 			wavesurfer.zoom(pps);
 		}
 		disableWaveTracker = setupWaveTracker();
-		
+
 		startGuiCheck();
 });	
 
@@ -731,73 +682,6 @@ function doRedo(e) {
 	changeBuffer(redo);
 }
 
-
-function base64ArrayBuffer(arrayBuffer) {
-  var base64    = ''
-  var encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-
-  var bytes         = new Uint8Array(arrayBuffer);
-  var byteLength    = bytes.byteLength;
-  var byteRemainder = byteLength % 3;
-  var mainLength    = byteLength - byteRemainder;
-
-  var a, b, c, d;
-  var chunk;
-
-  // Main loop deals with bytes in chunks of 3
-  for (var i = 0; i < mainLength; i = i + 3) {
-    // Insert newlines to avoid super-long strings.
-  	if ((i !== 0) && ((i % 72) === 0)) {
-    	base64 += '\n';
-    }
-    // Combine the three bytes into a single integer
-    chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
-
-    // Use bitmasks to extract 6-bit segments from the triplet
-    a = (chunk & 16515072) >> 18 // 16515072 = (2^6 - 1) << 18
-    b = (chunk & 258048)   >> 12 // 258048   = (2^6 - 1) << 12
-    c = (chunk & 4032)     >>  6 // 4032     = (2^6 - 1) << 6
-    d = chunk & 63               // 63       = 2^6 - 1
-
-    // Convert the raw binary segments to the appropriate ASCII encoding
-    base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d];
-  }
-
-  // Deal with the remaining bytes and padding
-  if (byteRemainder == 1) {
-    chunk = bytes[mainLength]
-
-    a = (chunk & 252) >> 2 // 252 = (2^6 - 1) << 2
-
-    // Set the 4 least significant bits to zero
-    b = (chunk & 3)   << 4 // 3   = 2^2 - 1
-
-    base64 += encodings[a] + encodings[b] + '=='
-  } else if (byteRemainder == 2) {
-    chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1]
-
-    a = (chunk & 64512) >> 10 // 64512 = (2^6 - 1) << 10
-    b = (chunk & 1008)  >>  4 // 1008  = (2^6 - 1) << 4
-
-    // Set the 2 least significant bits to zero
-    c = (chunk & 15)    <<  2 // 15    = 2^4 - 1
-
-    base64 += encodings[a] + encodings[b] + encodings[c] + '='
-  }
-
-  return base64
-}
-
-function base64ToArrayBuffer(base64) {
-    var binary_string =  window.atob(base64);
-    var len = binary_string.length;
-    var bytes = new Uint8Array( len );
-    for (var i = 0; i < len; i++)        {
-        bytes[i] = binary_string.charCodeAt(i);
-    }
-    return bytes.buffer;
-}
-
 function copyToClip(e) 
 {
 	let clip = e.originalEvent.clipboardData;
@@ -809,19 +693,6 @@ function copyToClip(e)
 	if (clip) clip.setData('text/plain', asText);
 	e.preventDefault();
 }
-/********
-// Populate copy to clip board button.
-var clipper = new Clipboard('#copybut', {
-	text: function(trigger) {
-		let clipBuff =  copySelected();
-		let wavData = audioBufferToWav(clipBuff);
-		let asText = base64ArrayBuffer(wavData);
-		// alert(asText);
-		console.log("returning clipboard data");
-		return asText;
-		}
-});
-*********/
 
 function cutToClip(e) {
 	copyToClip(e);
@@ -851,47 +722,41 @@ function zoom(amt) {
 	let minPxWas = wavesurfer.params.minPxPerSec;
 	let newPx = minPxWas * amt;
 	let zoomLimit = 44100;
-	let dur = wavesurfer.getDuration();
-	/*
-	if (dur > 60) zoomLimit = 2756.25; 
-		else if (dur > 30) zoomLimit = 5512.5;
-			else if (dur > 16) zoomLimit = 11025;
-				else if (dur > 10) zoomLimit = 22050;
-	*/
 	if (newPx > zoomLimit) newPx = zoomLimit;
 // console.log('zoom rate: ' + newPx);
 	wavesurfer.zoom(newPx);
 }
 
-
-$(window).on('paste', pasteFromClip);
-// iOS was screwing up if the following line was not commented out.
-$(window).on('copy', copyToClip);
-$(window).on('cut', cutToClip);
-
-$(window).on('undo', doUndo);
-$(window).on('redo', doRedo);
-// Remove highlighting after button pushes:
-$('.butn').mouseup(function() { this.blur()});
-
-$('#plsybut').on('click',(e)=>{wavesurfer.playPause(e)});
-$('#rewbut').on('click', (e)=>{wavesurfer.seekTo(0)});
-$('#plsyselbut').on('click', doPlaySel);
-$('#undobut').on('click', doUndo);
-$('#redobut').on('click', doRedo);
-$('#delbut').on('click', deleteSelected);
-$('#cutbut').on('click', cutToClip);
-$('#copybut').on('click', copyToClip);
-$('#pastebut').on('click',pasteFromClip);
-$('#normbut').on('click',normalizer);
-$('#reversebut').on('click',reverser);
-$('#fadeinbut').on('click',fadeIn);
-$('#fadeoutbut').on('click',fadeOut);
-$('#selallbut').on('click',selAll);
-$('#zoominbut').on('click',e=>{zoom(2.0)});
-$('#zoomoutbut').on('click',e=>{zoom(0.5)});
-
-
+function bindGui() {
+	$(window).on('paste', pasteFromClip);
+	// iOS was screwing up if the following line was not commented out.
+	$(window).on('copy', copyToClip);
+	$(window).on('cut', cutToClip);
+	
+	$(window).on('undo', doUndo);
+	$(window).on('redo', doRedo);
+	// Remove highlighting after button pushes:
+	$('.butn').mouseup(function() { this.blur()});
+	
+	$('#loadbut').on('click',btn_load);
+	$('#savebut').on('click',btn_save);
+	$('#plsybut').on('click',(e)=>{wavesurfer.playPause(e)});
+	$('#rewbut').on('click', (e)=>{wavesurfer.seekTo(0)});
+	$('#plsyselbut').on('click', doPlaySel);
+	$('#undobut').on('click', doUndo);
+	$('#redobut').on('click', doRedo);
+	$('#delbut').on('click', deleteSelected);
+	$('#cutbut').on('click', cutToClip);
+	$('#copybut').on('click', copyToClip);
+	$('#pastebut').on('click',pasteFromClip);
+	$('#normbut').on('click',normalizer);
+	$('#reversebut').on('click',reverser);
+	$('#fadeinbut').on('click',fadeIn);
+	$('#fadeoutbut').on('click',fadeOut);
+	$('#selallbut').on('click',selAll);
+	$('#zoominbut').on('click',e=>{zoom(2.0)});
+	$('#zoomoutbut').on('click',e=>{zoom(0.5)});
+}
 
 var sfxdd = sfx_dropdn_template();
 $('#dropdn').append(sfxdd);
@@ -951,7 +816,7 @@ function updateGui()
 var guiCheck;
 
 function startGuiCheck() {
-	guiCheck = setInterval(updateGui, 200);
+	if(!guiCheck) guiCheck = setInterval(updateGui, 200);
 }
 
 /*
@@ -1032,103 +897,13 @@ function onLoad()
 			} else sample_path_prefix = '';
 		}
 	}
+	bindGui();
 }
+
 window.onload = onLoad;
 
 
-// Snarfed from: https://github.com/Jam3/audiobuffer-to-wav/blob/master/index.js
-function audioBufferToWav (buffer, opt) {
-  opt = opt || {}
 
-  let {numberOfChannels, sampleRate} = buffer;
-  var format = opt.float32 ? 3 : 1
-  var bitDepth = format === 3 ? 32 : 16
-
-  var result
-  if (numberOfChannels === 2) {
-    result = interleave(buffer.getChannelData(0), buffer.getChannelData(1))
-  } else {
-    result = buffer.getChannelData(0)
-  }
-
-  return encodeWAV(result, format, sampleRate, numberOfChannels, bitDepth)
-}
-
-function encodeWAV (samples, format, sampleRate, numChannels, bitDepth) {
-  var bytesPerSample = bitDepth / 8
-  var blockAlign = numChannels * bytesPerSample
-
-  var buffer = new ArrayBuffer(44 + samples.length * bytesPerSample)
-  var view = new DataView(buffer)
-
-  /* RIFF identifier */
-  writeString(view, 0, 'RIFF')
-  /* RIFF chunk length */
-  view.setUint32(4, 36 + samples.length * bytesPerSample, true)
-  /* RIFF type */
-  writeString(view, 8, 'WAVE')
-  /* format chunk identifier */
-  writeString(view, 12, 'fmt ')
-  /* format chunk length */
-  view.setUint32(16, 16, true)
-  /* sample format (raw) */
-  view.setUint16(20, format, true)
-  /* channel count */
-  view.setUint16(22, numChannels, true)
-  /* sample rate */
-  view.setUint32(24, sampleRate, true)
-  /* byte rate (sample rate * block align) */
-  view.setUint32(28, sampleRate * blockAlign, true)
-  /* block align (channel count * bytes per sample) */
-  view.setUint16(32, blockAlign, true)
-  /* bits per sample */
-  view.setUint16(34, bitDepth, true)
-  /* data chunk identifier */
-  writeString(view, 36, 'data')
-  /* data chunk length */
-  view.setUint32(40, samples.length * bytesPerSample, true)
-  if (format === 1) { // Raw PCM
-    floatTo16BitPCM(view, 44, samples)
-  } else {
-    writeFloat32(view, 44, samples)
-  }
-
-  return buffer
-}
-
-function interleave (inputL, inputR) {
-  var length = inputL.length + inputR.length
-  var result = new Float32Array(length)
-
-  var index = 0
-  var inputIndex = 0
-
-  while (index < length) {
-    result[index++] = inputL[inputIndex]
-    result[index++] = inputR[inputIndex]
-    inputIndex++
-  }
-  return result
-}
-
-function writeFloat32 (output, offset, input) {
-  for (var i = 0; i < input.length; i++, offset += 4) {
-    output.setFloat32(offset, input[i], true)
-  }
-}
-
-function floatTo16BitPCM (output, offset, input) {
-  for (var i = 0; i < input.length; i++, offset += 2) {
-    var s = Math.max(-1, Math.min(1, input[i]))
-    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true)
-  }
-}
-
-function writeString (view, offset, string) {
-  for (var i = 0; i < string.length; i++) {
-    view.setUint8(offset + i, string.charCodeAt(i))
-  }
-}
 
 // use ajax to load wav data, instead of web worker.
 function loadFile()
