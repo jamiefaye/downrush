@@ -39,88 +39,50 @@ body {
 	background-color:#f8f8f8;
 }
 
-// from Kate Morley - http://code.iamkate.com/
 
-.dropdown,
-.dropdown ul,
-.dropdown li{
-  margin  : 0;
-  padding : 0;
+/* Dropdown Button from www schools */
+.dropbtn {
+//    background-color: #3498DB;
+//  color: white;
+//  padding: 16px;
+//  font-size: 16px;
+	vertical-align: top;
+	height: 28px;
+	min-height: 28px;
+	cursor: pointer;
 }
 
-.dropdown ul,
-[dir=rtl] .dropdown > .dropdownLeftToRight > ul{
-  display  : none;
-  position : absolute;
-  top      : 100%;
-  left     : 0;
-  right    : auto;
-  z-index  : 1;
+/* Dropdown button on hover & focus */
+.dropbtn:hover, .dropbtn:focus {
+    background-color: #2980B9;
 }
 
-[dir=rtl] .dropdown ul,
-.dropdown > .dropdownRightToLeft > ul{
-  left  : auto;
-  right : 0;
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+    position: relative;
+    display: inline-block;
 }
 
-.dropdown ul ul,
-[dir=rtl] .dropdown ul .dropdownLeftToRight ul{
-  top   : 0;
-  left  : 100%;
-  right : auto;
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f1f1f1;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
 }
 
-[dir=rtl] .dropdown ul ul,
-.dropdown ul .dropdownRightToLeft ul{
-  left  : auto;
-  right : 100%;
+/* Links inside the dropdown */
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
 }
 
-.dropdown li{
-  position        : relative;
-  display         : block;
-  list-style-type : none;
-}
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {background-color: #ddd}
 
-.dropdown > li{
-  display : inline-block;
-}
-
-.dropdown a,
-.dropdown span{
-  display         : block;
-  text-decoration : none;
-  white-space     : pre;
-}
-
-.dropdown li:hover > ul{
-  display : block;
-}
-
-.dropdownVertical{
-  display : inline-block;
-}
-
-.dropdownVertical > li{
-  display : block;
-}
-
-.dropdownVertical ul{
-  top  : 0;
-  left : 100%;
-}
-
-[dir=rtl] .dropdownVertical ul{
-  left  : auto;
-  right : 100%;
-}
-
-.dropdownJavaScript li:hover > ul{
-  display : none;
-}
-
-.dropdownJavaScript li.dropdownOpen > ul{
-  display : block !important;
-}
-
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.show {display:block;}

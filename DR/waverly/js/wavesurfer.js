@@ -1,3 +1,8 @@
+/*!
+ * wavesurfer.js 2.0.4 (Thu Mar 01 2018 11:52:42 GMT-0800 (PST))
+ * https://github.com/katspaugh/wavesurfer.js
+ * @license BSD-3-Clause
+ */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -171,6 +176,15 @@ Object.defineProperty(exports, 'debounce', {
   enumerable: true,
   get: function get() {
     return _interopRequireDefault(_debounce).default;
+  }
+});
+
+var _preventClick = __webpack_require__(13);
+
+Object.defineProperty(exports, 'preventClick', {
+  enumerable: true,
+  get: function get() {
+    return _interopRequireDefault(_preventClick).default;
   }
 });
 
@@ -1204,7 +1218,7 @@ var _util = __webpack_require__(0);
 
 var util = _interopRequireWildcard(_util);
 
-var _drawer = __webpack_require__(13);
+var _drawer = __webpack_require__(14);
 
 var _drawer2 = _interopRequireDefault(_drawer);
 
@@ -1212,11 +1226,11 @@ var _webaudio = __webpack_require__(3);
 
 var _webaudio2 = _interopRequireDefault(_webaudio);
 
-var _mediaelement = __webpack_require__(15);
+var _mediaelement = __webpack_require__(16);
 
 var _mediaelement2 = _interopRequireDefault(_mediaelement);
 
-var _peakcache = __webpack_require__(16);
+var _peakcache = __webpack_require__(17);
 
 var _peakcache2 = _interopRequireDefault(_peakcache);
 
@@ -2247,6 +2261,19 @@ var WaveSurfer = function (_util$Observer) {
         }
 
         /**
+         * Get the current ready status.
+         *
+         * @example const isReady = wavesurfer.isReady();
+         * @return {boolean}
+         */
+
+    }, {
+        key: 'isReady',
+        value: function isReady() {
+            return this.isReady;
+        }
+
+        /**
          * Get the list of current set filters as an array.
          *
          * Filters must be set with setFilters method first
@@ -2915,9 +2942,9 @@ function ajax(options) {
     if (options.xhr) {
         if (options.xhr.requestHeaders) {
             // add custom request headers
-            for (var header in options.xhr.requestHeaders) {
+            options.xhr.requestHeaders.forEach(function (header) {
                 xhr.setRequestHeader(header.key, header.value);
-            }
+            });
         }
         if (options.xhr.withCredentials) {
             // use credentials
@@ -3211,10 +3238,31 @@ module.exports = function debounce(func, wait, immediate){
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
+exports.default = preventClick;
+function preventClickHandler(e) {
+    e.stopPropagation();
+    document.body.removeEventListener('click', preventClickHandler, true);
+}
+
+function preventClick(values) {
+    document.body.addEventListener('click', preventClickHandler, true);
+}
+module.exports = exports['default'];
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _drawer = __webpack_require__(14);
+var _drawer = __webpack_require__(15);
 
 var _drawer2 = _interopRequireDefault(_drawer);
 
@@ -3849,7 +3897,7 @@ exports.default = MultiCanvas;
 module.exports = exports['default'];
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4325,7 +4373,7 @@ exports.default = Drawer;
 module.exports = exports['default'];
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4800,7 +4848,7 @@ exports.default = MediaElement;
 module.exports = exports['default'];
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
