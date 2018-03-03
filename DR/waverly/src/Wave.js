@@ -13,7 +13,7 @@ function secondsToSampleNum(t, buffer) {
 }
 
 export default class Wave {
-	Wave(rootDivId) {
+	constructor(rootDivId) {
 		this.rootDivId = rootDivId;
 	}
 

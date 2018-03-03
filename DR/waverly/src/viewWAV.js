@@ -7,6 +7,7 @@ import {sfx_dropdn_template, quadfilter_template, local_exec_head, local_exec_in
 import UndoStack from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import {audioBufferToWav} from './audioBufferToWav.js';
+import Dropdown from './Dropdown.js';
 
 "use strict";
 
@@ -31,10 +32,6 @@ var createOfflineContext  = function (buffer) {
 	return new OfflineContext(numberOfChannels, buffer.getChannelData(0).length, sampleRate);
 }
 
-
-
-// disconnectFilters
-// setFilters (listoffilters);
 var testFilterButton = function(e)
 {
 	let biquadFilter = wave.audioContext.createBiquadFilter();
@@ -42,6 +39,14 @@ var testFilterButton = function(e)
 	$('#procmods').empty();
 	wave.backend.setFilters();
 	$('#procmods').append (filterGUI);
+	let filterDrop = new Dropdown('#quaddropdn',undefined,function (e) {
+		let targID = e.target.getAttribute('id');
+		let targText = e.target.innerText;
+		let fname = targID.substring(3);
+		biquadFilter.type = fname;
+		let namef = $('#quaddropdn');
+		$(namef[0].firstChild).text(targText);
+	});
 	$(".dial").knob({change: function (v) {
 		let inp = this.i[0];
 		let ctlId = inp.getAttribute('id').substring(3);
@@ -52,12 +57,14 @@ var testFilterButton = function(e)
 //		}
 //		console.log(ctlId + " " + v);
 	}  });
+	/*
 	$('#qf_type').change( e=> {
 		let picked = $("select option:selected" )[0];
 		let fkind = $(picked).text();
 		biquadFilter.type = fkind;
 		//console.log($(picked).text());
 	});
+	*/
 	$('#fl_cancel').on('click', e=>{
 		$('#procmods').empty();
 		wave.backend.setFilters();
@@ -419,6 +426,7 @@ function bindGui() {
 	
 	$('#loadbut').on('click',btn_load);
 	$('#savebut').on('click',btn_save);
+
 	$('#plsybut').on('click',(e)=>{wave.surfer.playPause(e)});
 	$('#rewbut').on('click', (e)=>{wave.surfer.seekTo(0)});
 	$('#plsyselbut').on('click', doPlaySel);
@@ -427,6 +435,7 @@ function bindGui() {
 	$('#delbut').on('click', deleteSelected);
 	$('#cutbut').on('click', cutToClip);
 	$('#copybut').on('click', copyToClip);
+
 	$('#pastebut').on('click',pasteFromClip);
 	$('#normbut').on('click',normalizer);
 	$('#reversebut').on('click',reverser);
@@ -438,25 +447,20 @@ function bindGui() {
 }
 
 var sfxdd = sfx_dropdn_template();
+
+function openFilter(e) {
+	testFilterButton();
+}
+
+var dropdown = new Dropdown('#dropdn', sfxdd, openFilter);
+console.log(dropdown);
+/*
 $('#dropdn').append(sfxdd);
 $('#dropbtn').on('click', function (e) {
 	console.log('clicked!');
 	$('#droplist').toggleClass('show');
 });
-
-$('#openfilter').on('click', e=>{openFilter('filter')});
-
-function closeDropDown() {
-	$(".dropdown-content").removeClass('show');
-}
-
-
-function openFilter(filterName) {
-	closeDropDown();
-	if (filterName === 'filter') {
-		testFilterButton();
-	}
-}
+*/
 
 var playBtnImg = $('#playbutimg');
 var undoBtn = $('#undobut');
