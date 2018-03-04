@@ -4,6 +4,8 @@ import TimelinePlugin from'./js/plugins/wavesurfer.timeline.js';
 import RegionPlugin  from'./js/plugins/wavesurfer.regions.js';
 import Minimap from'./js/plugins/wavesurfer.minimap.js';
 import {TiledRenderer, tiledDrawBuffer} from './js/plugins/wavesurfer.tiledrenderer.js';
+import {audioCtx, OfflineContext} from './AudioCtx.js';
+import {undoStack} from './UndoStack.js';
 
 function secondsToSampleNum(t, buffer) {
 	let sn = t * buffer.sampleRate;
@@ -280,7 +282,62 @@ export default class Wave {
 		}
 	}
 }
+  copySelected () {
+	let buffer = this.surfer.backend.buffer;
+	let {length, first, last, region} = this.getSelection();
+	let ds = last - first;
+	let {numberOfChannels, sampleRate} = buffer;
+	let nextBuffer = audioCtx.createBuffer(numberOfChannels, ds, sampleRate);
 
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
+		let sa = buffer.getChannelData(cx);
+		let da = nextBuffer.getChannelData(cx);
+		let dx = 0;
+		for(var i = first; i < last; ++i) {
+			da[dx++] = sa[i];
+		}
+	}
+	return nextBuffer;
+}
+
+  pasteSelected(pasteData, checkInsert) {
+	let buffer = this.surfer.backend.buffer;
+
+	let {regional, cursorTime, cursorPos, length, first, last, region} = this.getSelection();
+
+	if (checkInsert && !regional) { // regionl === false means its an insertion point.
+		first = cursorPos;
+		last = cursorPos;
+	}
+
+	let pasteLen = pasteData.getChannelData(0).length;
+	let dTs = last - first;
+	let {numberOfChannels, sampleRate} = buffer;
+	let numPasteChannels = pasteData.numberOfChannels;
+	let bufLen = length - dTs + pasteLen;
+	let nextBuffer = audioCtx.createBuffer(numberOfChannels, bufLen, sampleRate);
+
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
+		let sa = buffer.getChannelData(cx);
+		let da = nextBuffer.getChannelData(cx);
+		let pdx = cx < numPasteChannels ? cx : 0;
+		let cb = pasteData.getChannelData(pdx);
+		let dx = 0;
+		for(var i = 0; i < first; ++i) {
+			da[dx++] = sa[i];
+		}
+
+		for(var i = 0; i < pasteLen; ++i) {
+			da[dx++] = cb[i];
+		}
+
+		for(var i = last; i < length; ++i) {
+			da[dx++] = sa[i];
+		}
+	}
+	undoStack.push(buffer);
+	this.changeBuffer(nextBuffer);
+  }
 
 } // End class
 

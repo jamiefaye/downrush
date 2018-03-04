@@ -50,3 +50,6 @@ export default class UndoStack {
 	}
 };
 
+var undoStack = new UndoStack(10);
+
+export {undoStack};

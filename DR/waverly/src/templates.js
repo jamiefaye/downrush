@@ -33,17 +33,18 @@ var quad_dropdn_template = Handlebars.compile(`<button id='quadpop' class="dropb
  </div>`);
 Handlebars.registerPartial("quaddropdn", quad_dropdn_template);
 
-var filterheader = Handlebars.compile(`<div id='filterhdr'>
+var filter_frame_template = Handlebars.compile(`<div id='filterhdr'>
 <button class="butn" id='fl_apply'>Apply</button>
 <button class="butn" id='fl_cancel'>Close</button>
 <input type='checkbox' id='fl_audition' checked>Audition</input>
+<div id ='filterbody'>
+</div>
 </div>
 `);
 
-Handlebars.registerPartial("filterheader", filterheader);
+// Handlebars.registerPartial("filterheader", filterheader);
 
 var quadfilter_template = Handlebars.compile(`<div id='quadfilter'>
-{{> filterheader}}
 <table><tr>
 <th>Kind</th>
 <th>Frequency</th>
@@ -61,4 +62,4 @@ var quadfilter_template = Handlebars.compile(`<div id='quadfilter'>
 `);
 
 
-export {sfx_dropdn_template, local_exec_head, local_exec_info, filterheader, quadfilter_template, quad_dropdn_template};
+export {sfx_dropdn_template, local_exec_head, local_exec_info, filter_frame_template, quadfilter_template, quad_dropdn_template};

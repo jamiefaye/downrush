@@ -1,5 +1,5 @@
 /*!
- * wavesurfer.js 2.0.4 (Fri Mar 02 2018 13:13:39 GMT-0800 (PST))
+ * wavesurfer.js 2.0.4 (Fri Mar 02 2018 18:29:26 GMT-0800 (PST))
  * https://github.com/katspaugh/wavesurfer.js
  * @license BSD-3-Clause
  */
@@ -904,9 +904,6 @@ var TiledRenderer = function (_Drawer) {
             this.setFillStyles(entry);
             this.drawLineToContext(entry, entry.waveCtx, peaks, absmax, halfH, offsetY, start, end);
             this.drawLineToContext(entry, entry.progressCtx, peaks, absmax, halfH, offsetY, start, end);
-            // let t1 = performance.now();
-            // let dT = t1 - t0;
-            // console.log(dT);
         }
 
         /**
@@ -1168,7 +1165,6 @@ var TiledRenderer = function (_Drawer) {
     }, {
         key: 'imageSingleCanvas',
         value: function imageSingleCanvas(surfer, entry, peaks) {
-            //  let t0 = performance.now();
             var buffer = surfer.backend.buffer;
             var numberOfChannels = buffer.numberOfChannels,
                 sampleRate = buffer.sampleRate;
@@ -1198,8 +1194,6 @@ var TiledRenderer = function (_Drawer) {
                 var progressCtx = entry.progressCtx,
                     waveCtx = entry.waveCtx;
 
-                //      console.log(lhs + ", " + rhs + " " + entry.start + " " + entry.end);
-
                 this.setFillStyles(entry);
                 var sx = entry.start * duration * sampleRate;
                 var w = rhs - lhs;
@@ -1210,9 +1204,6 @@ var TiledRenderer = function (_Drawer) {
                     if (progressCtx) progressCtx.fillRect(x, y, pixW, pixH);
                 }
             }
-            // let t1 = performance.now();
-            // let dT = t1 - t0;
-            //console.log(dT);
         }
 
         /**
@@ -1236,16 +1227,15 @@ var TiledRenderer = function (_Drawer) {
             var playState = surfer.isPlaying();
 
             if (normX > 1.0) {
-                console.log('clipping normX from: ' + normX);
                 normX = 1.0;
             }
 
-            // console.log(normX);
             var foundCan = void 0;
             var canvToFill = void 0;
-            var maxDist = 0;
-            // Find the canvas which is visable.
 
+            var maxDist = 0;
+            // Find the canvas which is visable. Also determine the canvas that is farthest away or hidden
+            // that we can recycle if need be.
             this.canvases.forEach(function (entry) {
                 if (normX >= entry.start && normX < entry.end && !entry.hidden) {
                     foundCan = entry;
@@ -1272,7 +1262,6 @@ var TiledRenderer = function (_Drawer) {
 
             if (!foundCan) {
                 whereX = normX;
-                //          console.log("Filling missing.");
             } else {
                 var ourWid = foundCan.end - foundCan.start;
                 var ourMid = foundCan.start + ourWid / 2;
@@ -1284,7 +1273,6 @@ var TiledRenderer = function (_Drawer) {
                     });
                 }
                 if (!foundUp && seekX < 1.0) {
-                    //              console.log("Filling forward.");
                     whereX = seekX;
                 } else {
                     seekX = ourMid - ourWid;
@@ -1294,7 +1282,6 @@ var TiledRenderer = function (_Drawer) {
                     });
                     if (!foundDn) {
                         whereX = seekX;
-                        //                  console.log("Filling backward.");
                     }
                 }
             }
@@ -1316,7 +1303,7 @@ var TiledRenderer = function (_Drawer) {
         }
 
         /**
-         * called from overDrawBuffer to reimage the tiles. If we are using tiled rendering,
+         * called from tiledDrawBuffer to reimage the tiles. If we are using tiled rendering,
          * arrange to repaint the visible area and set up an event listener for scrolling.
          * If we aren't using tiled rendering, then fill up all the canvases.
          *
@@ -1329,14 +1316,12 @@ var TiledRenderer = function (_Drawer) {
     }, {
         key: 'drawTiles',
         value: function drawTiles(surfer, width, peaks) {
-            //      console.log("drawSampes " + this.maxCanvasElementWidth + " " + this.maxCanvasWidth);
             this.setWidth(width);
             this.clearWave();
             var that = this;
 
             // Csncel any existing scroll watcher.
             if (this.scrollWatcher) {
-                //  console.log("Cancelling existing scrollWatcher");
                 surfer.un('scroll', this.scrollWatcher);
                 this.scrollWatcher = undefined;
             }
@@ -1348,9 +1333,7 @@ var TiledRenderer = function (_Drawer) {
                 var repaint = function repaint() {
                     var ctr = 0;
                     while (that.scrollCheck(surfer, peaks)) {
-                        //  console.log('Imaging tile ' + ctr);
                         if (ctr++ > that.canvasLimit) {
-                            console.log('Over limit imaging tiles');
                             return;
                         }
                     }
@@ -1369,7 +1352,6 @@ var TiledRenderer = function (_Drawer) {
                         if (that.params.minPxPerSec < that.sampleSpeed && !peaks) {
                             return;
                         }
-                        //console.log("Peaks Length at scrollcheck: " + peaks[0].length);
                         if (that.scrollCheck(surfer, peaks)) {
                             that.scrollCheck(surfer, peaks);
                         }
@@ -1402,10 +1384,7 @@ var tiledDrawBuffer = function tiledDrawBuffer() {
     var requiredCanvases = Math.ceil(width / this.params.maxCanvasWidth);
     this.drawer.tiledRendering = requiredCanvases > this.drawer.canvasLimit;
     var needPeaks = this.params.minPxPerSec < this.drawer.sampleSpeed;
-
     var end = Math.max(parentWidth, width);
-
-    // console.log("*** overDrawBuffer w:" + width + " end: " + end + " minxPxPerSec: " + this.params.minPxPerSec);
 
     this.peaks = undefined;
     var peaks = void 0;

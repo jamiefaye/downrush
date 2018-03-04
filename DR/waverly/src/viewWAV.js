@@ -2,12 +2,14 @@ import $ from'./js/jquery-3.2.1.min.js';
 import Wave from './Wave.js';
 
 import knob from'./js/jquery.knob.js';
-import {sfx_dropdn_template, quadfilter_template, local_exec_head, local_exec_info} from'./templates.js';
+import {sfx_dropdn_template, quadfilter_template, local_exec_head, local_exec_info, filter_frame_template} from'./templates.js';
 
-import UndoStack from './UndoStack.js';
+import {undoStack} from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import {audioBufferToWav} from './audioBufferToWav.js';
 import Dropdown from './Dropdown.js';
+import {audioCtx, OfflineContext} from './AudioCtx.js';
+import {BiQuadFilter, FilterFrame} from './Filters.js';
 
 "use strict";
 
@@ -18,126 +20,16 @@ var sample_path_prefix = '/';
 var filename_input = document.getElementById ("fname");//.value
 var fname = "";
 
-var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-var OfflineContext = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-
 var localClipboard;
-
-var undoStack = new UndoStack(10);
 
 var wave;
 
-var createOfflineContext  = function (buffer) {
-	let {numberOfChannels, sampleRate} = buffer;
-	return new OfflineContext(numberOfChannels, buffer.getChannelData(0).length, sampleRate);
-}
-
-var testFilterButton = function(e)
+function testFilterButton(e)
 {
-	let biquadFilter = wave.audioContext.createBiquadFilter();
-	let filterGUI = quadfilter_template();
-	$('#procmods').empty();
-	wave.backend.setFilters();
-	$('#procmods').append (filterGUI);
-	let filterDrop = new Dropdown('#quaddropdn',undefined,function (e) {
-		let targID = e.target.getAttribute('id');
-		let targText = e.target.innerText;
-		let fname = targID.substring(3);
-		biquadFilter.type = fname;
-		let namef = $('#quaddropdn');
-		$(namef[0].firstChild).text(targText);
-	});
-	$(".dial").knob({change: function (v) {
-		let inp = this.i[0];
-		let ctlId = inp.getAttribute('id').substring(3);
-//		if (ctlId === 'gain') {
-//			biquadFilter.gain.value = v;
-//		} else {
-			biquadFilter[ctlId].value = v;
-//		}
-//		console.log(ctlId + " " + v);
-	}  });
-	/*
-	$('#qf_type').change( e=> {
-		let picked = $("select option:selected" )[0];
-		let fkind = $(picked).text();
-		biquadFilter.type = fkind;
-		//console.log($(picked).text());
-	});
-	*/
-	$('#fl_cancel').on('click', e=>{
-		$('#procmods').empty();
-		wave.backend.setFilters();
-	});
-
-	$('#fl_audition').on('click', e=>{
-		if (e.target.checked) {
-			wave.backend.setFilters([biquadFilter]);
-		} else {
-			wave.backend.setFilters();
-		}
-	});
-
-	$('#fl_apply').on('click', e=>{
-		$('#fl_audition').prop('checked', false);
-		applyFilterTransform(function (ctx) {
-			let bqf = ctx.createBiquadFilter();
-			bqf.type = biquadFilter.type;
-			bqf.frequency.value = biquadFilter.frequency.value;
-			bqf.detune.value = biquadFilter.detune.value;
-			bqf.Q.value = biquadFilter.Q.value;
-			bqf.gain.value = biquadFilter.gain.value;
-			return [bqf];
-		});
-
-		wave.backend.setFilters();
-	});
-	wave.backend.setFilters([biquadFilter]);
+	let filtFrame = new FilterFrame(wave);
+	filtFrame.open(BiQuadFilter);
 }
 
-
-// Apply a filter transform implemented using the AudioContext filter system to the selected area
-// and paste back the result.
-// the setup function is called to knit together the filter graph desired.
-function applyFilterTransform(setup)
-{
-	let working = copySelected();
-	let ctx = createOfflineContext(working);
-	
-	let filters;
-	
-	if (setup !== undefined) {
-		filters = setup(ctx, working);
-	} 
-	
-	let source = ctx.createBufferSource();
-
-	// Connect all filters in the filter chain.
-	let prevFilter = source;
-	if (filters) {
-		for (var i = 0; i < filters.length; ++i) {
-			let thisFilter = filters[i];
-			prevFilter.connect(thisFilter);
-			prevFilter = thisFilter;
-		}
-	}
-	prevFilter.connect(ctx.destination);
-
-	source.buffer = working;
-	source.start();
-
-	ctx.oncomplete = function (e) {
-		pasteSelected(e.renderedBuffer);
-	}
-	ctx.startRendering();
-/*
-	ctx.startRendering().then(function(renderedBuffer) {
-		pasteSelected(renderedBuffer);
-	}).catch(function(err) {
-		alert('Rendering failed: ' + err);
-	});
-*/
-}
 
 // Simplified to just multiply by 1/max(abs(buffer))
 // (which preserves any existing DC offset).
@@ -163,7 +55,6 @@ var normalize = function (buffer)
 
 	return buffer;
 }
-
 
 function reverse (buffer)
 {
@@ -201,8 +92,6 @@ var applyFunction = function (buffer, f)
 	return buffer;
 }
 
-
-
 function doPlaySel(e)
 {
 	let {start, end} = wave.getSelection();
@@ -238,33 +127,15 @@ var deleteSelected = function (e)
 	wave.changeBuffer(nextBuffer);
 }
 
-var copySelected = function (e)
-{
-	let buffer = wave.backend.buffer;
-	let {length, first, last, region} = wave.getSelection();
-	let ds = last - first;
-	let {numberOfChannels, sampleRate} = buffer;
-	let nextBuffer = audioCtx.createBuffer(numberOfChannels, ds, sampleRate);
-
-	for (var cx = 0; cx < numberOfChannels; ++cx) {
-		let sa = buffer.getChannelData(cx);
-		let da = nextBuffer.getChannelData(cx);
-		let dx = 0;
-		for(var i = first; i < last; ++i) {
-			da[dx++] = sa[i];
-		}
-	}
-	return nextBuffer;
-}
 
 // Apply a transform function to the selected area and replace the selected area
 // with the result. The transform function can be either 'in place' or can return a
 // result buffer of any size.
 function applyTransform(f, f2)
 {
-	let working = copySelected();
+	let working = wave.copySelected();
 	let result = f(working, f2);
-	pasteSelected(result);
+	wave.pasteSelected(result);
 }
 
 function reverser(e) {
@@ -308,49 +179,6 @@ function selAll(e) {
 	wave.surfer.regions.add(pos);
 }
 
-
-var pasteSelected = function (pasteData, checkInsert)
-{
-	let buffer = wave.backend.buffer;
-
-	let {regional, cursorTime, cursorPos, length, first, last, region} = wave.getSelection();
-
-	if (checkInsert && !regional) { // regionl === false means its an insertion point.
-		first = cursorPos;
-		last = cursorPos;
-	}
-
-	let pasteLen = pasteData.getChannelData(0).length;
-	let dTs = last - first;
-	let {numberOfChannels, sampleRate} = buffer;
-	let numPasteChannels = pasteData.numberOfChannels;
-	let bufLen = length - dTs + pasteLen;
-	let nextBuffer = audioCtx.createBuffer(numberOfChannels, bufLen, sampleRate);
-
-	for (var cx = 0; cx < numberOfChannels; ++cx) {
-		let sa = buffer.getChannelData(cx);
-		let da = nextBuffer.getChannelData(cx);
-		let pdx = cx < numPasteChannels ? cx : 0;
-		let cb = pasteData.getChannelData(pdx);
-		let dx = 0;
-		for(var i = 0; i < first; ++i) {
-			da[dx++] = sa[i];
-		}
-
-		for(var i = 0; i < pasteLen; ++i) {
-			da[dx++] = cb[i];
-		}
-
-		for(var i = last; i < length; ++i) {
-			da[dx++] = sa[i];
-		}
-	}
-	//if(region) region.remove();
-	undoStack.push(buffer);
-	wave.changeBuffer(nextBuffer);
-}
-
-
 function doUndo(e) {
 	console.log("Undo");
 
@@ -372,7 +200,7 @@ function copyToClip(e)
 {
 	let clip = e.originalEvent.clipboardData;
 
-	let clipBuff =  copySelected();
+	let clipBuff = wave.copySelected();
 	let wavData = audioBufferToWav(clipBuff);
 	let asText = base64ArrayBuffer(wavData);
 	localClipboard = clipBuff;
@@ -393,14 +221,14 @@ function pasteFromClip(e)
 		if (clip.startsWith('Ukl')) {
 			let asbin = base64ToArrayBuffer(clip);
 			wave.backend.decodeArrayBuffer(asbin, function (data) {
-			if (data) pasteSelected(data, true);
+			if (data) wave.pasteSelected(data, true);
 	 	  }, function (err) {
 			alert('paste decode error');
 		  });
 		  return;
 		}
 	}
-	if (localClipboard) pasteSelected(localClipboard, true);
+	if (localClipboard) wave.pasteSelected(localClipboard, true);
 }
 
 function zoom(amt) {
@@ -449,18 +277,11 @@ function bindGui() {
 var sfxdd = sfx_dropdn_template();
 
 function openFilter(e) {
-	testFilterButton();
+	testFilterButton(e);
 }
 
 var dropdown = new Dropdown('#dropdn', sfxdd, openFilter);
 console.log(dropdown);
-/*
-$('#dropdn').append(sfxdd);
-$('#dropbtn').on('click', function (e) {
-	console.log('clicked!');
-	$('#droplist').toggleClass('show');
-});
-*/
 
 var playBtnImg = $('#playbutimg');
 var undoBtn = $('#undobut');
