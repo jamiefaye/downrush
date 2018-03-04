@@ -160,7 +160,7 @@ class FilterFrame {
 	source.buffer = working;
 	let that = this;
 	ctx.oncomplete = function (e) {
-		that.wave.pasteSelected(buffer);
+		that.wave.pasteSelected(e.renderedBuffer);
 	}
 	source.start();
 	ctx.startRendering();
