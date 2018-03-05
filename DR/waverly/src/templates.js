@@ -36,9 +36,11 @@ var quad_dropdn_template = Handlebars.compile(`<button id='quadpop' class="dropb
 Handlebars.registerPartial("quaddropdn", quad_dropdn_template);
 
 var filter_frame_template = Handlebars.compile(`<div id='filterhdr'>
-<button class="butn" id='fl_apply'>Apply</button>
-<button class="butn" id='fl_cancel'>Close</button>
-<input type='checkbox' id='fl_audition' checked>Audition</input>
+<table><tr>
+<td><button class="butn" id='fl_apply'>Apply</button></td>
+<td><button class="butn" id='fl_cancel'>Close</button></td>
+<td><input type='checkbox' class='audchbox' id='fl_audition' checked><span class='cboxtext'>Audition</span></input></td>
+</tr></table>
 <div id ='filterbody'>
 </div>
 </div>

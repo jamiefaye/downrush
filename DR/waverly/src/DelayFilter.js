@@ -9,10 +9,9 @@ export default class DelayFilter extends FilterBase {
   constructor() {
 	super(delay_template);
 	this.type = 'normal';
-	this.delayTime = 0;
-	this.cutoff = 2;
-	this.offset = 5;
-	this.dry = 5;
+	this.delayTime = 1.0;
+	this.cutoff = 8000;
+	this.offset = 0;
 	this.filterSetup = false;
   }
 
@@ -30,14 +29,14 @@ export default class DelayFilter extends FilterBase {
 	this.dryGain = ctx.createGain();
 
 	this.leftFilter.type = 'lowpass';
-	this.leftFilter.frequency.value  = 8000;
+	this.leftFilter.frequency.value  = this.cutoff;
 	this.rightFilter.type = 'lowpass';
-	this.rightFilter.frequency.value  = 8000;
+	this.rightFilter.frequency.value  = this.cutoff;
 
-	this.leftDelay.delayTime.value = 1;
-	this.rightDelay.delayTime.value = 1;
+	this.leftDelay.delayTime.value = this.delayTime;
+	this.rightDelay.delayTime.value = this.delayTime;
 	this.leftGain.gain.value = 0.5;
-	this.rightGain.gain.value = .5;
+	this.rightGain.gain.value = 0.5;
 	
 	this.setOffset(this.offset);
   }
@@ -73,7 +72,7 @@ export default class DelayFilter extends FilterBase {
   getState() {
 	  return {		
 		type:		this.type,
-		delay:		this.leftDelay.delayTime.value,
+		delay:		this.delayTime,
 		feedback:	this.leftGain.gain.value,
 		cutoff:		this.leftFilter.frequency.value,
 		offset:		this.offset,
@@ -116,8 +115,8 @@ export default class DelayFilter extends FilterBase {
 
 			switch (ctlId) {
 		case 'delay':
-			that.leftDelay.delayTime.value = v;
-			that.rightDelay.delayTime.value = v;
+			that.delayTime = v;
+			that.setOffset(that.offset);
 			break;
 
 		case 'feedback':
@@ -128,6 +127,7 @@ export default class DelayFilter extends FilterBase {
 		case 'cutoff':
 			that.leftFilter.frequency.value = v;
 			that.rightFilter.frequency.value = v;
+			that.cutoff = v;
 			break;
 
 		case 'offset':

@@ -86,3 +86,18 @@ body {
 
 /* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
 .show {display:block;}
+
+input[type=checkbox] {
+  transform: scale(1.75);
+}
+
+.audchbox {
+margin-left: 8px;
+
+}
+
+.cboxtext {
+ font-size: 18x;
+ text-align: center;
+ line-height: 18px;
+}

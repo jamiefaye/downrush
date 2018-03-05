@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "web-audio-oscillators": "^1.0.4",
     "webpack": "^4.0.0"
   },
   "devDependencies": {
