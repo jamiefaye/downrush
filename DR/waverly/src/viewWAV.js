@@ -12,6 +12,7 @@ import {audioCtx, OfflineContext} from './AudioCtx.js';
 import {FilterFrame} from './Filters.js';
 import BiQuadFilter from './BiquadFilter.js';
 import SimpleReverbFilter from './SimplereverbFilter.js';
+import DelayFilter from './DelayFilter.js';
 
 "use strict";
 
@@ -38,7 +39,7 @@ function testFilterButton(e)
 	let classToMake;
 	if (targID === 'openfilter') classToMake = BiQuadFilter;
 	 else if (targID === 'openReverb') classToMake = SimpleReverbFilter;
-
+	 	else if (targID === 'openDelay') classToMake = DelayFilter;
 	filterFrame.open(classToMake);
 }
 

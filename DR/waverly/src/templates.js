@@ -18,6 +18,7 @@ var sfx_dropdn_template = Handlebars.compile(`<button class="dropbtn">Effects &#
 	<div class="dropdown-content">
 	<a id='openfilter'>Quad Filter</a>
 	<a id='openReverb'>Simple Reverb</a>
+	<a id='openDelay'>Delay</a>
  </div>`);
 
 
@@ -83,4 +84,37 @@ var reverb_template = Handlebars.compile(`<div id='simplereverb'>
 </div>
 `);
 
-export {sfx_dropdn_template, local_exec_head, local_exec_info, filter_frame_template, quadfilter_template, quad_dropdn_template, reverb_template};
+var delay_template = Handlebars.compile(`<div id='delay'>
+<table>
+<tr>
+<th colspan='6'>Delay Filter</th>
+</tr>
+<tr>
+<td>
+<div id='delaydropdn'><button id='typepop' class="dropbtn">Kind &#x25bc;</button>
+	<div class="dropdown-content">
+	<a id='itmnormal'>Normal</a>
+	<a id='itminverted'>Inverted</a>
+	<a id='itmpingpong'>PingPong</a>
+ </div>
+</div>
+</td>
+<td><input id='qf_delay' type="text" value="1" class="dial" data-min="0" data-max="2" data-step='0.1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input id='qf_feedback' type="text" value="0.5" class="dial" data-min="0" data-max="1.0" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input id='qf_cutoff' type="text" value="8000" class="dial" data-min="0" data-max="22050" data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input id='qf_offset' type="text" value="0" class="dial" data-min="-0.5" data-max="0.5" data-step='0.01'  data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input id='qf_dry' type="text" value="1" class="dial" data-min="0" data-max="1" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+</tr>
+<tr>
+<th>Type</th>
+<th>Delay</th>
+<th>Feedback</th>
+<th>Cutoff</th>
+<th>Offset</th>
+<th>Dry</th>
+</tr>
+</table>
+</div>
+`);
+
+export {sfx_dropdn_template, local_exec_head, local_exec_info, filter_frame_template, quadfilter_template, quad_dropdn_template, reverb_template, delay_template};

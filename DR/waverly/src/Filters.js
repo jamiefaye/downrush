@@ -120,16 +120,6 @@ class FilterFrame {
 
 	// Create simulated wavesurfer filter environment.
 	let offlineSource = ctx.createBufferSource();
-/*
-	let offlineGain = ctx.createGain();
-	offlineGain.connect(ctx.destination);
-
-	let offlineAnalyser = ctx.createAnalyser();
-	offlineSource.connect(offlineAnalyser);
-	offlineAnalyser.connect(offlineGain);
-
-	offlineAnalyser.disconnect();
-*/
 	offlineFilter.connectFilters(offlineSource, ctx.destination);
 
 	let state = this.filter.getState();
