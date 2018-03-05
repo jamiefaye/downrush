@@ -1,15 +1,17 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import Wave from './Wave.js';
 
-import knob from'./js/jquery.knob.js';
-import {sfx_dropdn_template, quadfilter_template, local_exec_head, local_exec_info, filter_frame_template} from'./templates.js';
+
+import {sfx_dropdn_template, local_exec_head, local_exec_info} from'./templates.js';
 
 import {undoStack} from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import {audioBufferToWav} from './audioBufferToWav.js';
 import Dropdown from './Dropdown.js';
 import {audioCtx, OfflineContext} from './AudioCtx.js';
-import {BiQuadFilter, FilterFrame} from './Filters.js';
+import {FilterFrame} from './Filters.js';
+import BiQuadFilter from './BiquadFilter.js';
+import SimpleReverbFilter from './SimplereverbFilter.js';
 
 "use strict";
 
@@ -23,13 +25,22 @@ var fname = "";
 var localClipboard;
 
 var wave;
+var filterFrame;
 
 function testFilterButton(e)
 {
-	let filtFrame = new FilterFrame(wave);
-	filtFrame.open(BiQuadFilter);
-}
+	if (filterFrame) {
+		filterFrame.close();
+	}
 
+	filterFrame = new FilterFrame(wave);
+	let targID = e.target.getAttribute('id');
+	let classToMake;
+	if (targID === 'openfilter') classToMake = BiQuadFilter;
+	 else if (targID === 'openReverb') classToMake = SimpleReverbFilter;
+
+	filterFrame.open(classToMake);
+}
 
 // Simplified to just multiply by 1/max(abs(buffer))
 // (which preserves any existing DC offset).

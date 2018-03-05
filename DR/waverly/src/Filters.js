@@ -1,24 +1,10 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import {filter_frame_template, quadfilter_template} from'./templates.js';
+import {filter_frame_template} from'./templates.js';
 import {OfflineContext} from './AudioCtx.js';
-import Dropdown from './Dropdown.js';
 
 var createOfflineContext  = function (buffer) {
 	let {numberOfChannels, sampleRate} = buffer;
 	return new OfflineContext(numberOfChannels, buffer.getChannelData(0).length, sampleRate);
-}
-
-function connectChain(source, ctx, filters)
-{
-	let prevFilter = source;
-	if (filters) {
-		for (var i = 0; i < filters.length; ++i) {
-			let thisFilter = filters[i];
-			prevFilter.connect(thisFilter);
-			prevFilter = thisFilter;
-		}
-	}
-	prevFilter.connect(ctx.destination);
 }
 
 // Abstract super class for a filter object.
@@ -41,73 +27,52 @@ class FilterBase {
 		
 	}
 
-	makeFilterChain(ctx) {
-		return [];
+	createFilters(ctx) {
+		this.filters = [];
+	}
+
+	connectFilters(source, dest) {
+		this.source = source;
+		this.dest = dest;
+		if(this.filters) {
+			let prevFilter = source;
+			for (var i = 0; i < this.filters.length; ++i) {
+				let thisFilter = this.filters[i];
+				prevFilter.connect(thisFilter);
+				prevFilter = thisFilter;
+			}
+			prevFilter.connect(dest);
+		}
+	}
+
+	disconnectFilters() {
+		if (this.filters) {
+			this.filters.forEach(function (filter) {
+				filter && filter.disconnect();
+			});
+		}
+		// Reconnect the direct path
+		this.source.connect(this.dest);
 	}
 };
-
-class BiQuadFilter extends FilterBase {
-
-	constructor() {
-		super(quadfilter_template);
-	}
-
-	getState() {
-	  return {
-		type: 		this.biquadFilter.type,
-		frequency: 	this.biquadFilter.frequency.value,
-		Q:			this.biquadFilter.Q.value,
-		gain:		this.biquadFilter.gain.value,
-	  };
-	}
-
-	applyState(state) {
-		this.biquadFilter.type = state.type;
-		this.biquadFilter.frequency.value = state.frequency;
-		this.biquadFilter.Q.value = state.Q;
-		this.biquadFilter.gain.value = state.gain;
-	}
-
-	makeFilterChain(ctx) {
-		this.biquadFilter = ctx.createBiquadFilter();
-		this.filterChain = [this.biquadFilter];
-		return this.filterChain;
-	}
-
-	openGui(whereToPut) {
-		super.openGui(whereToPut);
-		let that = this;
-		let filterDrop = new Dropdown('#quaddropdn',undefined,function (e) {
-			let targID = e.target.getAttribute('id');
-			let targText = e.target.innerText;
-			let fname = targID.substring(3);
-			that.biquadFilter.type = fname;
-			let namef = $('#quaddropdn');
-			$(namef[0].firstChild).text(targText);
-		});
-
-		$(".dial").knob({change: function (v) {
-			let inp = this.i[0];
-			let ctlId = inp.getAttribute('id').substring(3);
-			that.biquadFilter[ctlId].value = v;
-		}});
-	}
-};
-
 
 class FilterFrame {
-  constructor(wave, updateFunc) {
+  constructor(wave) {
 		this.wave = wave;
-		this.updateFunc = updateFunc;
   }
 
-  buildLive() {
-	this.liveFilters = this.filter.makeFilterChain(this.wave.audioContext);
+  close() {
+	if(this.filter) {
+		this.filter.disconnectFilters();
+		this.filter = undefined;
+	}
   }
 
-  setFilters(toArray) {
-	this.wave.backend.setFilters(toArray);
+  connectToWave() {
+	this.wave.backend.analyser.disconnect();
+	this.filter.connectFilters(this.wave.backend.analyser, this.wave.backend.gainNode);
   }
+
 
   open(filterClass) {
 		this.filterClass = filterClass;
@@ -115,31 +80,33 @@ class FilterFrame {
 		$('#procmods').empty();
 		let frameText = filter_frame_template();
 		$('#procmods').append(frameText);
-		this.setFilters();
-		this.buildLive();
+		this.filter.createFilters(this.wave.audioContext);
 		this.filter.openGui('#filterbody');
-		this.setFilters(this.liveFilters);
+		this.connectToWave()
 		this.openGui();
 	}
 
 	openGui() {
 	$('#fl_cancel').on('click', e=>{
-		this.setFilters();
+		this.connectToWave();
+		if(this.filter) {
+			this.filter.disconnectFilters();
+		}
 		$('#procmods').empty();
 	});
 
 	$('#fl_audition').on('click', e=>{
 		if (e.target.checked) {
-			this.setFilters(this.liveFilters);
+			this.connectToWave();
 		} else {
-			this.setFilters();
+			this.filter.disconnectFilters();
 		}
 	});
 
 	$('#fl_apply').on('click', e=>{
 		$('#fl_audition').prop('checked', false);
 		this.applyFilters();
-		this.setFilters();
+		this.filter.disconnectFilters();
 	});
   }
 
@@ -149,23 +116,34 @@ class FilterFrame {
 
 	// create offline version of filter chain.
 	let offlineFilter = new this.filterClass();
-	let offlineChain = offlineFilter.makeFilterChain(ctx);
+	offlineFilter.createFilters(ctx);
 
-	let source = ctx.createBufferSource();
-	connectChain(source, ctx, offlineChain);
+	// Create simulated wavesurfer filter environment.
+	let offlineSource = ctx.createBufferSource();
+/*
+	let offlineGain = ctx.createGain();
+	offlineGain.connect(ctx.destination);
+
+	let offlineAnalyser = ctx.createAnalyser();
+	offlineSource.connect(offlineAnalyser);
+	offlineAnalyser.connect(offlineGain);
+
+	offlineAnalyser.disconnect();
+*/
+	offlineFilter.connectFilters(offlineSource, ctx.destination);
 
 	let state = this.filter.getState();
 	offlineFilter.applyState(state);
 
-	source.buffer = working;
+	offlineSource.buffer = working;
 	let that = this;
 	ctx.oncomplete = function (e) {
 		that.wave.pasteSelected(e.renderedBuffer);
 	}
-	source.start();
+	offlineSource.start();
 	ctx.startRendering();
   }
 
 };
 
-export {FilterBase, BiQuadFilter, FilterFrame};
+export {FilterBase, FilterFrame};
