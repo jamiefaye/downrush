@@ -82,8 +82,9 @@ export default class DelayFilter extends FilterBase {
 
   applyState(state) {
 		this.type = state.type;
-		this.leftDelay.delayTime.value = state.delay;
-		this.rightDelay.delayTime.value = state.delay;
+		this.delayTime = state.delay;
+		this.leftDelay.delayTime.value = this.delayTime;
+		this.rightDelay.delayTime.value = this.delayTime;
 		this.leftGain.gain.setValueAtTime(state.feedback, 0);
 		this.rightGain.gain.setValueAtTime(state.feedback, 0);
 		this.leftFilter.frequency.value = state.cutoff;

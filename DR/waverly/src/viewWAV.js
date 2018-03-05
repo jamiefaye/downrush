@@ -361,10 +361,12 @@ function openLocal(evt)
 	var f = files[0];
 	if (f === undefined) return;
 	var reader = new FileReader();
-	
+	if(!wave) {
+		wave = new Wave();
+	}
 // Closure to capture the file information.
 	reader.onloadend = (function(theFile) {
-		return openOnBuffer(theFile);
+		return wave.openOnBuffer(theFile);
 	})(f);
 	// Read in the image file as a data URL.
 	reader.readAsBinaryString(f);
