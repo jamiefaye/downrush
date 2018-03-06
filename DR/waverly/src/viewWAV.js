@@ -13,6 +13,7 @@ import {FilterFrame} from './Filters.js';
 import BiQuadFilter from './BiquadFilter.js';
 import SimpleReverbFilter from './SimplereverbFilter.js';
 import DelayFilter from './DelayFilter.js';
+import OscFilter from './OscFilter.js';
 
 "use strict";
 
@@ -39,7 +40,8 @@ function testFilterButton(e)
 	let classToMake;
 	if (targID === 'openfilter') classToMake = BiQuadFilter;
 	 else if (targID === 'openReverb') classToMake = SimpleReverbFilter;
-	 	else if (targID === 'openDelay') classToMake = DelayFilter;
+	 else if (targID === 'openDelay') classToMake = DelayFilter;
+	 else if (targID === 'openOsc') classToMake = OscFilter;
 	filterFrame.open(classToMake);
 }
 

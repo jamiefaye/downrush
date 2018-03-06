@@ -300,6 +300,23 @@ export default class Wave {
 	return nextBuffer;
 }
 
+  getBufferOfLength (duration) {
+	let buffer = this.surfer.backend.buffer;
+	let {numberOfChannels, sampleRate} = buffer;
+	let numSamps = Math.ceil(duration * sampleRate);
+	let nextBuffer = audioCtx.createBuffer(numberOfChannels, numSamps, sampleRate);
+
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
+		let sa = buffer.getChannelData(cx);
+		let da = nextBuffer.getChannelData(cx);
+		let dx = 0;
+		for(var i = 0; i < numSamps; ++i) {
+			da[i] = 0;
+		}
+	}
+	return nextBuffer;
+}
+
   pasteSelected(pasteData, checkInsert) {
 	let buffer = this.surfer.backend.buffer;
 

@@ -54,6 +54,10 @@ class FilterBase {
 		// Reconnect the direct path
 		this.source.connect(this.dest);
 	}
+
+	getGeneratedDuration() {
+		return 0;
+	}
 };
 
 class FilterFrame {
@@ -111,7 +115,15 @@ class FilterFrame {
   }
 
   applyFilters() {
-	let working = this.wave.copySelected();
+  	let generatedDuration = this.filter.getGeneratedDuration();
+  	
+	let working;
+	
+	if (generatedDuration === 0) {
+		working = this.wave.copySelected();
+	} else {
+		working = this.wave.getBufferOfLength(generatedDuration);
+	}
 	let ctx = createOfflineContext(working);
 
 	// create offline version of filter chain.
@@ -128,7 +140,7 @@ class FilterFrame {
 	offlineSource.buffer = working;
 	let that = this;
 	ctx.oncomplete = function (e) {
-		that.wave.pasteSelected(e.renderedBuffer);
+		that.wave.pasteSelected(e.renderedBuffer, generatedDuration > 0);
 	}
 	offlineSource.start();
 	ctx.startRendering();

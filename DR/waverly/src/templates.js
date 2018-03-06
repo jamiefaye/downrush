@@ -19,6 +19,7 @@ var sfx_dropdn_template = Handlebars.compile(`<button class="dropbtn">Effects &#
 	<a id='openfilter'>Quad Filter</a>
 	<a id='openReverb'>Simple Reverb</a>
 	<a id='openDelay'>Delay</a>
+	<a id='openOsc'>Oscillator</a>
  </div>`);
 
 
@@ -119,4 +120,34 @@ var delay_template = Handlebars.compile(`<div id='delay'>
 </div>
 `);
 
-export {sfx_dropdn_template, local_exec_head, local_exec_info, filter_frame_template, quadfilter_template, quad_dropdn_template, reverb_template, delay_template};
+var osc_template = Handlebars.compile(`<div id='osc'>
+<table>
+<tr>
+<th colspan='6'>Oscillator</th>
+</tr>
+<tr>
+<td>
+<div id='oscdropdn'><button id='typepop' class="dropbtn">Type &#x25bc;</button>
+	<div class="dropdown-content">
+	<a id='os_sine'>Sine</a>
+	<a id='os_square'>Square</a>
+	<a id='os_sawtooth'>Sawtooth</a>
+	<a id='os_triangle'>Triangle</a>
+ </div>
+</div>
+</td>
+<td><input id='os_frequency' type="text" value="440" class="dial" data-min="0" data-max="7040"  data-step='1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input id='os_gain' type="text" value="0.80" class="dial" data-min="0" data-max="1.00" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><div class='oscDur'><input id='os_duration' type="text" value="0" class="dial" data-min="0" data-max="10" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></div></td>
+</tr>
+<tr>
+<th>Type</th>
+<th>Frequency</th>
+<th>Gain</th>
+<th><div class='oscDur'>Duration</div></th>
+</tr>
+</table>
+</div>
+`);
+
+export {sfx_dropdn_template, local_exec_head, local_exec_info, filter_frame_template, quadfilter_template, quad_dropdn_template, reverb_template, delay_template, osc_template};
