@@ -73,7 +73,6 @@ export default class OscFilter extends FilterBase {
 				that.gainNode.gain.value = v;
 			} else if (ctlId === 'duration') {
 				that.duration = v;
-				console.log(this.duration);
 			}
 		}});
 		this.selectWaveform('sine');

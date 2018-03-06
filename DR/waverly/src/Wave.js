@@ -124,6 +124,12 @@ export default class Wave {
 	};
 }
 
+  seekTo(pos) {
+  	if(pos < 0) pos = 0;
+  	if (pos > 1) pos = 1;
+  	this.surfer.seekTo(pos);
+  	
+  }
   setupWaveTracker() {
 	var region;
 	var dragActive;
@@ -148,7 +154,7 @@ export default class Wave {
 		if (t1 < t0) {
 			tS = t1;
 			tE = t0;
-			that.surfer.seekTo(t1);
+			that.seekTo(t1);
 		}
 		region.update({
 			start:	tS * duration,
@@ -228,11 +234,11 @@ export default class Wave {
 		if (that.surfer.isPlaying()) {
 			dragActive = false;
 			let progress = that.surfer.drawer.handleEvent(e);
-			that.surfer.seekTo(progress);
+			that.seekTo(progress);
 		} else {
 			dragActive = true;
 			that.surfer.regions.clear();
-			that.surfer.seekTo(t0);
+			that.seekTo(t0);
 			let pos = {
 				start:	t0 * duration,
 				end:	t1 * duration,

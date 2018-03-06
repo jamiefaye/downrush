@@ -1,4 +1,5 @@
 var $ = require('./jquery-3.2.1.min.js');
+// *** JFF applied: https://github.com/aterrien/jQuery-Knob/pull/288/files
 /*!jQuery Knob*/
 /**
  * Downward compatible, touchable dial
@@ -161,6 +162,9 @@ var $ = require('./jquery-3.2.1.min.js');
                             var val = {};
                             val[k] = $this.val();
                             s.val(s._validate(val));
+                            var v = s._validate(val);
+                            if (s.cH && s.cH(v) === false) return;
+                            s.val(v);
                         }
                     );
                 });
@@ -174,7 +178,9 @@ var $ = require('./jquery-3.2.1.min.js');
                 this.$.bind(
                     'change blur',
                     function () {
-                        s.val(s._validate(s.o.parse(s.$.val())));
+                        var v = s._validate(s.o.parse(s.$.val()));
+                        if (s.cH && s.cH(v) === false) return;
+                        s.val(v);
                     }
                 );
 
@@ -641,6 +647,7 @@ var $ = require('./jquery-3.2.1.min.js');
                                 s.o.stopper && (v = max(min(v, s.o.max), s.o.min));
 
                                 s.change(s._validate(v));
+                                s.cH(v);
                                 s._draw();
 
                                 // long time keydown speed-up
