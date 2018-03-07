@@ -230,7 +230,7 @@ case 2:
 		doneFunc(true);
 		return;
 	}
-
+	let that = this;
 	let file = zonkList.shift();
 	let url = "/upload.cgi?DEL=" + file;
 	// Capture closure.
@@ -245,7 +245,7 @@ case 2:
 				doneFunc(false);
 				return;
 			}
-		deleteNext(zonkList, dirList, doneFunc);
+		that.deleteNext(zonkList, dirList, doneFunc);
 	   });	
 	};
 
@@ -260,14 +260,14 @@ case 2:
 		xlsd.pop();
 		// Convert to V2 format.
 		convertFileList(xlsd);
-		subZonk = [];
+		let subZonk = [];
 		// make a zonkList of the subdirectory contents.
 		for (var i = 0; i < xlsd.length; ++i) {
 			let subName = file + '/' + xlsd[i].fname;
 			subZonk.push(subName);
 		}
 		// and recur.
-		deleteNext(subZonk, xlsd, zonkFunc);
+		that.deleteNext(subZonk, xlsd, zonkFunc);
 	  });
 	} else zonkFunc(true);
 }
@@ -278,9 +278,10 @@ case 2:
 	var boxList = this.getCheckedList(this.currentPath + '/');
 	var alertList = boxList.join('\n');
 	var result = confirm( "Delete "+ alertList + "?" );
+	let that = this;
 	if (result) {
 		this.deleteNext(boxList, this.wlansd, function () {
-			upload_after();
+			that.upload_after();
 		});
 	}
 }
@@ -309,7 +310,7 @@ case 2:
 	if (boxList.length !== 1) {
 		alert("More than one file is checked. We will only rename or move the first one");
 	}
-	that.rename(boxList[0]);
+	this.rename(boxList[0]);
 }
 
   opensp(file,conf)
@@ -412,6 +413,7 @@ case 2:
 		whenDone(true);
 		return;
 	}
+	let that = this;
 	var	url = "/command.cgi?op=100&DIR=" + goodPart +"&TIME="+(Date.now());
 	var seeking = remaining.shift();
 	// Issue CGI command.
@@ -448,11 +450,11 @@ case 2:
 				return;				
 			}
 			let deeperGood = goodPart + '/' + seeking;
-			checkDownOne(deeperGood, remaining, whenDone);
+			that.checkDownOne(deeperGood, remaining, whenDone);
 		});
 		} else {
 			let deeperGood = goodPart + '/' + seeking;
-			checkDownOne(deeperGood, remaining, whenDone);
+			that.checkDownOne(deeperGood, remaining, whenDone);
 		}
 	});
 }
@@ -570,13 +572,13 @@ case 2:
 
   NewDirectory()
 {
-	var path = window.prompt("Directory name?\n"+last_dirpath, "NewDirectory01");
+	var path = window.prompt("Directory name?\n"+ this.last_dirpath, "NewDirectory01");
 	if(path)
 	{
 		var url = "";
 		if(this.last_dirpath != "/")
 		{
-			url = "/DR/FTF/mkdir.lua?"+last_dirpath+"/"+path;
+			url = "/DR/FTF/mkdir.lua?"+ this.last_dirpath+"/"+path;
 		}else{
 			url = "/DR/FTF/mkdir.lua?"+"/"+path;		
 		}
@@ -594,11 +596,11 @@ case 2:
  uploadNext (flist) {
 	if (!flist.length) {
 		$("#statind").text('Upload done.');
-		upload(200); // trigger refresh when done.
+		this.upload(200); // trigger refresh when done.
 		return;
 	}
 	let f = flist[0];
-
+	let that = this;
 // Create (if necessary) nested directories)
 	var dirList = f.name.split('/');
 	dirList.pop(); // Get rid of file name at the end.
@@ -638,7 +640,7 @@ case 2:
 	   type        : 'POST',
 	   success     : function(data, textStatus, jqXHR){
 		flist.shift();
-		  uploadNext(flist);
+		 that.uploadNext(flist);
 		  },
 	   xhr: function() {
 		  var xhr = new window.XMLHttpRequest();
