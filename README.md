@@ -42,7 +42,7 @@ APPAUTOTIME=0
 1. Copy the file named List.htm from the SD_WLAN distribution directory and put it into the SD_WLAN directory on the FlashAir Card.
 1. For the next steps, we will copy stuff into the root directory. This is one directory up from the SD_WLAN directory. 
 1. Copy the Directory named DR from the distribution directory and put it into the root directory on the FlashAir Card.
-1. There is no need to copy LICENSE or README.md.
+1. There is no need to copy LICENSE or README.md. There is also no need to copy the root-level FTF and waverly directories over either.
 1. Copy the four directories from your backup copy of the Deluge SD card into the root directory of your FlashAir card. The directory names to copy should be KITS, SAMPLES, SONGS, and SYNTHS.
 1. Safely eject the FlashAir card from your computer and put it into the Deluge and power the Deluge up.
 1. Connect to the card in your browser (Chrome recommended) This can present its own set of headaches.
