@@ -140,6 +140,30 @@ var deleteSelected = function (e)
 	wave.changeBuffer(nextBuffer);
 }
 
+  function cropToSel (e) {
+	let buffer = wave.backend.buffer;
+	let {insertionPoint, length, first, last, region} = wave.getSelection(false);
+	if (insertionPoint) return;
+
+	let bufLen = last - first;
+	let {numberOfChannels, sampleRate} = buffer;
+
+	let nextBuffer = audioCtx.createBuffer(numberOfChannels, bufLen, sampleRate);
+
+	for (var cx = 0; cx < numberOfChannels; ++cx) {
+		let sa = buffer.getChannelData(cx);
+		let da = nextBuffer.getChannelData(cx);
+		let dx = 0;
+		for(var i = first; i < last; ++i) {
+			da[dx++] = sa[i];
+		}
+	}
+	if(region) region.remove();
+	wave.surfer.seekTo(0);
+	undoStack.push(buffer);
+	wave.changeBuffer(nextBuffer);
+  }
+
 // Adjust the selection so that it trims to zero crossings
 function trimtozero() {
 	let buffer = wave.backend.buffer;
@@ -319,6 +343,7 @@ function bindGui() {
 	$('#zoominbut').click('click',e=>{zoom(2.0)});
 	$('#zoomoutbut').click('click',e=>{zoom(0.5)});
 	$('#trimbut').click(e=>trimtozero());
+	$('#cropbut').click(e=>cropToSel());
 }
 
 var sfxdd = sfx_dropdn_template();
