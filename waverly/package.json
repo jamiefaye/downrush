@@ -5,8 +5,8 @@
   "main": "src/viewWAV.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "webpack --mode development",
-    "build": "webpack --mode production"
+    "dev": "webpack --mode development --config webpack.config.js",
+    "build": "webpack --mode production --config webpack.config.prod.js"
   },
   "author": "",
   "license": "ISC",

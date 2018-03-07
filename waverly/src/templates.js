@@ -102,7 +102,7 @@ var delay_template = Handlebars.compile(`<div id='delay'>
  </div>
 </div>
 </td>
-<td><input id='qf_delay' type="text" value="1" class="dial" data-min="0" data-max="2" data-step='0.1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input id='qf_delay' type="text" value="1" class="dial" data-min="0" data-max="2" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
 <td><input id='qf_feedback' type="text" value="0.5" class="dial" data-min="0" data-max="1.0" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
 <td><input id='qf_cutoff' type="text" value="8000" class="dial" data-min="0" data-max="22050" data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
 <td><input id='qf_offset' type="text" value="0" class="dial" data-min="-0.5" data-max="0.5" data-step='0.01'  data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
