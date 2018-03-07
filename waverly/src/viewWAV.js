@@ -1,7 +1,6 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import Wave from './Wave.js';
-
-
+require('file-loader?name=[name].[ext]!../viewWAV.htm');
 import {sfx_dropdn_template, local_exec_head, local_exec_info} from'./templates.js';
 
 import {undoStack} from './UndoStack.js';

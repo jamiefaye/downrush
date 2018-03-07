@@ -12,9 +12,10 @@
   "license": "ISC",
   "dependencies": {
     "web-audio-oscillators": "^1.0.4",
-    "webpack": "^4.0.0"
+    "webpack": "^4.1.1"
   },
   "devDependencies": {
+    "file-loader": "^1.1.11",
     "webpack-cli": "^2.0.9"
   }
 }
