@@ -35,7 +35,7 @@ function testFilterButton(e)
 		filterFrame.close();
 	}
 
-	filterFrame = new FilterFrame(wave);
+	filterFrame = new FilterFrame(wave, undoStack);
 	let targID = e.target.getAttribute('id');
 	let classToMake;
 	if (targID === 'openfilter') classToMake = BiQuadFilter;
@@ -108,7 +108,7 @@ var applyFunction = function (buffer, f)
 
 function doPlaySel(e)
 {
-	let {start, end} = wave.getSelection();
+	let {start, end} = wave.getSelection(true);
 	wave.surfer.play(start, end);
 }
 
@@ -116,8 +116,8 @@ function doPlaySel(e)
 var deleteSelected = function (e)
 {
 	let buffer = wave.backend.buffer;
-	let {regional, length, first, last, region} = wave.getSelection();
-	if (!regional) return;
+	let {insertionPoint, length, first, last, region} = wave.getSelection(false);
+	if (insertionPoint) return;
 
 	let ds = last - first;
 	let {numberOfChannels, sampleRate} = buffer;
@@ -141,12 +141,12 @@ var deleteSelected = function (e)
 	wave.changeBuffer(nextBuffer);
 }
 
-// Adjust the selection so that trims to zero crossings
+// Adjust the selection so that it trims to zero crossings
 function trimtozero() {
 	let buffer = wave.backend.buffer;
 	let {sampleRate} = buffer;
-	let {regional, length, first, last, region} = wave.getSelection();
-	if (!regional) return;
+	let {insertionPoint, length, first, last, region} = wave.getSelection(false);
+	if (insertionPoint) return;
 
 	let sa = buffer.getChannelData(0);
 
@@ -181,7 +181,8 @@ function applyTransform(f, f2)
 {
 	let working = wave.copySelected();
 	let result = f(working, f2);
-	wave.pasteSelected(result);
+
+	undoStack.push(wave.pasteSelected(result));
 }
 
 function reverser(e) {
@@ -210,11 +211,11 @@ function fadeOut(e) {
 }
 
 function selAll(e) {
-	let {regional, start, end, duration} = wave.getSelection();
+	let {insertionPoint, start, end, duration} = wave.getSelection(false);
 	wave.surfer.regions.clear();
 	wave.surfer.seekTo(0);
 	// If wa are alread a full selection, quit right after we cleared.
-	if (regional && start === 0 && end === duration) return;
+	if (!insertionPoint && start === 0 && end === duration) return;
 
 	let pos = {
 		start:	0,
@@ -267,21 +268,21 @@ function pasteFromClip(e)
 		if (clip.startsWith('Ukl')) {
 			let asbin = base64ToArrayBuffer(clip);
 			wave.backend.decodeArrayBuffer(asbin, function (data) {
-			if (data) wave.pasteSelected(data, true);
+			if (data) undoStack.push(wave.pasteSelected(data, true));
 	 	  }, function (err) {
 			alert('paste decode error');
 		  });
 		  return;
 		}
 	}
-	if (localClipboard) wave.pasteSelected(localClipboard, true);
+	if (localClipboard) undoStack.push(wave.pasteSelected(localClipboard, true));
 }
 
 function zoom(amt) {
 	
 	let minPxWas = wave.surfer.params.minPxPerSec;
 	let newPx = minPxWas * amt;
-	let zoomLimit = 44100;
+	let zoomLimit = 192000;
 	if (newPx > zoomLimit) newPx = zoomLimit;
 // console.log('zoom rate: ' + newPx);
 	wave.surfer.zoom(newPx);
@@ -298,26 +299,26 @@ function bindGui() {
 	// Remove highlighting after button pushes:
 	$('.butn').mouseup(function() { this.blur()});
 	
-	$('#loadbut').on('click',btn_load);
-	$('#savebut').on('click',btn_save);
+	$('#loadbut').click(btn_load);
+	$('#savebut').click(btn_save);
 
-	$('#plsybut').on('click',(e)=>{wave.surfer.playPause(e)});
-	$('#rewbut').on('click', (e)=>{wave.surfer.seekTo(0)});
-	$('#plsyselbut').on('click', doPlaySel);
-	$('#undobut').on('click', doUndo);
-	$('#redobut').on('click', doRedo);
-	$('#delbut').on('click', deleteSelected);
-	$('#cutbut').on('click', cutToClip);
-	$('#copybut').on('click', copyToClip);
+	$('#plsybut').click((e)=>{wave.surfer.playPause(e)});
+	$('#rewbut').click( (e)=>{wave.surfer.seekTo(0)});
+	$('#plsyselbut').click( doPlaySel);
+	$('#undobut').click( doUndo);
+	$('#redobut').click( doRedo);
+	$('#delbut').click( deleteSelected);
+	$('#cutbut').click( cutToClip);
+	$('#copybut').click( copyToClip);
 
-	$('#pastebut').on('click',pasteFromClip);
-	$('#normbut').on('click',normalizer);
-	$('#reversebut').on('click',reverser);
-	$('#fadeinbut').on('click',fadeIn);
-	$('#fadeoutbut').on('click',fadeOut);
-	$('#selallbut').on('click',selAll);
-	$('#zoominbut').on('click',e=>{zoom(2.0)});
-	$('#zoomoutbut').on('click',e=>{zoom(0.5)});
+	$('#pastebut').click(pasteFromClip);
+	$('#normbut').click(normalizer);
+	$('#reversebut').click(reverser);
+	$('#fadeinbut').click(fadeIn);
+	$('#fadeoutbut').click(fadeOut);
+	$('#selallbut').click('click',selAll);
+	$('#zoominbut').click('click',e=>{zoom(2.0)});
+	$('#zoomoutbut').click('click',e=>{zoom(0.5)});
 	$('#trimbut').click(e=>trimtozero());
 }
 
@@ -382,7 +383,7 @@ function record()
 function setEditData(data)
 {
 	if(!wave) {
-		wave = new Wave();
+		wave = new Wave('#waveform');
 	}
 	wave.openOnBuffer(data);
 	startGuiCheck();
@@ -397,7 +398,7 @@ function openLocal(evt)
 	if (f === undefined) return;
 	var reader = new FileReader();
 	if(!wave) {
-		wave = new Wave();
+		wave = new Wave('#waveform');
 	}
 // Closure to capture the file information.
 	reader.onloadend = (function(theFile) {

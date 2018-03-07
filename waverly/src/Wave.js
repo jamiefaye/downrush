@@ -5,7 +5,6 @@ import RegionPlugin  from'./js/plugins/wavesurfer.regions.js';
 import Minimap from'./js/plugins/wavesurfer.minimap.js';
 import {TiledRenderer, tiledDrawBuffer} from './js/plugins/wavesurfer.tiledrenderer.js';
 import {audioCtx, OfflineContext} from './AudioCtx.js';
-import {undoStack} from './UndoStack.js';
 
 function secondsToSampleNum(t, buffer) {
 	let sn = t * buffer.sampleRate;
@@ -15,8 +14,9 @@ function secondsToSampleNum(t, buffer) {
 }
 
 export default class Wave {
-	constructor(rootDivId) {
+	constructor(rootDivId, params) {
 		this.rootDivId = rootDivId;
+		this.initParams = params;
 	}
 
 	redrawWave()
@@ -29,14 +29,14 @@ export default class Wave {
 //	var tiledRenderer = new TiledRenderer.default();
 	var plugs =  [
 		TimelinePlugin.create({
-			container: '#waveform-timeline'
+			container: this.rootDivId + '-timeline'
 			}),
 		RegionPlugin.create({
 			dragSelection: false,
 			}),
 			
 		Minimap.create({
-			container: '#minimap',
+			container: this.rootDivId + '-minimap',
 			height: 30,
 			barHeight: 1.4,
 			interact:	true,
@@ -44,12 +44,12 @@ export default class Wave {
 			})
 		];
 
-	$('#waveform').empty();
-	$('#waveform-timeline').empty();
-	$('#minimap').empty();
+	$(this.rootDivId).empty();
+	$(this.rootDivId + '-timeline').empty();
+	$(this.rootDivId + '-minimap').empty();
 
-	this.surfer = WaveSurfer.create({
-		container:		'#waveform',
+	let initParams = {
+		container:		this.rootDivId,
 		waveColor:		'violet',
 		progressColor:	'purple',
 		splitChannels:	true,
@@ -60,7 +60,13 @@ export default class Wave {
 		partialRender:  false,
 		renderer:		 TiledRenderer,
 		// barWidth:		1,
-	});
+	};
+
+	if (this.params) {
+		initParams = Object.assign(initParams, this.params);
+	}
+
+	this.surfer = WaveSurfer.create(initParams);
 // Patch in an override to the drawBuffer function.
 	this.surfer.drawBuffer = tiledDrawBuffer;
 
@@ -87,35 +93,48 @@ export default class Wave {
 	})
 }	
 
-  getSelection() {
+  getSelection(ipIsAll) {
 	let buffer = this.surfer.backend.buffer;
 	let srcLen = buffer.getChannelData(0).length;
 	let regionMap = this.surfer.regions.list;
-	
+
 	let startT = 0;
-	let regional = false;
 	let dur =  this.surfer.getDuration()
 	let endT = dur;
 	let progS = this.surfer.drawer.progress() * endT;
 	let region = regionMap[function() { for (var k in regionMap) return k }()];
 	let cursorTime = this.surfer.getCurrentTime();
-
-	if (region && region.start < region.end) {
-		startT = region.start;
-		endT = region.end;
-		regional = true;
-	}
+	let insertionPoint = false;
+	
 	let cursorPos = secondsToSampleNum(cursorTime, buffer);
+
+	if (region) {
+		if (region.start < region.end) {
+			startT = region.start;
+			endT = region.end;
+		} else if(!ipIsAll && region.start === region.end) {
+			startT = region.start;
+			endT = region.end;
+			insertionPoint = true;
+		}
+	} else {
+		if(!ipIsAll) {
+			startT = cursorTime;
+			endT = cursorTime;
+			insertionPoint = true;
+		}
+	}
+
 	let startS = secondsToSampleNum(startT, buffer);
 	let endS = secondsToSampleNum(endT, buffer);
-
+	
 	return {
 		length: srcLen,
-		regional: regional,
 		start:	startT,
 		end:	endT,
 		first:  startS,
 		last:	endS,
+		insertionPoint: insertionPoint,
 		progress: progS,
 		region: region,
 		cursorTime: cursorTime,
@@ -132,8 +151,6 @@ export default class Wave {
 				resize: false,
 			};
 		let region = this.surfer.regions.add(pos);		
-		
-		
 	}
 
   seekTo(pos) {
@@ -302,7 +319,7 @@ export default class Wave {
 }
   copySelected () {
 	let buffer = this.surfer.backend.buffer;
-	let {length, first, last, region} = this.getSelection();
+	let {length, first, last, region} = this.getSelection(true);
 	let ds = last - first;
 	let {numberOfChannels, sampleRate} = buffer;
 	let nextBuffer = audioCtx.createBuffer(numberOfChannels, ds, sampleRate);
@@ -338,12 +355,7 @@ export default class Wave {
   pasteSelected(pasteData, checkInsert) {
 	let buffer = this.surfer.backend.buffer;
 
-	let {regional, cursorTime, cursorPos, length, first, last, region} = this.getSelection();
-
-	if (checkInsert && !regional) { // regionl === false means its an insertion point.
-		first = cursorPos;
-		last = cursorPos;
-	}
+	let {cursorTime, cursorPos, length, first, last, insertionPoint} = this.getSelection(!checkInsert);
 
 	let pasteLen = pasteData.getChannelData(0).length;
 	let dTs = last - first;
@@ -370,8 +382,8 @@ export default class Wave {
 			da[dx++] = sa[i];
 		}
 	}
-	undoStack.push(buffer);
 	this.changeBuffer(nextBuffer);
+	return buffer;
   }
 
 } // End class

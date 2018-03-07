@@ -61,8 +61,9 @@ class FilterBase {
 };
 
 class FilterFrame {
-  constructor(wave) {
+  constructor(wave, undoStack) {
 		this.wave = wave;
+		this.undoStack = undoStack;
   }
 
   close() {
@@ -120,7 +121,7 @@ class FilterFrame {
 	let working;
 	
 	if (generatedDuration === 0) {
-		working = this.wave.copySelected();
+		working = this.wave.copySelected(true);
 	} else {
 		working = this.wave.getBufferOfLength(generatedDuration);
 	}
@@ -140,7 +141,8 @@ class FilterFrame {
 	offlineSource.buffer = working;
 	let that = this;
 	ctx.oncomplete = function (e) {
-		that.wave.pasteSelected(e.renderedBuffer, generatedDuration > 0);
+		let previous = that.wave.pasteSelected(e.renderedBuffer, generatedDuration > 0);
+		that.undoStack.push(previous);
 	}
 	offlineSource.start();
 	ctx.startRendering();
