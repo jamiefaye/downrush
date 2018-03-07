@@ -141,6 +141,38 @@ var deleteSelected = function (e)
 	wave.changeBuffer(nextBuffer);
 }
 
+// Adjust the selection so that trims to zero crossings
+function trimtozero() {
+	let buffer = wave.backend.buffer;
+	let {sampleRate} = buffer;
+	let {regional, length, first, last, region} = wave.getSelection();
+	if (!regional) return;
+
+	let sa = buffer.getChannelData(0);
+
+	while (sa[first] === 0.0 && first < last) first++;
+	last--;
+	while (sa[last] === 0.0 && first < last) last--;
+	let lsgn = Math.sign(sa[first]);
+	if(last < first) return;
+	let newL = first;
+	for (var i = first + 1; i <= last; ++i) {
+		if(Math.sign(sa[i]) != lsgn) {
+			newL = i;
+			break;
+		}
+	}
+
+	let newR = last;
+	let rsgn = Math.sign(sa[newR]);
+	for (var i = last - 1; i >= first; i--) {
+		if(Math.sign(sa[i]) != rsgn) {
+			newR = i + 1;
+			break;
+		}
+	}
+	wave.setSelection(newL / sampleRate, newR / sampleRate);
+}
 
 // Apply a transform function to the selected area and replace the selected area
 // with the result. The transform function can be either 'in place' or can return a
@@ -286,6 +318,7 @@ function bindGui() {
 	$('#selallbut').on('click',selAll);
 	$('#zoominbut').on('click',e=>{zoom(2.0)});
 	$('#zoomoutbut').on('click',e=>{zoom(0.5)});
+	$('#trimbut').click(e=>trimtozero());
 }
 
 var sfxdd = sfx_dropdn_template();

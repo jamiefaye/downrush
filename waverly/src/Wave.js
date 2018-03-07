@@ -123,6 +123,18 @@ export default class Wave {
 		duration:	dur,
 	};
 }
+	setSelection(start, end) {
+		this.surfer.regions.clear();
+		let pos = {
+				start:	start,
+				end:	end,
+				drag:	false,
+				resize: false,
+			};
+		let region = this.surfer.regions.add(pos);		
+		
+		
+	}
 
   seekTo(pos) {
   	if(pos < 0) pos = 0;
