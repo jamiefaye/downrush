@@ -501,7 +501,7 @@ function record()
 				headers: {"If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT"},
 				success: function(data, textStatus, jqXHR){
 					console.log("save and unlock done");
-					$("#statind").text(that.filepath + " saved.");
+					$("#statind").text(filepath + " saved.");
 				},
 			})
 		},
@@ -552,7 +552,7 @@ function record()
 
 	let aBuf = this.wave.backend.buffer;
 	let saveData = audioBufferToWav(aBuf);
-	this.saveFile(fname, saveData);
+	this.saveFile(this.fname, saveData);
 	// jsEditor.markClean();
 }
 
