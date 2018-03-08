@@ -16,23 +16,23 @@ You are running the local version of Waverly.
 
 var sfx_dropdn_template = Handlebars.compile(`<button class="dropbtn">Effects &#x25bc;</button>
 	<div class="dropdown-content">
-	<a id='openfilter'>Quad Filter</a>
-	<a id='openReverb'>Simple Reverb</a>
-	<a id='openDelay'>Delay</a>
-	<a id='openOsc'>Oscillator</a>
+	<a data-id='openfilter'>Quad Filter</a>
+	<a data-id='openReverb'>Simple Reverb</a>
+	<a data-id='openDelay'>Delay</a>
+	<a data-id='openOsc'>Oscillator</a>
  </div>`);
 
 
 var quad_dropdn_template = Handlebars.compile(`<button id='quadpop' class="dropbtn">Lowpass Filter &#x25bc;</button>
 	<div class="dropdown-content">
-	<a id='itmlowpass'>Lowpass Filter</a>
-	<a id='itmhighpass'>Highpass Filter</a>
-	<a id='itmbandpass'>Bandpass Filter</a>
-	<a id='itmlowshelf'>Lowshelf Filter</a>
-	<a id='itmhighshelf'>Highshelf Filter</a>
-	<a id='itmpeaking'>Peaking Filter</a>
-	<a id='itmnotch'>Notch Filter</a>
-	<a id='itmallpass'>Allpass Filter</a>
+	<a data-id='lowpass'>Lowpass Filter</a>
+	<a data-id='highpass'>Highpass Filter</a>
+	<a data-id='bandpass'>Bandpass Filter</a>
+	<a data-id='lowshelf'>Lowshelf Filter</a>
+	<a data-id='highshelf'>Highshelf Filter</a>
+	<a data-id='peaking'>Peaking Filter</a>
+	<a data-id='notch'>Notch Filter</a>
+	<a data-id='allpass'>Allpass Filter</a>
  </div>`);
 Handlebars.registerPartial("quaddropdn", quad_dropdn_template);
 
@@ -53,9 +53,9 @@ var quadfilter_template = Handlebars.compile(`<div id='quadfilter'>
 <table>
 <tr>
 <td><div id='quaddropdn'>{{> quaddropdn}}</div></td>
-<td><input id='qf_frequency' type="text" value="440" class="dial" data-min="1" data-max="8000" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'></td>
-<td><div class='q_div'><input id='qf_Q' type="text" value="1" class="dial" data-min="0" data-max="50" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'</div></td>
-<td><div class='gain_div'><input id='qf_gain' type="text" value="0" class="dial" data-min="-40" data-max="40" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'></div></td>
+<td><input data-id='frequency' type="text" value="440" class="dial" data-min="1" data-max="8000" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'></td>
+<td><div class='q_div'><input data-id='Q' type="text" value="1" class="dial" data-min="0" data-max="50" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'</div></td>
+<td><div class='gain_div'><input data-id='gain' type="text" value="0" class="dial" data-min="-40" data-max="40" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'></div></td>
 </tr>
 <tr>
 <th>Kind</th>
@@ -70,11 +70,11 @@ var quadfilter_template = Handlebars.compile(`<div id='quadfilter'>
 var reverb_template = Handlebars.compile(`<div id='simplereverb'>
 <table>
 <tr>
-<td><input id='qf_drylevel' type="text" value="5" class="dial" data-min="0" data-max="10" data-step='0.1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
-<td><input id='qf_wetlevel' type="text" value="5" class="dial" data-min="0" data-max="10" data-step='0.1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
-<td><input id='qf_seconds' type="text" value="3" class="dial" data-min="0" data-max="30"  data-step='0.1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
-<td><input id='qf_decay' type="text" value="2" class="dial" data-min="0" data-max="100" data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
-<td><input id='qf_reverse' type="text" value="0" class="dial" data-min="0" data-max="1" data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='drylevel' type="text" value="5" class="dial" data-min="0" data-max="10" data-step='0.1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='wetlevel' type="text" value="5" class="dial" data-min="0" data-max="10" data-step='0.1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='seconds' type="text" value="3" class="dial" data-min="0.01" data-max="30"  data-step='0.1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='decay' type="text" value="2" class="dial" data-min="0" data-max="100" data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='reverse' type="text" value="0" class="dial" data-min="0" data-max="1" data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
 </tr>
 <tr>
 <th>Dry Level</th>
@@ -96,17 +96,17 @@ var delay_template = Handlebars.compile(`<div id='delay'>
 <td>
 <div id='delaydropdn'><button id='typepop' class="dropbtn">Kind &#x25bc;</button>
 	<div class="dropdown-content">
-	<a id='itmnormal'>Normal</a>
-	<a id='itminverted'>Inverted</a>
-	<a id='itmpingpong'>PingPong</a>
+	<a data-id='normal'>Normal</a>
+	<a data-id='inverted'>Inverted</a>
+	<a data-id='pingpong'>PingPong</a>
  </div>
 </div>
 </td>
-<td><input id='qf_delay' type="text" value="1" class="dial" data-min="0" data-max="2" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
-<td><input id='qf_feedback' type="text" value="0.5" class="dial" data-min="0" data-max="1.0" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
-<td><input id='qf_cutoff' type="text" value="8000" class="dial" data-min="0" data-max="22050" data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
-<td><input id='qf_offset' type="text" value="0" class="dial" data-min="-0.5" data-max="0.5" data-step='0.01'  data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
-<td><input id='qf_dry' type="text" value="1" class="dial" data-min="0" data-max="1" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='delay' type="text" value="1" class="dial" data-min="0" data-max="2" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='feedback' type="text" value="0.5" class="dial" data-min="0" data-max="1.0" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='cutoff' type="text" value="8000" class="dial" data-min="0" data-max="22050" data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='offset' type="text" value="0" class="dial" data-min="-0.5" data-max="0.5" data-step='0.01'  data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='dry' type="text" value="1" class="dial" data-min="0" data-max="1" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
 </tr>
 <tr>
 <th>Type</th>
@@ -129,16 +129,16 @@ var osc_template = Handlebars.compile(`<div id='osc'>
 <td>
 <div id='oscdropdn'><button id='typepop' class="dropbtn">Type &#x25bc;</button>
 	<div class="dropdown-content">
-	<a id='os_sine'>Sine</a>
-	<a id='os_square'>Square</a>
-	<a id='os_sawtooth'>Sawtooth</a>
-	<a id='os_triangle'>Triangle</a>
+	<a data-id='sine'>Sine</a>
+	<a data-id='square'>Square</a>
+	<a data-id='sawtooth'>Sawtooth</a>
+	<a data-id='triangle'>Triangle</a>
  </div>
 </div>
 </td>
-<td><input id='os_frequency' type="text" value="440" class="dial" data-min="0" data-max="7040"  data-step='1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
-<td><input id='os_gain' type="text" value="0.80" class="dial" data-min="0" data-max="1.00" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
-<td><div class='oscDur'><input id='os_duration' type="text" value="0" class="dial" data-min="0" data-max="10" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></div></td>
+<td><input data-id='frequency' type="text" value="440" class="dial" data-min="0" data-max="7040"  data-step='1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><input data-id='gain' type="text" value="0.80" class="dial" data-min="0" data-max="1.00" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
+<td><div class='oscDur'><input data-id='duration' type="text" value="0" class="dial" data-min="0" data-max="10" data-step='0.01' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></div></td>
 </tr>
 <tr>
 <th>Type</th>

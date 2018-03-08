@@ -13,6 +13,8 @@ export default class DelayFilter extends FilterBase {
 	this.cutoff = 8000;
 	this.offset = 0;
 	this.filterSetup = false;
+	this.maxDelayLen = 2.0;
+	this.timeConstant = 0.016;
   }
 
   createFilters(ctx) {
@@ -20,8 +22,8 @@ export default class DelayFilter extends FilterBase {
 
 	this.split = ctx.createChannelSplitter(2);
 	this.merge = ctx.createChannelMerger(2);
-	this.leftDelay = ctx.createDelay();
-	this.rightDelay = ctx.createDelay();
+	this.leftDelay = ctx.createDelay(this.maxDelayLen);
+	this.rightDelay = ctx.createDelay(this.maxDelayLen);
 	this.leftGain = ctx.createGain();
 	this.rightGain = ctx.createGain();
 	this.leftFilter = ctx.createBiquadFilter()
@@ -29,14 +31,13 @@ export default class DelayFilter extends FilterBase {
 	this.dryGain = ctx.createGain();
 
 	this.leftFilter.type = 'lowpass';
-	this.leftFilter.frequency.value  = this.cutoff;
+	this.leftFilter.frequency.setTargetAtTime(this.cutoff, 0, 0);
 	this.rightFilter.type = 'lowpass';
-	this.rightFilter.frequency.value  = this.cutoff;
-
-	this.leftDelay.delayTime.value = this.delayTime;
-	this.rightDelay.delayTime.value = this.delayTime;
-	this.leftGain.gain.value = 0.5;
-	this.rightGain.gain.value = 0.5;
+	this.rightFilter.frequency.setTargetAtTime(this.cutoff, 0, 0);
+	this.leftDelay.delayTime.setTargetAtTime(this.delayTime, 0, 0);
+	this.rightDelay.delayTime.setTargetAtTime(this.delayTime, 0, 0);
+	this.leftGain.gain.setTargetAtTime( 0.5, 0, 0);
+	this.rightGain.gain.setTargetAtTime(0.5, 0, 0);
 	
 	this.setOffset(this.offset);
   }
@@ -83,12 +84,12 @@ export default class DelayFilter extends FilterBase {
   applyState(state) {
 		this.type = state.type;
 		this.delayTime = state.delay;
-		this.leftDelay.delayTime.value = this.delayTime;
-		this.rightDelay.delayTime.value = this.delayTime;
-		this.leftGain.gain.setValueAtTime(state.feedback, 0);
-		this.rightGain.gain.setValueAtTime(state.feedback, 0);
-		this.leftFilter.frequency.value = state.cutoff;
-		this.rightFilter.frequency.value = state.cutoff;
+		this.leftDelay.delayTime.setTargetAtTime(this.delayTime, 0, 0);
+		this.rightDelay.delayTime.setTargetAtTime(this.delayTime ,0, 0);
+		this.leftGain.gain.setTargetAtTime(state.feedback, 0, 0);
+		this.rightGain.gain.setTargetAtTime(state.feedback, 0, 0);
+		this.leftFilter.frequency.setTargetAtTime(state.cutoff, 0, 0);
+		this.rightFilter.frequency.setTargetAtTime(state.cutoff, 0, 0);
 		this.cutoff = state.cutoff;
 		this.setOffset(state.offset);
 		this.dryGain.gain.value = state.dry;
@@ -100,9 +101,9 @@ export default class DelayFilter extends FilterBase {
 		super.openGui(whereToPut);
 		let that = this;
 		let delayDrop = new Dropdown('#delaydropdn',undefined,function (e) {
-			let targID = e.target.getAttribute('id');
+			let targID = e.target.getAttribute('data-id');
 			let targText = e.target.innerText;
-			let fname = targID.substring(3);
+			let fname = targID;
 			that.type = fname;
 			that.repatch();
 			let namef = $('#delaydropdn');
@@ -111,7 +112,7 @@ export default class DelayFilter extends FilterBase {
 
 		$(".dial").knob({change: function (v) {
 			let inp = this.i[0];
-			let ctlId = inp.getAttribute('id').substring(3);
+			let ctlId = inp.getAttribute('data-id');
 			that[ctlId] = v;
 
 			switch (ctlId) {
@@ -121,13 +122,13 @@ export default class DelayFilter extends FilterBase {
 			break;
 
 		case 'feedback':
-			that.leftGain.gain.setValueAtTime(v, 0);
-			that.rightGain.gain.setValueAtTime(v, 0);
+			that.leftGain.gain.setTargetAtTime(v, 0, that.timeConstant);
+			that.rightGain.gain.setTargetAtTime(v, 0, that.timeConstant);
 			break;
 
 		case 'cutoff':
-			that.leftFilter.frequency.value = v;
-			that.rightFilter.frequency.value = v;
+			that.leftFilter.frequency.setTargetAtTime(v, 0, that.timeConstant);
+			that.rightFilter.frequency.setTargetAtTime(v, 0, that.timeConstant);
 			that.cutoff = v;
 			break;
 
@@ -136,21 +137,27 @@ export default class DelayFilter extends FilterBase {
 			break;
 
 		case 'dry':
-			that.dryGain.gain.value = v;
+			that.dryGain.gain.setTargetAtTime(v, 0, that.timeConstant);
 			break;
 		  } // End of switch
 		}});
 	}
 
+  clipMD(value) {
+  	if (value < 0) value = 0;
+  	 else if (value > this.maxDelayLen) value = this.maxDelayLen;
+  	return value;
+  }
+
   setOffset (value) {
 	var offsetTime = this.delayTime + value;
 	this.offset = value;
 	if (value < 0) {
-		this.leftDelay.delayTime.setValueAtTime(offsetTime, 0);
-		this.rightDelay.delayTime.setValueAtTime(this.delayTime, 0);
+		this.leftDelay.delayTime.setTargetAtTime(this.clipMD(offsetTime), 0, this.timeConstant);
+		this.rightDelay.delayTime.setTargetAtTime(this.clipMD(this.delayTime), 0, this.timeConstant);
 	} else {
-		this.leftDelay.delayTime.setValueAtTime(this.delayTime, 0);
-		this.rightDelay.delayTime.setValueAtTime(offsetTime, 0);
+		this.leftDelay.delayTime.setTargetAtTime(this.clipMD(this.delayTime), 0, this.timeConstant);
+		this.rightDelay.delayTime.setTargetAtTime(this.clipMD(offsetTime), 0, this.timeConstant);
 	 }
  }
 

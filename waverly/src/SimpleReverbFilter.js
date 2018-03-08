@@ -86,7 +86,7 @@ export default class SimpleReverbFilter extends FilterBase {
 		let that = this;
 		$(".dial").knob({change: function (v) {
 			let inp = this.i[0];
-			let ctlId = inp.getAttribute('id').substring(3);
+			let ctlId = inp.getAttribute('data-id');
 			that[ctlId] = v;
 			if (ctlId === 'drylevel') {
 				that.dryGain.gain.value = v / 10;

@@ -56,9 +56,9 @@ export default class OscFilter extends FilterBase {
 		super.openGui(whereToPut);
 		let that = this;
 		let filterDrop = new Dropdown('#oscdropdn',undefined,function (e) {
-			let targID = e.target.getAttribute('id');
+			let targID = e.target.getAttribute('data-id');
 			let targText = e.target.innerText;
-			let fname = targID.substring(3);
+			let fname = targID;
 			that.selectWaveform(fname);
 			let namef = $('#oscdropdn');
 			$(namef[0].firstChild).text(targText);
@@ -66,7 +66,7 @@ export default class OscFilter extends FilterBase {
 
 		$(".dial").knob({change: function (v) {
 			let inp = this.i[0];
-			let ctlId = inp.getAttribute('id').substring(3);
+			let ctlId = inp.getAttribute('data-id');
 			if (ctlId === 'frequency') {
 				that.oscFilter.frequency.value = v;
 			} else if (ctlId === 'gain') {

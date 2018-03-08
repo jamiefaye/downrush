@@ -28,14 +28,14 @@ var localClipboard;
 var wave;
 var filterFrame;
 
-function testFilterButton(e)
+function openFilter(e)
 {
 	if (filterFrame) {
 		filterFrame.close();
 	}
 
 	filterFrame = new FilterFrame(wave, undoStack);
-	let targID = e.target.getAttribute('id');
+	let targID = e.target.getAttribute('data-id');
 	let classToMake;
 	if (targID === 'openfilter') classToMake = BiQuadFilter;
 	 else if (targID === 'openReverb') classToMake = SimpleReverbFilter;
@@ -348,9 +348,6 @@ function bindGui() {
 
 var sfxdd = sfx_dropdn_template();
 
-function openFilter(e) {
-	testFilterButton(e);
-}
 
 var dropdown = new Dropdown('#dropdn', sfxdd, openFilter);
 console.log(dropdown);
