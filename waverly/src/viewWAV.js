@@ -3,7 +3,7 @@ import Wave from './Wave.js';
 require('file-loader?name=[name].[ext]!../viewWAV.htm');
 import {sfx_dropdn_template, local_exec_head, local_exec_info} from'./templates.js';
 
-import {undoStack} from './UndoStack.js';
+import UndoStack from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import {audioBufferToWav} from './audioBufferToWav.js';
 import Dropdown from './Dropdown.js';
@@ -20,33 +20,16 @@ import OscFilter from './OscFilter.js';
 var local_exec = document.URL.indexOf('file:') == 0;
 
 var sample_path_prefix = '/';
-var filename_input = document.getElementById ("fname");//.value
+
 var fname = "";
 
 var localClipboard;
 
 var wave;
-var filterFrame;
-
-function openFilter(e)
-{
-	if (filterFrame) {
-		filterFrame.close();
-	}
-
-	filterFrame = new FilterFrame(wave, undoStack);
-	let targID = e.target.getAttribute('data-id');
-	let classToMake;
-	if (targID === 'openfilter') classToMake = BiQuadFilter;
-	 else if (targID === 'openReverb') classToMake = SimpleReverbFilter;
-	 else if (targID === 'openDelay') classToMake = DelayFilter;
-	 else if (targID === 'openOsc') classToMake = OscFilter;
-	filterFrame.open(classToMake);
-}
 
 // Simplified to just multiply by 1/max(abs(buffer))
 // (which preserves any existing DC offset).
-var normalize = function (buffer)
+function normalize(buffer)
 {
 	let {numberOfChannels, sampleRate} = buffer;
 	let bufLen = buffer.getChannelData(0).length;
@@ -88,7 +71,7 @@ function reverse (buffer)
 	return buffer;
 }
 
-var applyFunction = function (buffer, f)
+function applyFunction (buffer, f)
 {
 	let {numberOfChannels, sampleRate} = buffer;
 	let bufLen = buffer.getChannelData(0).length;
@@ -105,17 +88,42 @@ var applyFunction = function (buffer, f)
 	return buffer;
 }
 
-function doPlaySel(e)
+
+class WaveViewer {
+
+  constructor(homeId) {
+	this.homeId = homeId;
+	this.undoStack = new UndoStack(10);;
+  }
+
+ openFilter(e)
 {
-	let {start, end} = wave.getSelection(true);
-	wave.surfer.play(start, end);
+	if (this.filterFrame) {
+		this.filterFrame.close();
+	}
+
+	this.filterFrame = new FilterFrame(this.wave, this.undoStack);
+	let targID = e.target.getAttribute('data-id');
+	let classToMake;
+	if (targID === 'openfilter') classToMake = BiQuadFilter;
+	 else if (targID === 'openReverb') classToMake = SimpleReverbFilter;
+	 else if (targID === 'openDelay') classToMake = DelayFilter;
+	 else if (targID === 'openOsc') classToMake = OscFilter;
+	this.filterFrame.open(classToMake);
 }
 
 
-var deleteSelected = function (e)
+ doPlaySel(e)
 {
-	let buffer = wave.backend.buffer;
-	let {insertionPoint, length, first, last, region} = wave.getSelection(false);
+	let {start, end} = this.wave.getSelection(true);
+	this.wave.surfer.play(start, end);
+}
+
+
+  deleteSelected(e)
+{
+	let buffer = this.wave.backend.buffer;
+	let {insertionPoint, length, first, last, region} = this.wave.getSelection(false);
 	if (insertionPoint) return;
 
 	let ds = last - first;
@@ -136,13 +144,13 @@ var deleteSelected = function (e)
 		}
 	}
 	if(region) region.remove();
-	undoStack.push(buffer);
-	wave.changeBuffer(nextBuffer);
+	this.undoStack.push(buffer);
+	this.wave.changeBuffer(nextBuffer);
 }
 
-  function cropToSel (e) {
-	let buffer = wave.backend.buffer;
-	let {insertionPoint, length, first, last, region} = wave.getSelection(false);
+   cropToSel (e) {
+	let buffer = this.wave.backend.buffer;
+	let {insertionPoint, length, first, last, region} = this.wave.getSelection(false);
 	if (insertionPoint) return;
 
 	let bufLen = last - first;
@@ -159,16 +167,16 @@ var deleteSelected = function (e)
 		}
 	}
 	if(region) region.remove();
-	wave.surfer.seekTo(0);
-	undoStack.push(buffer);
-	wave.changeBuffer(nextBuffer);
+	this.wave.surfer.seekTo(0);
+	this.undoStack.push(buffer);
+	this.wave.changeBuffer(nextBuffer);
   }
 
 // Adjust the selection so that it trims to zero crossings
-function trimtozero() {
-	let buffer = wave.backend.buffer;
+ trimtozero() {
+	let buffer = this.wave.backend.buffer;
 	let {sampleRate} = buffer;
-	let {insertionPoint, length, first, last, region} = wave.getSelection(false);
+	let {insertionPoint, length, first, last, region} = this.wave.getSelection(false);
 	if (insertionPoint) return;
 
 	let sa = buffer.getChannelData(0);
@@ -194,83 +202,83 @@ function trimtozero() {
 			break;
 		}
 	}
-	wave.setSelection(newL / sampleRate, newR / sampleRate);
+	this.wave.setSelection(newL / sampleRate, newR / sampleRate);
 }
 
 // Apply a transform function to the selected area and replace the selected area
 // with the result. The transform function can be either 'in place' or can return a
 // result buffer of any size.
-function applyTransform(f, f2)
+ applyTransform(f, f2)
 {
-	let working = wave.copySelected();
+	let working = this.wave.copySelected();
 	let result = f(working, f2);
 
-	undoStack.push(wave.pasteSelected(result));
+	this.undoStack.push(this.wave.pasteSelected(result));
 }
 
-function reverser(e) {
-	applyTransform(reverse);
+  reverser(e) {
+	this.applyTransform(reverse);
 }
 
-function normalizer(e) {
+  normalizer(e) {
 	
-	applyTransform(normalize);
+	this.applyTransform(normalize);
 }
 
-function fadeIn(e) {
+  fadeIn(e) {
 	
 	let f = function (s, i, len) {
 		return s * (i / len);
 	}
-	applyTransform(applyFunction, f);
+	this.applyTransform(applyFunction, f);
 }
 
-function fadeOut(e) {
+  fadeOut(e) {
 	
 	let f = function (s, i, len) {
 		return s * (1.0 - i / len);
 	}
-	applyTransform(applyFunction, f);
+	this.applyTransform(applyFunction, f);
 }
 
-function selAll(e) {
-	let {insertionPoint, start, end, duration} = wave.getSelection(false);
-	wave.surfer.regions.clear();
-	wave.surfer.seekTo(0);
+  selAll(e) {
+	let {insertionPoint, start, end, duration} = this.wave.getSelection(false);
+	this.wave.surfer.regions.clear();
+	this.wave.surfer.seekTo(0);
 	// If wa are alread a full selection, quit right after we cleared.
 	if (!insertionPoint && start === 0 && end === duration) return;
 
 	let pos = {
 		start:	0,
-		end:	wave.surfer.getDuration(),
+		end:	this.wave.surfer.getDuration(),
 		drag:	false,
 		resize: false,
 	};
-	wave.surfer.regions.add(pos);
+	this.wave.surfer.regions.add(pos);
 }
 
-function doUndo(e) {
+  doUndo(e) {
 	console.log("Undo");
 
-	if (undoStack.atTop()) {
-		let buffer = wave.backend.buffer;
-		undoStack.push(buffer);
+	if (this.undoStack.atTop()) {
+		let buffer = this.wave.backend.buffer;
+		this.undoStack.push(buffer);
 	}
-	let unbuf = undoStack.undo();
-	wave.changeBuffer(unbuf);
+	let unbuf = this.undoStack.undo();
+	this.wave.changeBuffer(unbuf);
 }
 
-function doRedo(e) {
+  doRedo(e) {
 	console.log("Redo");
-	let redo = undoStack.redo();
-	wave.changeBuffer(redo);
+	let redo = this.undoStack.redo();
+	this.wave.changeBuffer(redo);
 }
 
-function copyToClip(e) 
+   copyToClip(e) 
 {
 	let clip = e.originalEvent.clipboardData;
 
-	let clipBuff = wave.copySelected();
+	let clipBuff = this.wave.copySelected();
 	let wavData = audioBufferToWav(clipBuff);
 	let asText = base64ArrayBuffer(wavData);
 	localClipboard = clipBuff;
@@ -278,112 +286,110 @@ function copyToClip(e)
 	e.preventDefault();
 }
 
-function cutToClip(e) {
-	copyToClip(e);
-	deleteSelected(e);
+   cutToClip(e) {
+	this.copyToClip(e);
+	this.deleteSelected(e);
 }
 
-function pasteFromClip(e)
-{
+  pasteFromClip(e)
+ {
 	let clipBd = e.originalEvent.clipboardData;
 	if (clipBd) {
 		let clip = clipBd.getData('text/plain');
 		if (clip.startsWith('Ukl')) {
 			let asbin = base64ToArrayBuffer(clip);
-			wave.backend.decodeArrayBuffer(asbin, function (data) {
-			if (data) undoStack.push(wave.pasteSelected(data, true));
+			this.wave.backend.decodeArrayBuffer(asbin, function (data) {
+			if (data) this.undoStack.push(this.wave.pasteSelected(data, true));
 	 	  }, function (err) {
 			alert('paste decode error');
 		  });
 		  return;
 		}
 	}
-	if (localClipboard) undoStack.push(wave.pasteSelected(localClipboard, true));
-}
+	if (localClipboard) {
+		this.undoStack.push(this.wave.pasteSelected(localClipboard, true));
+	}
+ }
 
-function zoom(amt) {
+  zoom(amt) {
 	
-	let minPxWas = wave.surfer.params.minPxPerSec;
+	let minPxWas = this.wave.surfer.params.minPxPerSec;
 	let newPx = minPxWas * amt;
 	let zoomLimit = 192000;
 	if (newPx > zoomLimit) newPx = zoomLimit;
 // console.log('zoom rate: ' + newPx);
-	wave.surfer.zoom(newPx);
+	this.wave.surfer.zoom(newPx);
 }
 
-function bindGui() {
-	$(window).on('paste', pasteFromClip);
+  bindGui() {
+	let that = this;
+	$(window).on('paste', e=>{that.pasteFromClip(e)});
 	// iOS was screwing up if the following line was not commented out.
-	$(window).on('copy', copyToClip);
-	$(window).on('cut', cutToClip);
-	
-	$(window).on('undo', doUndo);
-	$(window).on('redo', doRedo);
+	$(window).on('copy', e=>{that.copyToClip(e)});
+	$(window).on('cut', e=>{that.cutToClip(e)});
+
+	$(window).on('undo', e=>{that.doUndo(e)});
+	$(window).on('redo', e=>{that.doRedo(e)});
 	// Remove highlighting after button pushes:
-	$('.butn').mouseup(function() { this.blur()});
-	
-	$('#loadbut').click(btn_load);
-	$('#savebut').click(btn_save);
+	//$('.butn').mouseup(e=>{e.target.blur()});
 
-	$('#plsybut').click((e)=>{wave.surfer.playPause(e)});
-	$('#rewbut').click( (e)=>{wave.surfer.seekTo(0)});
-	$('#plsyselbut').click( doPlaySel);
-	$('#undobut').click( doUndo);
-	$('#redobut').click( doRedo);
-	$('#delbut').click( deleteSelected);
-	$('#cutbut').click( cutToClip);
-	$('#copybut').click( copyToClip);
+	$('#loadbut').click(e=>{that.btn_load(e)});
+	$('#savebut').click(e=>{that.btn_save(e)});
 
-	$('#pastebut').click(pasteFromClip);
-	$('#normbut').click(normalizer);
-	$('#reversebut').click(reverser);
-	$('#fadeinbut').click(fadeIn);
-	$('#fadeoutbut').click(fadeOut);
-	$('#selallbut').click('click',selAll);
-	$('#zoominbut').click('click',e=>{zoom(2.0)});
-	$('#zoomoutbut').click('click',e=>{zoom(0.5)});
-	$('#trimbut').click(e=>trimtozero());
-	$('#cropbut').click(e=>cropToSel());
+	$('#plsybut').click(e=>{that.wave.surfer.playPause(e)});
+	$('#rewbut').click( e=>{that.wave.surfer.seekTo(0)});
+	$('#plsyselbut').click(e=>{that.doPlaySel(e)});
+	$('#undobut').click(e=>{that.doUndo(e)});
+	$('#redobut').click(e=>{that.doRedo(e)});
+	$('#delbut').click(e=>{that.deleteSelected(e)});
+	$('#cutbut').click(e=>{that.cutToClip(e)});
+	$('#copybut').click(e=>{that.copyToClip(e)});
+
+	$('#pastebut').click(e=>{that.pasteFromClip(e)});
+	$('#normbut').click(e=>{that.normalizer(e)});
+	$('#reversebut').click(e=>{that.reverser(e)});
+	$('#fadeinbut').click(e=>{that.fadeIn(e)});
+	$('#fadeoutbut').click(e=>{that.fadeOut(e)});
+	$('#selallbut').click(e=>{that.selAll(e)});
+	$('#zoominbut').click(e=>{that.zoom(2.0)});
+	$('#zoomoutbut').click(e=>{that.zoom(0.5)});
+	$('#trimbut').click(e=>{that.trimtozero(e)});
+	$('#cropbut').click(e=>{that.cropToSel(e)});
+
+	var sfxdd = sfx_dropdn_template();
+	new Dropdown('#dropdn', sfxdd, e=>{that.openFilter(e)});
+	this.playBtnImg = $('#playbutimg');
+	this.undoBtn = $('#undobut');
+	this.redoBtn = $('#redobut');
 }
 
-var sfxdd = sfx_dropdn_template();
-
-
-var dropdown = new Dropdown('#dropdn', sfxdd, openFilter);
-console.log(dropdown);
-
-var playBtnImg = $('#playbutimg');
-var undoBtn = $('#undobut');
-var redoBtn = $('#redobut');
-
-function setDisable(item, state)
+  setDisable(item, state)
 {
 	item.prop("disabled", state);
 	item.css('opacity', state ? 0.3: 1.0);
 }
 
-function updateGui()
+  updateGui()
 {
-	if(!wave || !wave.surfer) return;
-	let playState = wave.surfer.isPlaying();
+	if(!this.wave || !this.wave.surfer) return;
+	let playState = this.wave.surfer.isPlaying();
 
 	let newPlayImg = "img/glyphicons-174-play.png"
 	if (playState) newPlayImg = "img/glyphicons-175-pause.png";
-	if (playBtnImg.attr('src') !== newPlayImg) {
-		playBtnImg.attr('src',newPlayImg);
+	if (this.playBtnImg.attr('src') !== newPlayImg) {
+		this.playBtnImg.attr('src',newPlayImg);
 	}
 
-	let canUndo = undoStack.canUndo();
-	setDisable(undoBtn, !canUndo);
+	let canUndo = this.undoStack.canUndo();
+	this.setDisable(this.undoBtn, !canUndo);
 
-	let canRedo = undoStack.canRedo();
-	setDisable(redoBtn, !canRedo);
+	let canRedo = this.undoStack.canRedo();
+	this.setDisable(this.redoBtn, !canRedo);
 }
 
-var guiCheck;
 
-function startGuiCheck() {
-	if(!guiCheck) guiCheck = setInterval(updateGui, 200);
+  startGuiCheck() {
+	if(!this.guiCheck) this.guiCheck = setInterval(()=>{this.updateGui()}, 200);
 }
 
 /*
@@ -391,7 +397,7 @@ function startGuiCheck() {
 // since the FlashAir card doesn't do that, we can't record audio. Another annoying browser incapacity.
 function record()
 {
-	var mike = new Microphone({}, wave.surfer);
+	var mike = new Microphone({}, this.wave.surfer);
 
 	mike.start();
 }
@@ -401,72 +407,50 @@ function record()
 
 
 //editor
-function setEditData(data)
+  setEditData(data)
 {
-	if(!wave) {
-		wave = new Wave('#waveform');
+	if(!this.wave) {
+		this.wave = new Wave('#waveform');
 	}
-	wave.openOnBuffer(data);
-	startGuiCheck();
+	this.wave.openOnBuffer(data);
+	this.startGuiCheck();
 	// let loadEndTime = performance.now();
 	// console.log("Load time: " + (loadEndTime - loadStartTime));
 }
 
-function openLocal(evt)
+  openLocal(evt)
 {
 	var files = evt.target.files;
 	var f = files[0];
 	if (f === undefined) return;
 	var reader = new FileReader();
-	if(!wave) {
-		wave = new Wave('#waveform');
+	if(!this.wave) {
+		this.wave = new Wave('#waveform');
 	}
 // Closure to capture the file information.
 	reader.onloadend = (function(theFile) {
-		return wave.openOnBuffer(theFile);
+		return this.wave.openOnBuffer(theFile);
 	})(f);
 	// Read in the image file as a data URL.
 	reader.readAsBinaryString(f);
 }
 
 
-//---------- When reading page -------------
-function onLoad()
-{
-	// Getting arguments
-	var urlarg = location.search.substring(1);
-	if(urlarg != "")
-	{
-		// Decode and assign to file name box
-		filename_input.value = decodeURI(urlarg);
-	}
-
-	if(!local_exec) {
-		loadFile();
-	} else { // We are running as a 'file://', so change the GUI to reflect that.
-		$('#filegroup').remove();
-		$('#filegroupplace').append(local_exec_head());
-		$('#jtab').append (local_exec_info());
-		$('#opener').on('change', openLocal);
-	}
-	bindGui();
-}
-
-window.onload = onLoad;
 
 // use ajax to load wav data (instead of a web worker).
-function loadFile()
+  loadFile()
 {
-	fname = filename_input.value;
+	this.fname = this.filename_input.value;
+	let that = this;
 	$("#statind").text("Loading: " +  fname);
 	$.ajax({
-	url         : fname,
+	url         : this.fname,
 	cache       : false,
 	processData : false,
 	method:		'GET',
 	type        : 'GET',
 	success     : function(data, textStatus, jqXHR){
-		setEditData(data);
+		that.setEditData(data);
 		$("#statind").text(fname + " loaded.");
 	},
 
@@ -484,8 +468,9 @@ function loadFile()
 }
 
 // use ajax to save-back wav data (instead of a web worker).
-function saveFile(filepath, data)
+  saveFile(filepath, data)
 {
+	let that = this;
 	var timestring;
 	var dt = new Date();
 	var year = (dt.getFullYear() - 1980) << 9;
@@ -516,7 +501,7 @@ function saveFile(filepath, data)
 				headers: {"If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT"},
 				success: function(data, textStatus, jqXHR){
 					console.log("save and unlock done");
-					$("#statind").text(filepath + " saved.");
+					$("#statind").text(that.filepath + " saved.");
 				},
 			})
 		},
@@ -537,34 +522,16 @@ function saveFile(filepath, data)
 	});
 }
 
-//-------keyin--------
-document.onkeydown = function (e){
-	if(!e) e = window.event;
-
-	if(e.keyCode == 112) //F1
-	{
-		btn_save();
-		return false;		
-	}
-
-	if(e.keyCode == 123) //F12
-	{
-		btn_load();
-		return false;		
-	}
-};
-
-
 //---------Button-----------
 
 //Load
-function btn_load()
+  btn_load()
 {
 //	if(window.confirm('Load ?'))
 //	{
 		// postWorker("load"); // 4306
-		loadFile();
-		fname = filename_input.value;
+		this.loadFile();
+		this.fname = this.filename_input.value;
 
 //	}
 	// jsEditor.markClean();
@@ -572,19 +539,69 @@ function btn_load()
 
 //Save
 
-function btn_save(){
+  btn_save(){
 
-	if(fname != filename_input.value)
+	if(this.fname != this.filename_input.value)
 	{
 		if(!window.confirm('Are you sure you want to save it?\n(Target file name has changed!)'))
 		{
 			return;
 		}
 	}
-	fname = filename_input.value;
+	this.fname = this.filename_input.value;
 
-	let aBuf = wave.backend.buffer;
+	let aBuf = this.wave.backend.buffer;
 	let saveData = audioBufferToWav(aBuf);
-	saveFile(fname, saveData);
+	this.saveFile(fname, saveData);
 	// jsEditor.markClean();
 }
+
+  openLocal(evt)
+ {
+	var files = evt.target.files;
+	var f = files[0];
+	if (f === undefined) return;
+	var reader = new FileReader();
+	if(!this.wave) {
+		this.wave = new Wave('#waveform');
+	}
+	let that = this;
+// Closure to capture the file information.
+	reader.onloadend = (function(theFile) {
+		return that.wave.openOnBuffer(theFile);
+	})(f);
+	// Read in the image file as a data URL.
+	reader.readAsBinaryString(f);
+ }
+
+
+}; // ** End of class
+
+//.value
+
+//---------- When reading page -------------
+function onLoad()
+{
+	let homeDoc = new WaveViewer($('#wavegroup'));
+	var filenameel = document.getElementById ("fname");
+	homeDoc.filename_input = filenameel;
+	// Getting arguments
+	var urlarg = location.search.substring(1);
+	if(urlarg != "")
+	{
+		// Decode and assign to file name box
+		homeDoc.filename_input.value = decodeURI(urlarg);
+	}
+
+	if(!local_exec) {
+		homeDoc.loadFile();
+	} else { // We are running as a 'file://', so change the GUI to reflect that.
+		$('#filegroup').remove();
+		$('#filegroupplace').append(local_exec_head());
+		$('#jtab').append (local_exec_info());
+		$('#opener').on('change', (e)=>{homeDoc.openLocal(e)});
+	}
+	homeDoc.bindGui();
+}
+
+window.onload = onLoad;
