@@ -22,47 +22,15 @@ window.onerror = function(msg, url, line, col, error) {
 	<body>
 		<div id='filegroupplace'>
 			<table id='filegroup' class='nobord'><tr>
-				<td><input id="fname" type="text" size="32" value=""></td>
-				<td><button id="savebut" class="butn" title="save">Save</button></td>
-				<td><button  id="loadbut" class="butn" title="reload">Reload</button></td>
+				<td><input id="fname" class='fname' type="text" size="32" value=""></td>
+				<td><button id="savebut" class="butn savebut" title="save">Save</button></td>
+				<td><button  id="loadbut" class="butn loadbut" title="reload">Reload</button></td>
 				<td><div id="statind" style='font-size: 9pt'></div></td>
 			</tr>
 			</table>
 		</div>
 		<p class='tinygap'/>
-<div id='wavegroup'>
-		<div id='jtab'> </div>
-		<div id="waveform"></div>
-<div id="waveform"></div>
-<div id="waveform-timeline"></div>
-<div id="waveform-minimap"></div>
-<div class='butnrow'>
-<button class="butn" id='zoominbut' title='Zoom in'><img src='img/glyphicons-237-zoom-in.png'/></button>
-<button class="butn" id='zoomoutbut'  title='Zoom out'><img src='img/glyphicons-238-zoom-out.png'/></button>
-<button class="butn" id='rewbut' title='Back to start'><img src='img/glyphicons-172-fast-backward.png'/></button>
-<button class="butn" id='plsybut' title='Play'><img width='16px'height='18px' id='playbutimg' src='img/glyphicons-174-play.png'/></button>
-<button class="butn" id='plsyselbut' title='Play selected'><img src='img/glyphicons-221-play-button.png'/></button>
-
-<button class="butn" id='undobut' title='Undo'><img src='img/glyphicons-436-undo.png'/></button>
-<button class="butn" id='redobut' title='Redo'><img src='img/glyphicons-435-redo.png'/></button>
-<button class="butn" id='selallbut' title='Select All'><img src='img/glyphicons-729-resize-horizontal.png'/></button>
-<button class="butn" id='delbut' title='Delete'>DEL</button>
-<button class="butn" id='cutbut' title='Cut to clipboard'><img src='img/glyphicons-599-scissors-alt.png'/></button>
-<button class="butn" id='copybut' title='Copy to clipboard'><img src='img/glyphicons-512-copy.png'/></button>
-<button class="butn" id='pastebut' title='Paste from clipboard'><img src='img/glyphicons-513-paste.png'/></button>
-<table><tr>
-<td><div id='dropdn'></div></td>
-<td><button class="butn" id='trimbut'>Trim</button></td>
-<td><button class="butn" id='cropbut'>Crop</button></td>
-<td><button class="butn" id='normbut'>Normalize</button></td>
-<td><button class="butn" id='reversebut'>Reverse</button></td>
-<td><button class="butn" id='fadeinbut'>Fade In</button></td>
-<td><button class="butn" id='fadeoutbut'>Fade Out</button></td>
-</tr>
-</table>
-</div>
-
-<div id='procmods'>
+<div id='wavegroups'>
 </div>
 </div>
 

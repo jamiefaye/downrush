@@ -84,7 +84,7 @@ export default class SimpleReverbFilter extends FilterBase {
   openGui(whereToPut) {
 		super.openGui(whereToPut);
 		let that = this;
-		$(".dial").knob({change: function (v) {
+		$(".dial", this.rootElem).knob({change: function (v) {
 			let inp = this.i[0];
 			let ctlId = inp.getAttribute('data-id');
 			that[ctlId] = v;

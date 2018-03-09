@@ -14,7 +14,8 @@ class FilterBase {
 	}
 
 	openGui(whereToPut) {
-		$(whereToPut).append (this.template());
+		this.rootElm = $(whereToPut);
+		this.rootElm.append (this.template());
 	}
 
 	// Get the current state of all the filter parameters.
@@ -61,7 +62,8 @@ class FilterBase {
 };
 
 class FilterFrame {
-  constructor(wave, undoStack) {
+  constructor(rootID, wave, undoStack) {
+		this.rootElem = $(rootID);
 		this.wave = wave;
 		this.undoStack = undoStack;
   }
@@ -82,36 +84,38 @@ class FilterFrame {
   open(filterClass) {
 		this.filterClass = filterClass;
 		this.filter = new filterClass();
-		$('#procmods').empty();
+		this.rootElem.empty();
 		let frameText = filter_frame_template();
-		$('#procmods').append(frameText);
+		this.rootElem.append(frameText);
 		this.filter.createFilters(this.wave.audioContext);
-		this.filter.openGui('#filterbody');
+		let filterBodyPlace = this.rootElem.find('.filterbody');
+		this.filter.openGui(filterBodyPlace);
 		this.connectToWave()
 		this.openGui();
 	}
 
 	openGui() {
-	$('#fl_cancel').on('click', e=>{
-		this.connectToWave();
-		if(this.filter) {
-			this.filter.disconnectFilters();
+	let that = this;
+	$('.fl_cancel', this.rootElem).on('click', e=>{
+		that.connectToWave();
+		if(that.filter) {
+			that.filter.disconnectFilters();
 		}
-		$('#procmods').empty();
+		that.rootElem.empty();
 	});
 
-	$('#fl_audition').on('click', e=>{
+	$('.fl_audition', this.rootElem).on('click', e=>{
 		if (e.target.checked) {
-			this.connectToWave();
+			that.connectToWave();
 		} else {
-			this.filter.disconnectFilters();
+			that.filter.disconnectFilters();
 		}
 	});
 
-	$('#fl_apply').on('click', e=>{
-		$('#fl_audition').prop('checked', false);
-		this.applyFilters();
-		this.filter.disconnectFilters();
+	$('.fl_apply', this.rootElem).on('click', e=>{
+		$('.fl_audition', that.rootElem).prop('checked', false);
+		that.applyFilters();
+		that.filter.disconnectFilters();
 	});
   }
 

@@ -284,7 +284,7 @@ export default class Wave {
 		//console.log('down');
 	}
 
-	let waveElem = $('#waveform');
+	let waveElem = $(this.rootDivId);
 
 	waveElem.on('mousedown', eventDown);
 	waveElem.on('touchstart', eventDown);

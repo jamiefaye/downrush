@@ -100,17 +100,17 @@ export default class DelayFilter extends FilterBase {
 	openGui(whereToPut) {
 		super.openGui(whereToPut);
 		let that = this;
-		let delayDrop = new Dropdown('#delaydropdn',undefined,function (e) {
+		let delayDrop = new Dropdown($('.delaydropdn', this.rootElem),undefined,function (e) {
 			let targID = e.target.getAttribute('data-id');
 			let targText = e.target.innerText;
 			let fname = targID;
 			that.type = fname;
 			that.repatch();
-			let namef = $('#delaydropdn');
+			let namef = $('.delaydropdn', this.rootElem);
 			$(namef[0].firstChild).text(targText);
 		});
 
-		$(".dial").knob({change: function (v) {
+		$(".dial", this.rootElem).knob({change: function (v) {
 			let inp = this.i[0];
 			let ctlId = inp.getAttribute('data-id');
 			that[ctlId] = v;

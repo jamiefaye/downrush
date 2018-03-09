@@ -2,10 +2,6 @@
 var Handlebars = require('./js/handlebars.min.js');
 var local_exec_head = Handlebars.compile(`			<table class='nobord'><tr>
 				<td><input ID='opener' name="file" type="file" accept=".wav,.WAV" /></td>
-				<!--
-				<td><input type="button" value="Open" style="width:55pt" onclick="btn_open()" ></td>
-				<td><input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"></td>
-				-->
 			</tr>
 			</table>`);
 
@@ -14,6 +10,47 @@ You are running the local version of Waverly.
 `);
 
 
+var button_row_template = Handlebars.compile(`
+<button class="butn zoominbut" title='Zoom in'><img src='img/glyphicons-237-zoom-in.png'/></button>
+<button class='butn zoomoutbut'  title='Zoom out'><img src='img/glyphicons-238-zoom-out.png'/></button>
+<button class='butn rewbut' title='Back to start'><img src='img/glyphicons-172-fast-backward.png'/></button>
+<button class='butn plsybut' title='Play'><img width='16px'height='18px' class='playbutimg' src='img/glyphicons-174-play.png'/></button>
+<button class='butn plsyselbut' title='Play selected'><img src='img/glyphicons-221-play-button.png'/></button>
+<button class='butn undobut' title='Undo'><img src='img/glyphicons-436-undo.png'/></button>
+<button class='butn redobut' title='Redo'><img src='img/glyphicons-435-redo.png'/></button>
+<button class='butn selallbut' title='Select All'><img src='img/glyphicons-729-resize-horizontal.png'/></button>
+<button class='butn delbut' title='Delete'>DEL</button>
+<button class='butn cutbut' title='Cut to clipboard'><img src='img/glyphicons-599-scissors-alt.png'/></button>
+<button class='butn copybut' title='Copy to clipboard'><img src='img/glyphicons-512-copy.png'/></button>
+<button class='butn pastebut' title='Paste from clipboard'><img src='img/glyphicons-513-paste.png'/></button>
+<table><tr>
+<td><div id='dropdn{{idsuffix}}'></div></td>
+<td><button class='butn trimbut'>Trim</button></td>
+<td><button class='butn cropbut'>Crop</button></td>
+<td><button class='butn normbut'>Normalize</button></td>
+<td><button class='butn reversebut'>Reverse</button></td>
+<td><button class='butn fadeinbut'>Fade In</button></td>
+<td><button class='butn fadeoutbut'>Fade Out</button></td>
+</tr>
+</table>
+`);
+
+Handlebars.registerPartial("buttonrow", button_row_template);
+
+var filegroup_template = Handlebars.compile(`
+<div id='wavegroup{{idsuffix}}'>
+<div id='jtab{{idsuffix}}'> </div>
+<div id="waveform{{idsuffix}}"></div>
+<div id="waveform{{idsuffix}}-timeline"></div>
+<div id="waveform{{idsuffix}}-minimap"></div>
+<div class='butnrow' id='butnrow{{idsuffix}}'>
+{{> buttonrow}}
+</div>
+<div id='procmods{{idsuffix}}'>
+</div>
+</div>
+`);
+
 var sfx_dropdn_template = Handlebars.compile(`<button class="dropbtn">Effects &#x25bc;</button>
 	<div class="dropdown-content">
 	<a data-id='openfilter'>Quad Filter</a>
@@ -21,7 +58,6 @@ var sfx_dropdn_template = Handlebars.compile(`<button class="dropbtn">Effects &#
 	<a data-id='openDelay'>Delay</a>
 	<a data-id='openOsc'>Oscillator</a>
  </div>`);
-
 
 var quad_dropdn_template = Handlebars.compile(`<button id='quadpop' class="dropbtn">Lowpass Filter &#x25bc;</button>
 	<div class="dropdown-content">
@@ -36,13 +72,13 @@ var quad_dropdn_template = Handlebars.compile(`<button id='quadpop' class="dropb
  </div>`);
 Handlebars.registerPartial("quaddropdn", quad_dropdn_template);
 
-var filter_frame_template = Handlebars.compile(`<div id='filterhdr'>
+var filter_frame_template = Handlebars.compile(`<div class='filterhdr'>
 <table><tr>
-<td><button class="butn" id='fl_apply'>Apply</button></td>
-<td><button class="butn" id='fl_cancel'>Close</button></td>
-<td><input type='checkbox' class='audchbox' id='fl_audition' checked><span class='cboxtext'>Audition</span></input></td>
+<td><button class='butn fl_apply'>Apply</button></td>
+<td><button class='butn fl_cancel'>Close</button></td>
+<td><input type='checkbox' class='audchbox fl_audition' checked><span class='cboxtext'>Audition</span></input></td>
 </tr></table>
-<div id ='filterbody'>
+<div class ='filterbody'>
 </div>
 </div>
 `);
@@ -52,7 +88,7 @@ var filter_frame_template = Handlebars.compile(`<div id='filterhdr'>
 var quadfilter_template = Handlebars.compile(`<div id='quadfilter'>
 <table>
 <tr>
-<td><div id='quaddropdn'>{{> quaddropdn}}</div></td>
+<td><div class='quaddropdn'>{{> quaddropdn}}</div></td>
 <td><input data-id='frequency' type="text" value="440" class="dial" data-min="1" data-max="8000" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'></td>
 <td><div class='q_div'><input data-id='Q' type="text" value="1" class="dial" data-min="0" data-max="50" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'</div></td>
 <td><div class='gain_div'><input data-id='gain' type="text" value="0" class="dial" data-min="-40" data-max="40" data-angleArc="300" data-angleOffset="30" data-width='128' data-height='128'></div></td>
@@ -67,7 +103,7 @@ var quadfilter_template = Handlebars.compile(`<div id='quadfilter'>
 </div>
 `);
 
-var reverb_template = Handlebars.compile(`<div id='simplereverb'>
+var reverb_template = Handlebars.compile(`<div class='simplereverb'>
 <table>
 <tr>
 <td><input data-id='drylevel' type="text" value="5" class="dial" data-min="0" data-max="10" data-step='0.1' data-angleArc="300" data-angleOffset="210" data-width='128' data-height='128'></td>
@@ -87,14 +123,14 @@ var reverb_template = Handlebars.compile(`<div id='simplereverb'>
 </div>
 `);
 
-var delay_template = Handlebars.compile(`<div id='delay'>
+var delay_template = Handlebars.compile(`<div class='delay'>
 <table>
 <tr>
 <th colspan='6'>Delay Filter</th>
 </tr>
 <tr>
 <td>
-<div id='delaydropdn'><button id='typepop' class="dropbtn">Kind &#x25bc;</button>
+<div class='delaydropdn'><button class="dropbtn">Kind &#x25bc;</button>
 	<div class="dropdown-content">
 	<a data-id='normal'>Normal</a>
 	<a data-id='inverted'>Inverted</a>
@@ -120,14 +156,14 @@ var delay_template = Handlebars.compile(`<div id='delay'>
 </div>
 `);
 
-var osc_template = Handlebars.compile(`<div id='osc'>
+var osc_template = Handlebars.compile(`<div class='osc'>
 <table>
 <tr>
 <th colspan='6'>Oscillator</th>
 </tr>
 <tr>
 <td>
-<div id='oscdropdn'><button id='typepop' class="dropbtn">Type &#x25bc;</button>
+<div class='oscdropdn'><button class="dropbtn">Type &#x25bc;</button>
 	<div class="dropdown-content">
 	<a data-id='sine'>Sine</a>
 	<a data-id='square'>Square</a>
@@ -150,4 +186,4 @@ var osc_template = Handlebars.compile(`<div id='osc'>
 </div>
 `);
 
-export {sfx_dropdn_template, local_exec_head, local_exec_info, filter_frame_template, quadfilter_template, quad_dropdn_template, reverb_template, delay_template, osc_template};
+export {filegroup_template, sfx_dropdn_template, local_exec_head, local_exec_info, filter_frame_template, quadfilter_template, quad_dropdn_template, reverb_template, delay_template, osc_template};

@@ -41,12 +41,13 @@ export default class BiQuadFilter extends FilterBase {
 	openGui(whereToPut) {
 		super.openGui(whereToPut);
 		let that = this;
-		let filterDrop = new Dropdown('#quaddropdn',undefined,function (e) {
+	
+		let filterDrop = new Dropdown($('.quaddropdn', this.rootElem),undefined,function (e) {
 			let targID = e.target.getAttribute('data-id');
 			let targText = e.target.innerText;
 			let fname = targID;
 			that.selectSubfilter(fname);
-			let namef = $('#quaddropdn');
+			let namef = $('.quaddropdn', that.rootElem);
 			$(namef[0].firstChild).text(targText);
 		});
 

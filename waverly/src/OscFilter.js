@@ -55,16 +55,16 @@ export default class OscFilter extends FilterBase {
 	openGui(whereToPut) {
 		super.openGui(whereToPut);
 		let that = this;
-		let filterDrop = new Dropdown('#oscdropdn',undefined,function (e) {
+		let filterDrop = new Dropdown($('.oscdropdn', this.rootElem),undefined,function (e) {
 			let targID = e.target.getAttribute('data-id');
 			let targText = e.target.innerText;
 			let fname = targID;
 			that.selectWaveform(fname);
-			let namef = $('#oscdropdn');
+			let namef = $('.oscdropdn', that.rootElem);
 			$(namef[0].firstChild).text(targText);
 		});
 
-		$(".dial").knob({change: function (v) {
+		$(".dial", this.rootElem).knob({change: function (v) {
 			let inp = this.i[0];
 			let ctlId = inp.getAttribute('data-id');
 			if (ctlId === 'frequency') {

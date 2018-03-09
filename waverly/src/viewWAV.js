@@ -1,7 +1,7 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import Wave from './Wave.js';
 require('file-loader?name=[name].[ext]!../viewWAV.htm');
-import {sfx_dropdn_template, local_exec_head, local_exec_info} from'./templates.js';
+import {filegroup_template, sfx_dropdn_template, local_exec_head, local_exec_info} from'./templates.js';
 
 import UndoStack from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
@@ -18,14 +18,16 @@ import OscFilter from './OscFilter.js';
 
 // Flag to enable local execution (not via the FlashAir web server)
 var local_exec = document.URL.indexOf('file:') == 0;
-
 var sample_path_prefix = '/';
 
-var fname = "";
+// Used to enable 'multiple samples open on one page'.
+var multiDocs = false;
 
+var gIdCounter = 0;
 var localClipboard;
 
-var wave;
+var focusWaveView;
+var firstOpened = false;
 
 // Simplified to just multiply by 1/max(abs(buffer))
 // (which preserves any existing DC offset).
@@ -89,11 +91,32 @@ function applyFunction (buffer, f)
 }
 
 
-class WaveViewer {
+function registerGlobalHandlers() {
+	$(window).on('paste', e=>{focusWaveView.pasteFromClip(e)});
+	// iOS was screwing up if the following line was not commented out.
+	$(window).on('copy', e=>{focusWaveView.copyToClip(e)});
+	$(window).on('cut', e=>{focusWaveView.cutToClip(e)});
 
-  constructor(homeId) {
-	this.homeId = homeId;
-	this.undoStack = new UndoStack(10);;
+	$(window).on('undo', e=>{focusWaveView.doUndo(e)});
+	$(window).on('redo', e=>{focusWaveView.doRedo(e)});
+	$('.loadbut').click(e=>{focusWaveView.btn_load(e)});
+	$('.savebut').click(e=>{focusWaveView.btn_save(e)});
+}
+
+
+
+class WaveViewer {
+  constructor(name) {
+
+	this.idNumber = gIdCounter++;
+	this.idString = "" + this.idNumber;
+	this.homeId = this.idFor(name);
+	this.html = filegroup_template({idsuffix: this.idNumber});
+	this.undoStack = new UndoStack(10);
+  }
+
+  idFor(root) {
+	return '#' + root + this.idString;
   }
 
  openFilter(e)
@@ -102,7 +125,7 @@ class WaveViewer {
 		this.filterFrame.close();
 	}
 
-	this.filterFrame = new FilterFrame(this.wave, this.undoStack);
+	this.filterFrame = new FilterFrame(this.idFor('procmods'), this.wave, this.undoStack);
 	let targID = e.target.getAttribute('data-id');
 	let classToMake;
 	if (targID === 'openfilter') classToMake = BiQuadFilter;
@@ -111,7 +134,6 @@ class WaveViewer {
 	 else if (targID === 'openOsc') classToMake = OscFilter;
 	this.filterFrame.open(classToMake);
 }
-
 
  doPlaySel(e)
 {
@@ -293,13 +315,14 @@ class WaveViewer {
 
   pasteFromClip(e)
  {
+ 	let that = this;
 	let clipBd = e.originalEvent.clipboardData;
 	if (clipBd) {
 		let clip = clipBd.getData('text/plain');
 		if (clip.startsWith('Ukl')) {
 			let asbin = base64ToArrayBuffer(clip);
-			this.wave.backend.decodeArrayBuffer(asbin, function (data) {
-			if (data) this.undoStack.push(this.wave.pasteSelected(data, true));
+			that.wave.backend.decodeArrayBuffer(asbin, function (data) {
+			if (data) that.undoStack.push(that.wave.pasteSelected(data, true));
 	 	  }, function (err) {
 			alert('paste decode error');
 		  });
@@ -323,6 +346,9 @@ class WaveViewer {
 
   bindGui() {
 	let that = this;
+	let id = this.idFor('butnrow');
+	let baseEl = $(id);
+	/*
 	$(window).on('paste', e=>{that.pasteFromClip(e)});
 	// iOS was screwing up if the following line was not commented out.
 	$(window).on('copy', e=>{that.copyToClip(e)});
@@ -330,37 +356,37 @@ class WaveViewer {
 
 	$(window).on('undo', e=>{that.doUndo(e)});
 	$(window).on('redo', e=>{that.doRedo(e)});
+	*/
 	// Remove highlighting after button pushes:
 	//$('.butn').mouseup(e=>{e.target.blur()});
 
-	$('#loadbut').click(e=>{that.btn_load(e)});
-	$('#savebut').click(e=>{that.btn_save(e)});
 
-	$('#plsybut').click(e=>{that.wave.surfer.playPause(e)});
-	$('#rewbut').click( e=>{that.wave.surfer.seekTo(0)});
-	$('#plsyselbut').click(e=>{that.doPlaySel(e)});
-	$('#undobut').click(e=>{that.doUndo(e)});
-	$('#redobut').click(e=>{that.doRedo(e)});
-	$('#delbut').click(e=>{that.deleteSelected(e)});
-	$('#cutbut').click(e=>{that.cutToClip(e)});
-	$('#copybut').click(e=>{that.copyToClip(e)});
 
-	$('#pastebut').click(e=>{that.pasteFromClip(e)});
-	$('#normbut').click(e=>{that.normalizer(e)});
-	$('#reversebut').click(e=>{that.reverser(e)});
-	$('#fadeinbut').click(e=>{that.fadeIn(e)});
-	$('#fadeoutbut').click(e=>{that.fadeOut(e)});
-	$('#selallbut').click(e=>{that.selAll(e)});
-	$('#zoominbut').click(e=>{that.zoom(2.0)});
-	$('#zoomoutbut').click(e=>{that.zoom(0.5)});
-	$('#trimbut').click(e=>{that.trimtozero(e)});
-	$('#cropbut').click(e=>{that.cropToSel(e)});
+	$('.plsybut', baseEl).click(e=>{that.wave.surfer.playPause(e)});
+	$('.rewbut', baseEl).click( e=>{that.wave.surfer.seekTo(0)});
+	$('.plsyselbut', baseEl).click(e=>{that.doPlaySel(e)});
+	$('.undobut', baseEl).click(e=>{that.doUndo(e)});
+	$('.redobut', baseEl).click(e=>{that.doRedo(e)});
+	$('.delbut', baseEl).click(e=>{that.deleteSelected(e)});
+	$('.cutbut', baseEl).click(e=>{that.cutToClip(e)});
+	$('.copybut', baseEl).click(e=>{that.copyToClip(e)});
+
+	$('.pastebut', baseEl).click(e=>{that.pasteFromClip(e)});
+	$('.normbut', baseEl).click(e=>{that.normalizer(e)});
+	$('.reversebut', baseEl).click(e=>{that.reverser(e)});
+	$('.fadeinbut', baseEl).click(e=>{that.fadeIn(e)});
+	$('.fadeoutbut', baseEl).click(e=>{that.fadeOut(e)});
+	$('.selallbut', baseEl).click(e=>{that.selAll(e)});
+	$('.zoominbut', baseEl).click(e=>{that.zoom(2.0)});
+	$('.zoomoutbut', baseEl).click(e=>{that.zoom(0.5)});
+	$('.trimbut', baseEl).click(e=>{that.trimtozero(e)});
+	$('.cropbut', baseEl).click(e=>{that.cropToSel(e)});
 
 	var sfxdd = sfx_dropdn_template();
-	new Dropdown('#dropdn', sfxdd, e=>{that.openFilter(e)});
-	this.playBtnImg = $('#playbutimg');
-	this.undoBtn = $('#undobut');
-	this.redoBtn = $('#redobut');
+	new Dropdown(this.idFor('dropdn'), sfxdd, e=>{that.openFilter(e)});
+	this.playBtnImg = $('.playbutimg', baseEl);
+	this.undoBtn = $('.undobut', baseEl);
+	this.redoBtn = $('.redobut', baseEl);
 }
 
   setDisable(item, state)
@@ -387,9 +413,10 @@ class WaveViewer {
 	this.setDisable(this.redoBtn, !canRedo);
 }
 
-
   startGuiCheck() {
-	if(!this.guiCheck) this.guiCheck = setInterval(()=>{this.updateGui()}, 200);
+	let that = this;
+ 	this.checker = e=>{that.updateGui()};
+	if(!this.guiCheck) this.guiCheck = setInterval(this.checker, 200);
 }
 
 /*
@@ -410,7 +437,7 @@ function record()
   setEditData(data)
 {
 	if(!this.wave) {
-		this.wave = new Wave('#waveform');
+		this.wave = new Wave(this.idFor('waveform'));
 	}
 	this.wave.openOnBuffer(data);
 	this.startGuiCheck();
@@ -418,31 +445,12 @@ function record()
 	// console.log("Load time: " + (loadEndTime - loadStartTime));
 }
 
-  openLocal(evt)
-{
-	var files = evt.target.files;
-	var f = files[0];
-	if (f === undefined) return;
-	var reader = new FileReader();
-	if(!this.wave) {
-		this.wave = new Wave('#waveform');
-	}
-// Closure to capture the file information.
-	reader.onloadend = (function(theFile) {
-		return this.wave.openOnBuffer(theFile);
-	})(f);
-	// Read in the image file as a data URL.
-	reader.readAsBinaryString(f);
-}
-
-
-
 // use ajax to load wav data (instead of a web worker).
   loadFile()
 {
 	this.fname = this.filename_input.value;
 	let that = this;
-	$("#statind").text("Loading: " +  fname);
+	$("#statind").text("Loading: " +  this.fname);
 	$.ajax({
 	url         : this.fname,
 	cache       : false,
@@ -451,7 +459,7 @@ function record()
 	type        : 'GET',
 	success     : function(data, textStatus, jqXHR){
 		that.setEditData(data);
-		$("#statind").text(fname + " loaded.");
+		$("#statind").text(that.fname + " loaded.");
 	},
 
 	error: function (data, textStatus, jqXHR) {
@@ -530,8 +538,17 @@ function record()
 //	if(window.confirm('Load ?'))
 //	{
 		// postWorker("load"); // 4306
-		this.loadFile();
-		this.fname = this.filename_input.value;
+		var filenameel = document.getElementById ("fname");
+
+		let homeDoc = new WaveViewer('wavegroup');
+		homeDoc.filename_input = filenameel;
+		homeDoc.loadFile();
+		if(!multiDocs) $('#wavegroups').empty();
+		$('#wavegroups').append(homeDoc.html);
+		homeDoc.bindGui();
+
+		
+		focusWaveView = homeDoc;
 
 //	}
 	// jsEditor.markClean();
@@ -558,17 +575,27 @@ function record()
 
   openLocal(evt)
  {
+ 	let that = this;
+
+	if (firstOpened && multiDocs) {
+		 that = new WaveViewer('wavegroup');
+		 $('#wavegroups').append(that.html);
+		 that.bindGui();
+		 focusWaveView = that;
+	}
+	firstOpened = true;
 	var files = evt.target.files;
 	var f = files[0];
 	if (f === undefined) return;
 	var reader = new FileReader();
-	if(!this.wave) {
-		this.wave = new Wave('#waveform');
+	if(!that.wave) {
+		that.wave = new Wave(that.idFor('waveform'));
 	}
-	let that = this;
+
 // Closure to capture the file information.
 	reader.onloadend = (function(theFile) {
-		return that.wave.openOnBuffer(theFile);
+		that.wave.openOnBuffer(theFile);
+		that.startGuiCheck();
 	})(f);
 	// Read in the image file as a data URL.
 	reader.readAsBinaryString(f);
@@ -582,7 +609,13 @@ function record()
 //---------- When reading page -------------
 function onLoad()
 {
-	let homeDoc = new WaveViewer($('#wavegroup'));
+	let homeDoc = new WaveViewer('wavegroup');
+	$('#wavegroups').append(homeDoc.html);
+
+	if(!focusWaveView) {
+		focusWaveView = homeDoc;
+		registerGlobalHandlers();
+	}
 	var filenameel = document.getElementById ("fname");
 	homeDoc.filename_input = filenameel;
 	// Getting arguments
@@ -598,7 +631,7 @@ function onLoad()
 	} else { // We are running as a 'file://', so change the GUI to reflect that.
 		$('#filegroup').remove();
 		$('#filegroupplace').append(local_exec_head());
-		$('#jtab').append (local_exec_info());
+		$(homeDoc.idFor('jtab')).append (local_exec_info());
 		$('#opener').on('change', (e)=>{homeDoc.openLocal(e)});
 	}
 	homeDoc.bindGui();
