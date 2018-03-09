@@ -99,13 +99,13 @@ export default class DelayFilter extends FilterBase {
 
 	openGui(whereToPut) {
 		super.openGui(whereToPut);
-		let that = this;
+		let me = this;
 		let delayDrop = new Dropdown($('.delaydropdn', this.rootElem),undefined,function (e) {
 			let targID = e.target.getAttribute('data-id');
 			let targText = e.target.innerText;
 			let fname = targID;
-			that.type = fname;
-			that.repatch();
+			me.type = fname;
+			me.repatch();
 			let namef = $('.delaydropdn', this.rootElem);
 			$(namef[0].firstChild).text(targText);
 		});
@@ -113,31 +113,31 @@ export default class DelayFilter extends FilterBase {
 		$(".dial", this.rootElem).knob({change: function (v) {
 			let inp = this.i[0];
 			let ctlId = inp.getAttribute('data-id');
-			that[ctlId] = v;
+			me[ctlId] = v;
 
 			switch (ctlId) {
 		case 'delay':
-			that.delayTime = v;
-			that.setOffset(that.offset);
+			me.delayTime = v;
+			me.setOffset(me.offset);
 			break;
 
 		case 'feedback':
-			that.leftGain.gain.setTargetAtTime(v, 0, that.timeConstant);
-			that.rightGain.gain.setTargetAtTime(v, 0, that.timeConstant);
+			me.leftGain.gain.setTargetAtTime(v, 0, me.timeConstant);
+			me.rightGain.gain.setTargetAtTime(v, 0, me.timeConstant);
 			break;
 
 		case 'cutoff':
-			that.leftFilter.frequency.setTargetAtTime(v, 0, that.timeConstant);
-			that.rightFilter.frequency.setTargetAtTime(v, 0, that.timeConstant);
-			that.cutoff = v;
+			me.leftFilter.frequency.setTargetAtTime(v, 0, me.timeConstant);
+			me.rightFilter.frequency.setTargetAtTime(v, 0, me.timeConstant);
+			me.cutoff = v;
 			break;
 
 		case 'offset':
-			that.setOffset(v);
+			me.setOffset(v);
 			break;
 
 		case 'dry':
-			that.dryGain.gain.setTargetAtTime(v, 0, that.timeConstant);
+			me.dryGain.gain.setTargetAtTime(v, 0, me.timeConstant);
 			break;
 		  } // End of switch
 		}});

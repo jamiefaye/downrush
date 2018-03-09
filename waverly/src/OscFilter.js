@@ -54,13 +54,13 @@ export default class OscFilter extends FilterBase {
 
 	openGui(whereToPut) {
 		super.openGui(whereToPut);
-		let that = this;
+		let me = this;
 		let filterDrop = new Dropdown($('.oscdropdn', this.rootElem),undefined,function (e) {
 			let targID = e.target.getAttribute('data-id');
 			let targText = e.target.innerText;
 			let fname = targID;
-			that.selectWaveform(fname);
-			let namef = $('.oscdropdn', that.rootElem);
+			me.selectWaveform(fname);
+			let namef = $('.oscdropdn', me.rootElem);
 			$(namef[0].firstChild).text(targText);
 		});
 
@@ -68,11 +68,11 @@ export default class OscFilter extends FilterBase {
 			let inp = this.i[0];
 			let ctlId = inp.getAttribute('data-id');
 			if (ctlId === 'frequency') {
-				that.oscFilter.frequency.value = v;
+				me.oscFilter.frequency.value = v;
 			} else if (ctlId === 'gain') {
-				that.gainNode.gain.value = v;
+				me.gainNode.gain.value = v;
 			} else if (ctlId === 'duration') {
-				that.duration = v;
+				me.duration = v;
 			}
 		}});
 		this.selectWaveform('sine');

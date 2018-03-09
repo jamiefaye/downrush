@@ -83,17 +83,17 @@ export default class SimpleReverbFilter extends FilterBase {
 
   openGui(whereToPut) {
 		super.openGui(whereToPut);
-		let that = this;
+		let me = this;
 		$(".dial", this.rootElem).knob({change: function (v) {
 			let inp = this.i[0];
 			let ctlId = inp.getAttribute('data-id');
-			that[ctlId] = v;
+			me[ctlId] = v;
 			if (ctlId === 'drylevel') {
-				that.dryGain.gain.value = v / 10;
+				me.dryGain.gain.value = v / 10;
 			} else if (ctlId === 'wetlevel') {
-				that.wetGain.gain.value = v / 10;
+				me.wetGain.gain.value = v / 10;
 			} else {
-				that.buildImpulse();
+				me.buildImpulse();
 			}
 		}});
   }

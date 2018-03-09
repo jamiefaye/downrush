@@ -40,21 +40,21 @@ export default class BiQuadFilter extends FilterBase {
 
 	openGui(whereToPut) {
 		super.openGui(whereToPut);
-		let that = this;
+		let me = this;
 	
 		let filterDrop = new Dropdown($('.quaddropdn', this.rootElem),undefined,function (e) {
 			let targID = e.target.getAttribute('data-id');
 			let targText = e.target.innerText;
 			let fname = targID;
-			that.selectSubfilter(fname);
-			let namef = $('.quaddropdn', that.rootElem);
+			me.selectSubfilter(fname);
+			let namef = $('.quaddropdn', me.rootElem);
 			$(namef[0].firstChild).text(targText);
 		});
 
 		$(".dial").knob({change: function (v) {
 			let inp = this.i[0];
 			let ctlId = inp.getAttribute('data-id');
-			that.biquadFilter[ctlId].value = v;
+			me.biquadFilter[ctlId].value = v;
 		}});
 		this.selectSubfilter('lowpass');
 	}

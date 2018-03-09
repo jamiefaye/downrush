@@ -5,21 +5,21 @@ export default class Dropdown {
 		this.item = $(item);
 		this.showing = false;
 		this.dropfn = dropfn;
-		var that = this;
+		var me = this;
 		if(contents) this.item.append(contents);
 		this.dropbut = this.item.find('.dropbtn');
 		this.dropbut.on('click', function (e) {
-			that.showing = !that.showing;
-			that.item.find('.dropdown-content').toggleClass('show');
-			that.dropWatch = function (e) {
+			me.showing = !me.showing;
+			me.item.find('.dropdown-content').toggleClass('show');
+			me.dropWatch = function (e) {
 				if (e.target.matches('.dropbtn')) return;
-				that.closeDropDown();
+				me.closeDropDown();
 			};
-			$(window).on('click', that.dropWatch);
+			$(window).on('click', me.dropWatch);
 		});
 		$(this.item).find('.dropdown-content').on('click', e=> {
-			that.closeDropDown();
-			that.dropfn(e);
+			me.closeDropDown();
+			me.dropfn(e);
 		});
 	}
 

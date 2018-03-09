@@ -95,27 +95,27 @@ class FilterFrame {
 	}
 
 	openGui() {
-	let that = this;
+	let me = this;
 	$('.fl_cancel', this.rootElem).on('click', e=>{
-		that.connectToWave();
-		if(that.filter) {
-			that.filter.disconnectFilters();
+		me.connectToWave();
+		if(me.filter) {
+			me.filter.disconnectFilters();
 		}
-		that.rootElem.empty();
+		me.rootElem.empty();
 	});
 
 	$('.fl_audition', this.rootElem).on('click', e=>{
 		if (e.target.checked) {
-			that.connectToWave();
+			me.connectToWave();
 		} else {
-			that.filter.disconnectFilters();
+			me.filter.disconnectFilters();
 		}
 	});
 
 	$('.fl_apply', this.rootElem).on('click', e=>{
-		$('.fl_audition', that.rootElem).prop('checked', false);
-		that.applyFilters();
-		that.filter.disconnectFilters();
+		$('.fl_audition', me.rootElem).prop('checked', false);
+		me.applyFilters();
+		me.filter.disconnectFilters();
 	});
   }
 
@@ -143,10 +143,10 @@ class FilterFrame {
 	offlineFilter.applyState(state);
 
 	offlineSource.buffer = working;
-	let that = this;
+	let me = this;
 	ctx.oncomplete = function (e) {
-		let previous = that.wave.pasteSelected(e.renderedBuffer, generatedDuration > 0);
-		that.undoStack.push(previous);
+		let previous = me.wave.pasteSelected(e.renderedBuffer, generatedDuration > 0);
+		me.undoStack.push(previous);
 	}
 	offlineSource.start();
 	ctx.startRendering();

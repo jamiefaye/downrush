@@ -76,20 +76,20 @@ export default class Wave {
 	this.backend = this.surfer.backend;
 	this.audioContext = this.surfer.backend.ac;
 
-	let that = this;
+	let me = this;
 	this.surfer.on('ready', function () {
-		let buf = that.surfer.backend.buffer;
+		let buf = me.surfer.backend.buffer;
 		let dat = buf.getChannelData(0);
 		
-		let dur = that.surfer.getDuration();
-		let w = that.surfer.drawer.getWidth();
+		let dur = me.surfer.getDuration();
+		let w = me.surfer.drawer.getWidth();
 		if (dur !== 0) {
 			let pps = w / dur * 0.9;
-			that.surfer.zoom(pps);
+			me.surfer.zoom(pps);
 		}
-		that.disableWaveTracker = that.setupWaveTracker();
+		me.disableWaveTracker = me.setupWaveTracker();
 
-		// that.startGuiCheck();
+		// me.startGuiCheck();
 	})
 }	
 
@@ -174,16 +174,16 @@ export default class Wave {
 	var wrapper = this.surfer.drawer.wrapper;
 	var repeater;
 	
-	var that = this;
+	var me = this;
 
 	var rangeUpdater = function(e) {
-		t1 = that.surfer.drawer.handleEvent(e);
+		t1 = me.surfer.drawer.handleEvent(e);
 		let tS = t0;
 		let tE = t1;
 		if (t1 < t0) {
 			tS = t1;
 			tE = t0;
-			that.seekTo(t1);
+			me.seekTo(t1);
 		}
 		region.update({
 			start:	tS * duration,
@@ -211,7 +211,7 @@ export default class Wave {
 		if (!dragActive) return;
 		rangeUpdater(e);
 		// If scrolling is enabled
-		if (scroll && that.surfer.drawer.container.clientWidth < wrapper.scrollWidth) {
+		if (scroll && me.surfer.drawer.container.clientWidth < wrapper.scrollWidth) {
 			// Check threshold based on mouse
 			var x = e.clientX - wrapperRect.left;
 			if (x <= scrollThreshold) {
@@ -229,7 +229,7 @@ export default class Wave {
 		dragActive = false;
 		if (region) {
 			region.fireEvent('update-end', e);
-			that.surfer.fireEvent('region-update-end', region, e);
+			me.surfer.fireEvent('region-update-end', region, e);
 		}
 		region = null;
 		let win = $(window); // disconnect listeners.
@@ -241,9 +241,9 @@ export default class Wave {
 
 
 	var eventDown = function (e) {
-		duration = that.surfer.getDuration();
+		duration = me.surfer.getDuration();
 		// Filter out events intended for the scroll bar
-		let hasScroll = that.surfer.params.scrollParent;
+		let hasScroll = me.surfer.params.scrollParent;
 		let r = e.target.getBoundingClientRect();
 
 		if (hasScroll && e.clientY > (r.bottom - 16)) return; // *** JFF Hack magic number.
@@ -251,7 +251,7 @@ export default class Wave {
 		maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
 		wrapperRect = wrapper.getBoundingClientRect();
 
-		t0 = that.surfer.drawer.handleEvent(e);
+		t0 = me.surfer.drawer.handleEvent(e);
 
 		let xD = e.clientX;
 
@@ -260,21 +260,21 @@ export default class Wave {
 		}
 
 		t1 = t0;
-		if (that.surfer.isPlaying()) {
+		if (me.surfer.isPlaying()) {
 			dragActive = false;
-			let progress = that.surfer.drawer.handleEvent(e);
-			that.seekTo(progress);
+			let progress = me.surfer.drawer.handleEvent(e);
+			me.seekTo(progress);
 		} else {
 			dragActive = true;
-			that.surfer.regions.clear();
-			that.seekTo(t0);
+			me.surfer.regions.clear();
+			me.seekTo(t0);
 			let pos = {
 				start:	t0 * duration,
 				end:	t1 * duration,
 				drag:	false,
 				resize: false,
 			};
-			region = that.surfer.regions.add(pos);
+			region = me.surfer.regions.add(pos);
 		}
 		let win = $(window);
 		win.on('mousemove', eventMove); // dynamic listeners
