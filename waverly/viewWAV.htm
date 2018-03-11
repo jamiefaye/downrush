@@ -17,18 +17,19 @@ window.onerror = function(msg, url, line, col, error) {
 -->
 
 </script>
-<link rel="stylesheet" href="css/edit.css">
+<link rel="stylesheet" href="filewidget.css">
+<link rel="stylesheet" href="edit.css">
 	</head>
 	<body>
 		<div id='filegroupplace'>
 			<table id='filegroup' class='nobord'><tr>
-				<td><input id="fname" class='fname' type="text" size="32" value=""></td>
+				<td><button id="openbutn" class="butn openbutn" title="open">Open</button></td>
 				<td><button id="savebut" class="butn savebut" title="save">Save</button></td>
-				<td><button  id="loadbut" class="butn loadbut" title="reload">Reload</button></td>
 				<td><div id="statind" style='font-size: 9pt'></div></td>
 			</tr>
 			</table>
 		</div>
+		<div id='popupspot'></div>
 		<p class='tinygap'/>
 <div id='wavegroups'>
 </div>

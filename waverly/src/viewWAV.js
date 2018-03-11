@@ -1,8 +1,8 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import Wave from './Wave.js';
 require('file-loader?name=[name].[ext]!../viewWAV.htm');
+require('file-loader?name=[name].[ext]!../css/edit.css');
 import {filegroup_template, sfx_dropdn_template, local_exec_head, local_exec_info} from'./templates.js';
-
 import UndoStack from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import {audioBufferToWav} from './audioBufferToWav.js';
@@ -13,6 +13,7 @@ import BiQuadFilter from './BiquadFilter.js';
 import SimpleReverbFilter from './SimplereverbFilter.js';
 import DelayFilter from './DelayFilter.js';
 import OscFilter from './OscFilter.js';
+import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 
 "use strict";
 
@@ -92,6 +93,7 @@ function applyFunction (buffer, f)
 
 
 function registerGlobalHandlers() {
+	console.log('register global handlers');
 	$(window).on('paste', e=>{focusWaveView.pasteFromClip(e)});
 	// iOS was screwing up if the following line was not commented out.
 	$(window).on('copy', e=>{focusWaveView.copyToClip(e)});
@@ -99,8 +101,19 @@ function registerGlobalHandlers() {
 
 	$(window).on('undo', e=>{focusWaveView.doUndo(e)});
 	$(window).on('redo', e=>{focusWaveView.doRedo(e)});
-	$('.loadbut').click(e=>{focusWaveView.btn_load(e)});
-	$('.savebut').click(e=>{focusWaveView.btn_save(e)});
+	$('.savebut').click(e=>{focusWaveView.saveAs(e)});
+	$('.openbutn').click(e=>{
+		let initial;
+		if (focusWaveView) initial = focusWaveView.fname;
+		if (!initial) initial = '/';
+		openFileBrowser({
+			initialPath:  initial,
+			opener: function(name) {
+				openFile(name);
+			}
+			
+		});
+	});
 }
 
 
@@ -446,9 +459,9 @@ function record()
 }
 
 // use ajax to load wav data (instead of a web worker).
-  loadFile()
+  loadFile(fname)
 {
-	this.fname = this.filename_input.value;
+	this.fname = fname;
 	let me = this;
 	$("#statind").text("Loading: " +  this.fname);
 	$.ajax({
@@ -532,45 +545,20 @@ function record()
 
 //---------Button-----------
 
-//Load
-  btn_load()
-{
-//	if(window.confirm('Load ?'))
-//	{
-		// postWorker("load"); // 4306
-		var filenameel = document.getElementById ("fname");
-
-		let homeDoc = new WaveViewer('wavegroup');
-		homeDoc.filename_input = filenameel;
-		homeDoc.loadFile();
-		if(!multiDocs) $('#wavegroups').empty();
-		$('#wavegroups').append(homeDoc.html);
-		homeDoc.bindGui();
-
-		
-		focusWaveView = homeDoc;
-
-//	}
-	// jsEditor.markClean();
-}
 
 //Save
 
-  btn_save(){
-
-	if(this.fname != this.filename_input.value)
-	{
-		if(!window.confirm('Are you sure you want to save it?\n(Target file name has changed!)'))
-		{
-			return;
+  saveAs(){
+	let me = this;
+	saveFileBrowser({
+		initialPath:  this.fname,
+		saver: function(name) {
+			let aBuf = me.wave.backend.buffer;
+			let saveData = audioBufferToWav(aBuf);
+			// console.log("Save to: " + name);
+			me.saveFile(name, saveData);
 		}
-	}
-	this.fname = this.filename_input.value;
-
-	let aBuf = this.wave.backend.buffer;
-	let saveData = audioBufferToWav(aBuf);
-	this.saveFile(this.fname, saveData);
-	// jsEditor.markClean();
+	});
 }
 
   openLocal(evt)
@@ -616,18 +604,11 @@ function onLoad()
 		focusWaveView = homeDoc;
 		registerGlobalHandlers();
 	}
-	var filenameel = document.getElementById ("fname");
-	homeDoc.filename_input = filenameel;
-	// Getting arguments
-	var urlarg = location.search.substring(1);
-	if(urlarg != "")
-	{
-		// Decode and assign to file name box
-		homeDoc.filename_input.value = decodeURI(urlarg);
-	}
 
 	if(!local_exec) {
-		homeDoc.loadFile();
+		var urlarg = location.search.substring(1);
+		let fname = decodeURI(urlarg);
+		homeDoc.loadFile(fname);
 	} else { // We are running as a 'file://', so change the GUI to reflect me.
 		$('#filegroup').remove();
 		$('#filegroupplace').append(local_exec_head());
@@ -635,6 +616,18 @@ function onLoad()
 		$('#opener').on('change', (e)=>{homeDoc.openLocal(e)});
 	}
 	homeDoc.bindGui();
+}
+
+function openFile(fname)
+{
+	let homeDoc = new WaveViewer('wavegroup');
+	homeDoc.loadFile(fname);
+	if(!multiDocs) $('#wavegroups').empty();
+	$('#wavegroups').append(homeDoc.html);
+
+	homeDoc.bindGui();
+
+	focusWaveView = homeDoc;
 }
 
 window.onload = onLoad;
