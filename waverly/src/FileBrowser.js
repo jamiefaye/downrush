@@ -16,16 +16,16 @@ class FileBrowser {
 	$('#popupspot').append(html);
 	let widg = $('#filewidget');
 	widg.css('display', 'block');
-	let that = this;
-	$('.fw-close', widg).click(e=> {that.cancel(e)});
+	let me = this;
+	$('.fw-close', widg).click(e=> {me.cancel(e)});
 	let h = Math.min(Math.max(window.innerHeight / 2, 200), 450);
 	console.log(window.innerHeight + " " + h);
 	$('.wrapper').css('height', h + 'px');
 
 	this.browser = new FileWidget({template: dir_template,
 		initialDir: initialDir,
-		fileSelected: (browser, file, event, context) => {that.fileSelect(browser, file, event, context)},
-		dirCallback: (browser, path) => {that.dirSelect(browser, path)},
+		fileSelected: (browser, file, event, context) => {me.fileSelect(browser, file, event, context)},
+		dirCallback: (browser, path) => {me.dirSelect(browser, path)},
 	});
 	
 	let openPlace = '/';
@@ -38,9 +38,9 @@ class FileBrowser {
 	}
 	this.browser.start(openPlace);
 
-	$('#openfilebut').click(e=>{that.openFile(e)});
-	$('#cancelbut').click(e=>{that.cancel(e)});	
-	$('#savefilebut').click(e=>{that.saveFile(e)});	
+
+	$('#cancelbut').click(e=>{me.cancel(e)});	
+
 }
 
   cancel(e) {
@@ -76,6 +76,20 @@ class FileBrowser {
 	}
   }
 
+
+
+}; // End of class
+
+class OpenFileBrowser extends FileBrowser {
+  constructor(params) {
+		params = params || {};
+		params.template = open_frame;
+		super(params);
+		let me = this;
+		$('#openfilebut').click(e=>{me.openFile(e)});
+		$('.fw-body').dblclick(e=>{me.openFile(e)});
+	}
+
   openFile(e) {
 	let cbf = this.params.opener;
 	if (cbf) {
@@ -84,22 +98,6 @@ class FileBrowser {
 	this.cancel();
   }
 
-  saveFile(e) {
-	let cbf = this.params.saver;
-	let saveName = $('#fw-name').val();
-	if (cbf && saveName) {
-		cbf(saveName);
-	}
-	this.cancel();
-  }
-}; // End of class
-
-class OpenFileBrowser extends FileBrowser {
-	constructor(params) {
-		params = params || {};
-		params.template = open_frame;
-		super(params);
-	}
 };
 
 function openFileBrowser (params) {
@@ -107,13 +105,15 @@ function openFileBrowser (params) {
 }
 
 class SaveFileBrowser extends FileBrowser {
-	constructor(params) {
+  constructor(params) {
 		params = params || {};
 		params.template = save_frame;
 		super(params);
+		let me = this;
 		let initName = params.initialPath;
 		if (!initName) initName = '/Untitled.wav';
 		$('#fw-name').val(initName);
+		$('#savefilebut').click(e=>{me.saveFile(e)});
 	}
 
   fileSelect(browser, file, event, context) {
@@ -140,6 +140,14 @@ class SaveFileBrowser extends FileBrowser {
 	$('#fw-name').val(newVal);
   }
 
+  saveFile(e) {
+	let cbf = this.params.saver;
+	let saveName = $('#fw-name').val();
+	if (cbf && saveName) {
+		cbf(saveName);
+	}
+	this.cancel();
+  }
 };
 
 function saveFileBrowser (params) {
