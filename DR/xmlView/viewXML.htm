@@ -18,27 +18,19 @@ window.onerror = function(msg, url, line, col, error) {
 
 </script>
 
-<script type="text/javascript" src="js/ext/jquery-3.2.1.min.js"></script>
-<script type="text/javascript" src="js/ext/handlebars.min.js"></script>
-<script type="text/javascript" src="js/ext/clipboard.min.js"></script>
-<script type="text/javascript" src="js/ext/tippy.all.min.js"></script>
-<script type="text/javascript" src="js/loc/delugepatches.js"></script>
-<script type="text/javascript" src="templates.js"></script>
-
 <link rel="stylesheet" href="edit.css">
-
+<link rel="stylesheet" href="filewidget.css">
 	</head>
 	<body>
 		<div id='filegroupplace'>
 			<table id='filegroup' class='nobord'><tr>
-				<td>File:&nbsp;<input id="fname" type="text" size="24" value=""></td>
-				<td><input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"></td>
-				<td><input type="button" value="Reload(F12)" style="width:55pt" onclick="btn_load()" ></td>
-				<td><textarea id="status" rows="2"  class="statusbox" readonly></textarea></td>
+				<td><button id="openbutn" class="butn openbutn" title="open">Open</button></td>
+				<td><button id="savebut" class="butn savebut" title="save">Save</button></td>
+				<td><div id="statind" style='font-size: 9pt'></div></td>
 			</tr>
 			</table>
 		</div>
-
+		<div id='popupspot'></div>
 		<div id='fileTitle'></div>
 		<p class='tinygap'/>
 		<div id='jtab'> </div>

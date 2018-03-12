@@ -21,26 +21,6 @@
 .tinygap {
 	font-size: 2pt;
 }
-/*
-.toolbox{
-  margin-left: 5px;
-  width:auto;
-  float:left;
-}
-*/
-
-input[type="button"] {
-	width:120px;
-	height:24px;
-	-webkit-appearance: none;
-	padding:0%;
-    text-decoration:none;
-    display:inline;
-    color:#000;
-    background-color:#EEEEEE;
-    border-radius:2px;
-    box-shadow:1px 1px 1px #7F7F7F;
-}
 
 body {
 	background-color:#f8f8f8;

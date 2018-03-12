@@ -1,0 +1,317 @@
+
+.error-line {
+  background-color:#FFDDDD;
+}
+.fullbox {
+  width: 90vw;
+  height: 80vh;
+}
+.statusbox {
+  width: 30vw;
+}
+.tinybox {
+  width: 30vw;
+}
+
+.nobord td,th {
+	border: none;
+	width: auto;
+}
+
+.tinygap {
+	font-size: 2pt;
+}
+
+body {
+	background-color:#f8f8f8;
+}
+table {
+	border-collapse: collapse;
+	text-align: center;
+}
+td {
+	border: solid 1px;
+	padding: 0.5em;
+}
+
+th {
+	border: solid 1px;
+	padding: 0.5em;
+}
+
+.samplelist td {
+	text-align: left;
+}
+
+.repeats {
+	font-size: 9pt;
+}
+
+.tabval td {
+	text-align: left;
+	padding: 0.5em;
+}
+
+.keyval {
+	font-weight: 600;
+	background-color:#f0f0f0;
+}
+
+.tabval {
+	font-weight: 500;
+	background-color:#f8f8f8;
+}
+
+div.trgrid {
+	position: relative;
+	// border: solid 1px;
+	background-color:#FFE8E8;
+
+}
+
+div.kitgrid {
+	position: relative;
+	// border: solid 1px;
+	background-color:#F8FFFF;
+}
+
+div.trnote {
+	position: absolute;
+	height: 4px;
+	background-color:#202020;
+}
+
+div.kitlab {
+	position: absolute;
+	font-size: 7pt;
+}
+
+div.notelab {
+	position: absolute;
+	font-size: 9pt;
+}
+
+div.parmlab {
+	position: absolute;
+	font-size: 7pt;
+	top:  0px;
+	left: 2px;
+}
+div.trkitnote {
+	position: absolute;
+	height: 8px;
+	background-color:#202020;
+}
+
+
+div.trnsn {
+	position: absolute;
+	height: 4px;
+//	background-color:#A0A0A0;
+}
+
+div.trnkn {
+	position: absolute;
+	height: 8px;
+//	background-color:#202020;
+}
+
+
+div.parmplot {
+	position: relative;
+	background-color:#fffff0;
+	height: 64px;
+}
+
+div.paramrun {
+	position: absolute;
+	height: 1px;
+	background-color:#202020;
+}
+
+.plotspot, .parmplot {
+	padding:0%;
+	margin: 0%;
+	padding: 0em;
+	border-spacing: 0px;
+}
+
+.plottab th {
+	font-size: 9pt;
+	font-weight: 500;
+	background-color: #E8E8C0;
+}
+
+.mkhead {
+	background-color:  #F0F0D0;
+	font-size: 9pt;
+	padding:0%;
+	margin: 0%;
+}
+
+
+.mkhdata {
+	background-color:  #FFFFE8;
+	font-size: 10pt;
+}
+
+.midimh {
+	background-color:  #F0F0D0;
+	font-size: 10pt;
+}
+
+.midismh {
+	background-color:  #F0F0E0;
+	font-size: 7pt;
+}
+
+.midi_mod_knobs td {
+	background-color:  #FFFFE8;
+	font-size: 10pt;
+}
+.clipbtn {
+	font-size: 9pt;
+	padding:0%;
+	margin: 0%;
+}
+
+.sound_grid th {
+		font-size: 6pt;
+		color: black;
+		width: 60px;
+		border-bottom-color: #A0A0A0;
+}
+
+
+.sound_grid td {
+	text-align: center;
+}
+
+.hleftb {
+	 border-left-width: 2px;
+
+}
+
+.unlab {
+	background-color:  #E8E8E8;
+}
+
+.textsm {
+	font-size: 7pt;
+}
+
+.textsm2 {
+	font-size: 8pt;
+}
+
+.sample1 {
+	background-color: #FFD2C2;
+}
+
+.sample2 {
+	background-color: #F8C8B8;
+}
+
+.osc1 {
+	background-color: #C0FFC0;
+}
+
+.osc2 {
+	background-color: #B8F8B8;
+}
+
+.noise {
+	background-color: #B8F0FF;
+}
+
+.fmmod1 {
+	background-color: #E8F8FF;
+}
+
+.fmmod2 {
+	background-color: #E0F0F0;
+}
+
+.distortion {
+	background-color: #C0ECEC;
+}
+
+.master {
+	background-color: #F8F8C0;
+}
+
+.voice {
+	background-color: #FFC8C8;
+}
+
+.unison {
+	background-color: #C8FFFF;
+}
+
+.env1 {
+	background-color: #C8FFC8;
+}
+
+.env2 {
+	background-color: #C0F8C0;
+}
+
+.sidechain {
+	background-color: #E8E8FF;
+}
+
+.arp {
+	background-color: #C0F0F0;	
+}
+
+.lfo1 {
+	background-color: #F0F0C0;
+}
+
+.lfo2 {
+	background-color: #E8E8C0;
+}
+
+.modfx {
+	background-color: #F0C0F0;	
+}
+
+.reverb {
+	background-color: #FFC0C0;	
+}
+
+.delay {
+	background-color: #E0E0FF;	
+}
+
+.modsources {
+	background-color: #F0F080;
+}
+
+.lpf {
+	background-color: #FFE0FF;
+}
+
+.hpf {
+	background-color: #F8D8F8;
+}
+
+
+.bass {
+	background-color: #E8FFE8;
+}
+
+.treble {
+	background-color: #E0F8E0;
+}
+
+// .kit_tab td {
+// 	text-align: right;
+// }
+
+.kitentry {
+	background-color: #FFFFE8;
+}
+.kithead {
+	background-color: #EFEFd8;
+}

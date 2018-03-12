@@ -1,4 +1,5 @@
 // Handlebars tamplates
+import Handlebars from './js/handlebars.min.js';
 
 var local_exec_head = Handlebars.compile(`			<table class='nobord'><tr>
 				<td><input ID='opener' name="file" type="file" accept=".xml,.XML" /></td>
@@ -28,7 +29,7 @@ var note_tip_template = Handlebars.compile(`
 /* Track Head
 */
 var track_head_template = Handlebars.compile(`<p class='tinygap'>
-<table>
+<table class='xmltab'>
 <tr><th colspan='8'>Track {{trackNum}}<//th></tr>
 <tr>
 <td class='soundviewbtn' trackno='{{trackIndex}}'>&#x25BA</td>
@@ -48,7 +49,7 @@ var track_head_template = Handlebars.compile(`<p class='tinygap'>
 /* Sample List
 */
 var sample_list_template = Handlebars.compile(`<p class='tinygap'>
-<table class='samplelist'>
+<table class='samplelist xmltab'>
 <tr><th>Samples used in this song</th>
 <th><input id='showdrums' type='checkbox' {{#if showDrums}} checked{{/if}}>Show /SAMPLES/DRUMS</input></th>
 </tr>
@@ -65,7 +66,7 @@ var sample_list_template = Handlebars.compile(`<p class='tinygap'>
 */
 var param_plot_template = Handlebars.compile(`
 <p class='tinygap'/>
-<table class='plottab'>
+<table class='plottab xmltab'>
 <tr><th>{{paramName}}</th></tr>
 <tr><td class ='plotspot'/td></tr>
 </table>
@@ -80,7 +81,7 @@ var paster_template = Handlebars.compile(`<hr><div>
 // This table expands into a parameter display which follows the
 // "Shortcut template" layout:
 
-var midiKnobTemplate = Handlebars.compile(`<table class='midi_knobs'>
+var midiKnobTemplate = Handlebars.compile(`<table class='midi_knobs xmltab'>
 <tr><th colspan='4'>Midi Parameter Mapping</th></tr>
 <tr><th>Channel</th><th>CC #</th><th>Rel</th><th>Controls</th></tr>
 {{#each this}}
@@ -94,10 +95,10 @@ var midiKnobTemplate = Handlebars.compile(`<table class='midi_knobs'>
 </table>
 <p class='tinygap'/>`);
 
-var midiModKnobTemplate = Handlebars.compile(`<table class='midi_mod_knob'>
+var midiModKnobTemplate = Handlebars.compile(`<table class='midi_mod_knob xmltab'>
 <tr><td>{{cc}}</td><td>{{fixh value}}</td></tr></table>`);
 
-var modKnobTemplate = Handlebars.compile(`<table class='mod_knobs'>
+var modKnobTemplate = Handlebars.compile(`<table class='mod_knobs xmltab'>
 <!-- Mod Knob Mappings -->
 <tr>
 <th class='mkhead' colspan='8'>{{title}}</th>
@@ -149,7 +150,7 @@ var modKnobTemplate = Handlebars.compile(`<table class='mod_knobs'>
 </tr>
 </table><p class='tinygap'>`);
 
-var midiModKnobTemplate = Handlebars.compile(`<table class='midi_mod_knobs'>
+var midiModKnobTemplate = Handlebars.compile(`<table class='midi_mod_knobs xmltab'>
 <!-- MIDI Mod Knob Mappings -->
 <tr>
 <th class='midimh' colspan='16'>Knob to Midi CC Parameter Mapping</th>
@@ -224,7 +225,7 @@ var midiModKnobTemplate = Handlebars.compile(`<table class='midi_mod_knobs'>
 </table><p class='tinygap'>`);
 
 var sample_list_header = Handlebars.compile(`<tr class='kithead'>
-<th class='kit_opener' kitItem='-1'>&#x25BA </th>
+<th class='kit_opener xmltab' kitItem='-1'>&#x25BA </th>
 <th>Name</th>
 <th>Path</th>
 <th>Start</th>
@@ -264,7 +265,7 @@ var sample_name_prefix = Handlebars.compile(`<tr class='sampleprefix'>
 `);
 
 
-var sound_template = Handlebars.compile(`<table class='sound_grid'>
+var sound_template = Handlebars.compile(`<table class='sound_grid xmltab'>
 {{{stprefix}}}
 <tr>
 <th class ='toph sample1'>Sample 1</th>
@@ -676,3 +677,20 @@ var sound_template = Handlebars.compile(`<table class='sound_grid'>
 </table><p/>`);
 
 // **** Thats all for the sound table
+
+export {
+local_exec_head,
+local_exec_info,
+note_tip_template,
+track_head_template,
+sample_list_template,
+param_plot_template,
+paster_template,
+midiKnobTemplate,
+modKnobTemplate,
+midiModKnobTemplate,
+sample_list_header,
+sample_entry_template,
+sample_name_prefix,
+sound_template
+};

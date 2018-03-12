@@ -526,10 +526,10 @@ function record()
 				},
 			})
 		},
-		
+
 		xhr: function() {
 			var xhr = new window.XMLHttpRequest();
-		  	xhr.upload.addEventListener("progress", function(evt){
+			xhr.upload.addEventListener("progress", function(evt){
 			  if (evt.lengthComputable) {
 				  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
 				  //Do something with upload progress

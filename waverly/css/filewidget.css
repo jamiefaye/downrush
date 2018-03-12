@@ -55,17 +55,26 @@
 	cursor: pointer;
 }
 
+.fw-btn-frame td,th {
+	border: none;
+}
+
 .fw-header {
 	padding: 2px 16px;
 	background-color: #e0e0e0;
 	color: black;
 }
+
 .fw-but {
 	min-width: 40px;
+	border: 2px solid;
+	border-radius:2px;
+	box-shadow:1px 1px 1px #7F7F7F;
 }
 
 .fw-body {
 	padding: 2px 16px;
+	background-color: #F8F8F0;
 }
 
 .wrapper {
@@ -142,7 +151,8 @@
 
 .filetab {
 	/*border-collapse: collapse;*/
-	border-collapse:separate;
+	text-align: left;
+	border-collapse:collapse;
 	width: 100%;
 }
 
@@ -154,7 +164,6 @@
 	border: solid 1px #888888;
 	color: black;
 }
-
 
 .tinygap {
 font-size: 2pt;

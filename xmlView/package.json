@@ -1,0 +1,20 @@
+{
+  "name": "viewScore",
+  "version": "1.0.0",
+  "description": "score viewer",
+  "main": "src/viewXML.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack --mode development --config webpack.config.js",
+    "build": "webpack --mode production --config webpack.config.prod.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "webpack": "^4.1.1"
+  },
+  "devDependencies": {
+    "file-loader": "^1.1.11",
+    "webpack-cli": "^2.0.9"
+  }
+}
