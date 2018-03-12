@@ -30,8 +30,8 @@ class FileBrowser {
 
 	this.browser = new FileWidget({template: dir_template,
 		initialDir: initialDir,
-		fileSelected: (browser, file, event, context) => {me.fileSelect(browser, file, event, context)},
-		dirCallback: (browser, path) => {me.dirSelect(browser, path)},
+		fileSelected: (...args) => {me.fileSelect(...args)},
+		dirCallback: (...args) => {me.dirSelect(...args)},
 	});
 	
 	let openPlace = '/';

@@ -36,17 +36,17 @@ var custom_sample_path = undefined;
 var local_exec = document.URL.indexOf('file:') == 0;
 
 var sample_path_prefix = '/';
+var xPlotOffset = 32;
+var jQuery = $;
 
-var stat_output = document.getElementById ("status")//.value
-
+// Variables to convert to instance variables for an object.
 var fname = "";
-
 var jsonDocument;
 var firmwareVersionFound = '';
 var newNoteFormat = false;
-var xPlotOffset = 32;
 
-var jQuery = $;
+
+// End of variables to move into object.
 
 /* JSON and XML conversions and aids.
 */
@@ -613,6 +613,69 @@ function encodeNoteInfo(noteName, time, dur, vel, cond)
 	return th + dh + vh + ch + noteName;
 }
 
+function plotNoteName(note, style, parentDiv) {
+	let labName = yToNoteName(note);
+	if (labName != undefined) {
+		let labdiv = $("<div class='notelab'/>");
+		labdiv.text(labName);
+		labdiv.css(style);
+		parentDiv.append(labdiv);
+	}
+}
+
+
+function rgbToHexColor(r, g, b)
+{
+	let rh = r.toString(16);
+	if (rh.length < 2) rh = "0" + rh;
+	let gh = g.toString(16);
+	if (gh.length < 2) gh = "0" + gh;
+	let bh = b.toString(16);
+	if (bh.length < 2) bh = "0" + bh;
+	return '#' + rh + gh + bh;
+	
+}
+function colorEncodeNote(vel,cond) {
+	if (cond === 0x14) {
+		// vanilla note, just encode velocity	
+		let cv = (128 - vel) + 0x30;
+		return rgbToHexColor(cv, cv, cv);
+	}
+	if (cond < 0x14) {
+		if (cond < 5) { // red
+			return 'red';
+		} else if(cond < 15) { // yellow
+			return 'yellow';
+		} else { // green
+			return 'green';
+			
+		}
+	}
+	else if (cond > 0x14) { // blue for conditional
+		return 'lightblue';
+	}
+}
+
+// 192 is the typical denominator. It's prime factors are 2 and 3.
+function simplifyFraction(num, den)
+{
+	while (num && den && (num & 1) === 0 && (den & 1) === 0) {
+		num >>= 1; den >>= 1;
+	}
+	while (num && den && (num % 3) === 0 && (den % 3) === 0) {
+		num /= 3; den /= 3;
+	}
+	if(num === den) return "1";
+
+	if(den === 1) return num.toString();
+
+	return num.toString() + '/' + den.toString();
+}
+
+/*
+	Demarcation for code to roll-up into objects followimg.
+	
+*/
 
 function plotTrack13(track, obj) {
 // first walk the track and find min and max y positions
@@ -717,48 +780,7 @@ function plotKit13(track, reftrack, obj) {
 	obj.append(parentDiv);
 }
 
-function plotNoteName(note, style, parentDiv) {
-	let labName = yToNoteName(note);
-	if (labName != undefined) {
-		let labdiv = $("<div class='notelab'/>");
-		labdiv.text(labName);
-		labdiv.css(style);
-		parentDiv.append(labdiv);
-	}
-}
 
-
-function rgbToHexColor(r, g, b)
-{
-	let rh = r.toString(16);
-	if (rh.length < 2) rh = "0" + rh;
-	let gh = g.toString(16);
-	if (gh.length < 2) gh = "0" + gh;
-	let bh = b.toString(16);
-	if (bh.length < 2) bh = "0" + bh;
-	return '#' + rh + gh + bh;
-	
-}
-function colorEncodeNote(vel,cond) {
-	if (cond === 0x14) {
-		// vanilla note, just encode velocity	
-		let cv = (128 - vel) + 0x30;
-		return rgbToHexColor(cv, cv, cv);
-	}
-	if (cond < 0x14) {
-		if (cond < 5) { // red
-			return 'red';
-		} else if(cond < 15) { // yellow
-			return 'yellow';
-		} else { // green
-			return 'green';
-			
-		}
-	}
-	else if (cond > 0x14) { // blue for conditional
-		return 'lightblue';
-	}
-}
 
 function plotTrack14(track, obj) {
 // first walk the track and find min and max y positions
@@ -870,21 +892,6 @@ function plotKit14(track, reftrack, obj) {
 
 var nitTable = "111222132333142434441525354555162636465666172737475767771828384858687888";
 
-// 192 is the typical denominator. It's prime factors are 2 and 3.
-function simplifyFraction(num, den)
-{
-	while (num && den && (num & 1) === 0 && (den & 1) === 0) {
-		num >>= 1; den >>= 1;
-	}
-	while (num && den && (num % 3) === 0 && (den % 3) === 0) {
-		num /= 3; den /= 3;
-	}
-	if(num === den) return "1";
-
-	if(den === 1) return num.toString();
-
-	return num.toString() + '/' + den.toString();
-}
 
 function activateNoteTips()
 {
@@ -1218,7 +1225,7 @@ function getTrackText(trackNum)
 	var trackD;
 	if (trackJ.instrument && trackJ.instrument.referToTrackId !== undefined) {
 		let fromID = Number(trackJ.instrument.referToTrackId);
-		trackD = Object.assign({}, trackJ); // working copy
+		trackD = {...trackJ}; // working copy
 		delete trackD.instrument; // zonk reference
 		let sourceT = trackA[fromID];
 		// patch in data from source (depending on what type).
@@ -1729,25 +1736,6 @@ function triggerRedraw() {
 
 /******************* File and GUI ********************
 */
-
-//------ Tool button management--------
-var showToolFlag=false;
-function showTool()
-{
-		if(showToolFlag)
-		{
-			document.getElementById("ToolButtons1").style.display="none";
-			showToolFlag=false;
-		}else{
-			document.getElementById("ToolButtons1").style.display="block";
-			showToolFlag=true;
-		}
-}
-
-// Page transition warning
-
-var unexpected_close = true;
-
 
 function openLocal(evt)
 {
