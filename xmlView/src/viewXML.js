@@ -1601,7 +1601,7 @@ function formatMidi(obj)
 function viewSound(e) {
 	let target = e.target;
 	let trn =  Number(target.getAttribute('trackno'));
-	
+
 	let hideShow = target.textContent;
 	let songJ = jsonDocument.song;
 	if (!songJ) return;

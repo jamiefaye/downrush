@@ -43,10 +43,7 @@ class FileBrowser {
 		}
 	}
 	this.browser.start(openPlace);
-
-
 	$('#cancelbut').click(e=>{me.cancel(e)});	
-
 }
 
   cancel(e) {
