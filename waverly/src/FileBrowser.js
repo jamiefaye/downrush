@@ -154,9 +154,15 @@ class SaveFileBrowser extends FileBrowser {
 	let cbf = this.params.saver;
 	let saveName = $('#fw-name').val();
 	if (cbf && saveName) {
-		cbf(saveName);
+		this.browser.doesFileExist(saveName, (exists, status)=>{
+			if(exists) {
+				let OK = confirm("The file named " + saveName + " already exists. Overwrite?");
+				if (!OK) return;
+			}
+			cbf(saveName);
+			this.cancel();
+		});
 	}
-	this.cancel();
   }
 };
 

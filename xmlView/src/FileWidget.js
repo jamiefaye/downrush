@@ -437,7 +437,39 @@ case 2:
 		arrPath.push("");
 	}
 	return arrPath.join("/");
-}
+  }
+
+  doesFileExist(path, callback) {
+	let parts = path.split('/');
+	let fname = parts.pop();
+	let dirPath = parts.join('/');
+	if (dirPath === '') dirPath = '/';
+	let url = "/command.cgi?op=100&DIR=" + dirPath;
+	$.get(url).done(function(data, textStatus, jqXHR){
+		// Save the current path.
+		// Split lines by new line characters.
+		let filelist = data.split(/\n/g);
+		// Ignore the first line (title) and last line (blank).
+		filelist.shift();
+		filelist.pop();
+		// Convert to V2 format.
+		convertFileList(filelist);
+		// See if the file we are curios about is there.
+		for(var i = 0; i < filelist.length;++i) {
+			let f = filelist[i];
+			if (f['fname'] === fname) {
+				callback(true, 'OK');
+				return;
+			}
+		};
+		callback(false, 'OK');
+		return;
+
+	}).fail(function(jqXHR, textStatus, errorThrown){
+		// Failure: Display error contents
+		callback(false, textStatus);
+	});
+  }
 
 // Get file list
   getFileList(nextPath) { //dir

@@ -131,7 +131,7 @@ class SaveFileBrowser extends FileBrowser {
   dirSelect(browser, path) {
 	let nowName = $('#fw-name').val();
 	let splitup = nowName.split('/');
-	let namePart = 'Untitled.wav';
+	let namePart = 'Untitled.XML';
 	if (splitup.length) {
 		let lastPart = splitup[splitup.length - 1];
 		if (lastPart) {
@@ -151,9 +151,15 @@ class SaveFileBrowser extends FileBrowser {
 	let cbf = this.params.saver;
 	let saveName = $('#fw-name').val();
 	if (cbf && saveName) {
-		cbf(saveName);
+		this.browser.doesFileExist(saveName, (exists, status)=>{
+			if(exists) {
+				let OK = confirm("The file named " + saveName + " already exists. Overwrite?");
+				if (!OK) return;
+			}
+			cbf(saveName);
+			this.cancel();
+		});
 	}
-	this.cancel();
   }
 };
 
