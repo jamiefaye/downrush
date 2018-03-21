@@ -3,12 +3,14 @@ npm run build
 cd /Users/jamie/deluge/downrush/waverly
 npm run build
 cd /Users/jamie/deluge
-rm -rf master
-mkdir master
+rm -rf distribution
+mkdir distribution
 cd /Users/jamie/deluge/downrush
-cp -R SD_WLAN ~/deluge/master/.
-cp -R DR  ~/deluge/master/.
-#cp -R ../tools  ~/deluge/master/.
+cp -R SD_WLAN ~/deluge/distribution/.
+cp -R DR  ~/deluge/distribution/.
+cp README.md ~/deluge/distribution/.
+cp MANUAL.md ~/deluge/distribution/.
+#cp -R ../tools  ~/deluge/distribution/.
 cd /Users/jamie/deluge
 rm  downrush.zip
-zip -r downrush.zip master
+zip -r downrush.zip distribution
