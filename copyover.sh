@@ -1,4 +1,4 @@
-cd /Users/jamie/deluge/downrush
+cd /Users/jamie/deluge/distribution
 chflags -R nohidden /VOLUMES/NO\ NAME/SD_WLAN
 cp -R SD_WLAN /VOLUMES/NO\ NAME/.
 cp -R DR /VOLUMES/NO\ NAME/.
