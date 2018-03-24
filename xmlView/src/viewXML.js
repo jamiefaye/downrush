@@ -48,8 +48,14 @@ var newNoteFormat = false;
 
 // End of variables to move into object.
 
-/* JSON and XML conversions and aids.
+
+/*******************************************************************************
+
+		JSON and XML conversions and aids.
+
+********************************************************************************
 */
+
 /**
 * Converts passed XML string into a DOM element.
 * @param 		{String}			xmlStr
@@ -311,8 +317,23 @@ function jsonToTable(json, obj, formatters) {
 	return obj;
 }
 
-/* Handlebars formatters
+
+/*******************************************************************************
+
+		Handlebars formatters
+
+********************************************************************************
 */
+
+function convertHexTo50(str)
+{
+	let v = parseInt(str, 16);
+	if (v & 0x80000000) {
+			v -= 0x100000000;
+		}
+	let vr = Math.round( ((v + 0x80000000) * 50) / 0x100000000);
+	return vr;
+}
 
 function fixhex(v) {
 	if(v === undefined) return v;
@@ -677,54 +698,134 @@ function simplifyFraction(num, den)
 	
 */
 
-function plotTrack13(track, obj) {
-// first walk the track and find min and max y positions
-	let trackW = Number(track.trackLength);
-	let ymin =  1000000;
-	let ymax = -1000000;
-	let rowList = forceArray(track.noteRows.noteRow);
-	let parentDiv = $("<div class='trgrid'/>");
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		let y = rowYfilter(row);
-		if (y >= 0) {
-			if (y < ymin) ymin = y;
-			if (y > ymax) ymax = y;
+
+/*******************************************************************************
+
+		SOUND & MIDI
+		
+ *******************************************************************************
+*/
+
+function formatSound(obj)
+{
+	let context = {};
+	for (var i = 1; i < arguments.length; ++i) {
+		if(arguments[i]) {
+			jQuery.extend(true, context, arguments[i]);
 		}
 	}
-	let totH = ((ymax - ymin) + 2) * 4;
 
-	parentDiv.css({height: totH + 'px'});
-	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+	if (context.midiKnobs && context.midiKnobs.midiKnob) {
+		obj.append(midiKnobTemplate(forceArray(context.midiKnobs.midiKnob)));
+		// formatModKnobs(context.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
+	}
 
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		var noteList = forceArray(row.notes.note);
-		let y = rowYfilter(row);
-		let labName = yToNoteName(y);
-		if (y < 0) continue;
-		for (var nx = 0; nx < noteList.length; ++nx) {
-			let n = noteList[nx];
-			let x = Number(n.pos);
-			let dx = x + xPlotOffset;
-			let dur = n.length;
-			if (dur > 1) dur--;
-			let vel = n.velocity;
+	if (context.modKnobs && context.modKnobs.modKnob) {
+		formatModKnobs(context.modKnobs.modKnob, "Parameter Knob Mapping", obj);
+	}
 
-			let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
-			let ndiv = $("<div class='trnote npop' data-note='" + noteInfo + "'/>");
-			let ypos = (y- ymin) * 4 + 2;
-			ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
-			parentDiv.append(ndiv);
+	// Populate mod sources fields with specified destinations
+	if (context.patchCables) {
+		let destMap = {};
+		let patchA = forceArray(context.patchCables.patchCable);
+		for (var i = 0; i < patchA.length; ++i) {
+			let cable = patchA[i];
+			let sName = "m_" + cable.source;
+			let aDest = cable.destination;
+			// Vibrato is represented by a patchCable between lfo1 and pitch
+			if (cable.source === 'lfo1' && aDest === 'pitch') {
+				let vibratoVal = fixm50to50(cable.amount);
+				context['vibrato'] = vibratoVal;
+			}
+			let amount = fixm50to50(cable.amount);
+			let info = aDest + "(" + amount + ")";
+			let val = destMap[sName];
+			if (val) val += ' ';
+				else val = "";
+			val += info;
+			destMap[sName]  = val;
 		}
+		
+		jQuery.extend(true, context, destMap);
 	}
-	let miny = totH - 10;
-	plotNoteName(ymin, {top: miny + 'px', obj}, parentDiv);
-	if (ymin !== ymax) {
-		plotNoteName(ymax, {top: '0px'}, parentDiv);
+	context.sample_path_prefix = sample_path_prefix;
+	if ( (context.osc1 && context.osc1.fileName) || (context.osc2 && context.osc2.fileName) ) {
+		let subContext = jQuery.extend(true, {}, context);
+		// If Osc2 does not have a sample defined for it, strike osc2 from the context
+		if (!context.osc2 || !context.osc2.fileName || $.isEmptyObject(context.osc2.fileName)) {
+			delete subContext.osc2;
+		}
+		context.stprefix = sample_name_prefix(subContext);
 	}
-	obj.append(parentDiv);
+	obj.append(sound_template(context));
 }
+
+function formatMidi(obj)
+{
+	let context = {};
+	for (var i = 1; i < arguments.length; ++i) {
+		if(arguments[i]) {
+			jQuery.extend(true, context, arguments[i]);
+		}
+	}
+	if (context.modKnobs && context.modKnobs.modKnob) {
+		formatModKnobsMidi(context.modKnobs.modKnob, obj);
+	}
+}
+
+function viewSound(e) {
+	let target = e.target;
+	let trn =  Number(target.getAttribute('trackno'));
+
+	let hideShow = target.textContent;
+	let songJ = jsonDocument.song;
+	if (!songJ) return;
+
+	let trackA = forceArray(songJ.tracks.track);
+	let trackIX = trackA.length - trn - 1;
+	let trackD = trackA[trackIX];
+	
+	// Follow any indirect reference
+	if (trackD.instrument && trackD.instrument.referToTrackId !== undefined) {
+		let fromID = Number(trackD.instrument.referToTrackId);
+		trackD = trackA[fromID];
+	}
+
+	let divID = '#snd_place' + trn;
+	let where = $(divID);
+
+	if (hideShow === "▼") {
+		target.textContent = "►";
+		$(where)[0].innerHTML = "";
+	} else {
+		let trackType = trackKind(trackD);
+		if (trackType === 'sound' || trackType === 'kit'|| trackType === 'midi') {
+			target.textContent = "▼";
+		} else {
+			return;
+		}
+		if (trackType === 'sound') {
+		formatSound(where, trackD.sound, trackD.soundParams);
+	  } else if (trackType === 'kit') {
+			// We have a kit track,, 
+			let kitroot = trackD.kit;
+			if (trackD['soundSources']) {
+				kitroot = trackD;
+			}
+			formatKit(kitroot, where, trackD.kitParams, trackD);
+		} else if(trackType === 'midi') {
+			formatMidi(where, trackD);
+		}
+	 }
+}
+
+/*******************************************************************************
+
+		KIT
+
+ *******************************************************************************
+*/
+
 
 function plotKit13(track, reftrack, obj) {
 	let kitItemH = 8;
@@ -782,58 +883,6 @@ function plotKit13(track, reftrack, obj) {
 
 
 
-function plotTrack14(track, obj) {
-// first walk the track and find min and max y positions
-	let trackW = Number(track.trackLength);
-	let ymin =  1000000;
-	let ymax = -1000000;
-	let rowList = forceArray(track.noteRows.noteRow);
-	let parentDiv = $("<div class='trgrid'/>");
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		let y = rowYfilter(row);
-		if (y >= 0) {
-			if (y < ymin) ymin = y;
-			if (y > ymax) ymax = y;
-		}
-	}
-	let totH = ((ymax - ymin) + 2) * 4;
-
-	parentDiv.css({height: totH + 'px'});
-	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
-
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		var noteData = row.noteData;
-		let y = rowYfilter(row);
-		if (y < 0) continue;
-		let labName = yToNoteName(y);
-		for (var nx = 2; nx < noteData.length; nx += 20) {
-			let notehex = noteData.substring(nx, nx + 20);
-			let x = parseInt(notehex.substring(0, 8), 16);
-			let dur =  parseInt(notehex.substring(8, 16), 16);
-			let vel = parseInt(notehex.substring(16, 18), 16);
-			let cond = parseInt(notehex.substring(18, 20), 16);
-			let noteInfo = notehex + labName;
-			x += xPlotOffset;
-			if (dur > 1) dur--;
-			let ndiv = $("<div class='trnsn npop' data-note='" + noteInfo + "'/>");
-
-			let ypos = (y- ymin) * 4 + 2;
-			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
-			parentDiv.append(ndiv);
-		}
-	}
-	let miny = totH - 10;
-	plotNoteName(ymin, {top: miny + 'px', obj}, parentDiv);
-	if (ymin !== ymax) {
-		plotNoteName(ymax, {top: '0px'}, parentDiv);
-	}
-	obj.append(parentDiv);
-
-}
-
-
 function plotKit14(track, reftrack, obj) {
 	let kitItemH = 8;
 	let trackW = Number(track.trackLength);
@@ -887,6 +936,196 @@ function plotKit14(track, reftrack, obj) {
 		}
 	}
 	obj.append(parentDiv);
+}
+
+
+
+function plotKit(track, reftrack, obj) {
+	if(newNoteFormat) {
+		plotKit14(track, reftrack, obj);
+	} else {
+		plotKit13(track, reftrack, obj);
+	}
+}
+
+
+function openKitSound(e, kitTab, kitParams, track) {
+	let target = e.target;
+	let ourX = Number(target.getAttribute('kitItem'));
+
+	var aKitSound;
+	if (ourX >= 0) {
+		aKitSound = kitTab[ourX];
+	} else {
+		aKitSound = kitParams;
+		if(!aKitSound) return;
+	}
+
+	let ourRow = target.parentNode;
+	let nextRow = ourRow.nextElementSibling;
+	let ourTab = ourRow.parentNode;
+	if (nextRow && nextRow.classList.contains('soundentry')) {
+		ourTab.removeChild(nextRow);
+		target.textContent = "►";
+		return;
+	}
+	var noteSound = {};
+	if(track && track.noteRows && ourX >= 0) {
+		let noteRowA= forceArray(track.noteRows.noteRow);
+		for (var i = 0; i < noteRowA.length; ++i) {
+			let aRow = noteRowA[i];
+			if(Number(aRow.drumIndex) === ourX) {
+				 noteSound = aRow.soundParams;
+				 break;
+			}
+		}
+	}
+
+	let newRow = $("<tr class='soundentry'/>");
+	let newData =$("<td  colspan='8'/>");
+
+	formatSound(newData, aKitSound, aKitSound.defaultParams, aKitSound.soundParams, noteSound);
+
+	newRow.append(newData);
+	if (nextRow) {
+		ourTab.insertBefore(newRow[0], nextRow);
+	} else {
+		ourTab.appendChild(newRow[0]);
+	}
+	target.textContent = "▼";
+}
+
+function formatKit(json, obj, kitParams, track) {
+	
+	let kitList = forceArray(json.soundSources.sound);
+	
+	let tab = $("<table class='kit_tab'/>");
+	let hasKitParams = kitParams !== undefined;
+	tab.append(sample_list_header({hasKitParams: hasKitParams}));
+	
+	for(var i = 0; i < kitList.length; ++i) {
+		let kit = kitList[i];
+		formatSampleEntry(kit, tab, i);
+	}
+	
+	
+	obj.append(tab);
+
+	let opener = function (e) {
+		let js = json;
+		openKitSound(e, kitList, kitParams, track);
+	};
+	$('.kit_opener').on('click', opener);
+}
+
+
+
+/*******************************************************************************
+
+		TRACK
+
+ *******************************************************************************
+*/
+
+function plotTrack13(track, obj) {
+// first walk the track and find min and max y positions
+	let trackW = Number(track.trackLength);
+	let ymin =  1000000;
+	let ymax = -1000000;
+	let rowList = forceArray(track.noteRows.noteRow);
+	let parentDiv = $("<div class='trgrid'/>");
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		let y = rowYfilter(row);
+		if (y >= 0) {
+			if (y < ymin) ymin = y;
+			if (y > ymax) ymax = y;
+		}
+	}
+	let totH = ((ymax - ymin) + 2) * 4;
+
+	parentDiv.css({height: totH + 'px'});
+	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		var noteList = forceArray(row.notes.note);
+		let y = rowYfilter(row);
+		let labName = yToNoteName(y);
+		if (y < 0) continue;
+		for (var nx = 0; nx < noteList.length; ++nx) {
+			let n = noteList[nx];
+			let x = Number(n.pos);
+			let dx = x + xPlotOffset;
+			let dur = n.length;
+			if (dur > 1) dur--;
+			let vel = n.velocity;
+
+			let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
+			let ndiv = $("<div class='trnote npop' data-note='" + noteInfo + "'/>");
+			let ypos = (y- ymin) * 4 + 2;
+			ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
+			parentDiv.append(ndiv);
+		}
+	}
+	let miny = totH - 10;
+	plotNoteName(ymin, {top: miny + 'px', obj}, parentDiv);
+	if (ymin !== ymax) {
+		plotNoteName(ymax, {top: '0px'}, parentDiv);
+	}
+	obj.append(parentDiv);
+}
+
+
+function plotTrack14(track, obj) {
+// first walk the track and find min and max y positions
+	let trackW = Number(track.trackLength);
+	let ymin =  1000000;
+	let ymax = -1000000;
+	let rowList = forceArray(track.noteRows.noteRow);
+	let parentDiv = $("<div class='trgrid'/>");
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		let y = rowYfilter(row);
+		if (y >= 0) {
+			if (y < ymin) ymin = y;
+			if (y > ymax) ymax = y;
+		}
+	}
+	let totH = ((ymax - ymin) + 2) * 4;
+
+	parentDiv.css({height: totH + 'px'});
+	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		var noteData = row.noteData;
+		let y = rowYfilter(row);
+		if (y < 0) continue;
+		let labName = yToNoteName(y);
+		for (var nx = 2; nx < noteData.length; nx += 20) {
+			let notehex = noteData.substring(nx, nx + 20);
+			let x = parseInt(notehex.substring(0, 8), 16);
+			let dur =  parseInt(notehex.substring(8, 16), 16);
+			let vel = parseInt(notehex.substring(16, 18), 16);
+			let cond = parseInt(notehex.substring(18, 20), 16);
+			let noteInfo = notehex + labName;
+			x += xPlotOffset;
+			if (dur > 1) dur--;
+			let ndiv = $("<div class='trnsn npop' data-note='" + noteInfo + "'/>");
+
+			let ypos = (y- ymin) * 4 + 2;
+			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
+			parentDiv.append(ndiv);
+		}
+	}
+	let miny = totH - 10;
+	plotNoteName(ymin, {top: miny + 'px', obj}, parentDiv);
+	if (ymin !== ymax) {
+		plotNoteName(ymax, {top: '0px'}, parentDiv);
+	}
+	obj.append(parentDiv);
+
 }
 
 
@@ -1020,26 +1259,6 @@ function plotTrack(track, obj) {
 	} else {
 		plotTrack13(track, obj);
 	}
-}
-
-
-function plotKit(track, reftrack, obj) {
-	if(newNoteFormat) {
-		plotKit14(track, reftrack, obj);
-	} else {
-		plotKit13(track, reftrack, obj);
-	}
-}
-
-
-function convertHexTo50(str)
-{
-	let v = parseInt(str, 16);
-	if (v & 0x80000000) {
-			v -= 0x100000000;
-		}
-	let vr = Math.round( ((v + 0x80000000) * 50) / 0x100000000);
-	return vr;
 }
 
 function plotParamChanges(k, ps, tracklen, prefix, elem)
@@ -1253,6 +1472,15 @@ function trackCopyButton(trackNum, obj) {
 function soundViewButton(trackNum, obj) {
 	obj.append(sound_view_template({trackNum: trackNum}));
 }
+
+
+/*******************************************************************************
+
+		SONG
+
+ *******************************************************************************
+*/
+
 function pasteTrackText(text) {
 	let pastedJSON = JSON.parse(text);
 	// Clear the pasted-into-area
@@ -1349,6 +1577,8 @@ function trackPasteField(obj) {
 		$('#paster').on('paste', pasteTrack);
 	}
 }
+
+
 
 function songTail(jsong, obj) {
 	formatSound(obj, jsong, jsong.songParams, jsong.defaultParams, jsong.soundParams);
@@ -1530,188 +1760,12 @@ function formatSampleEntry(sound, obj, ix)
 	obj.append(sample_entry_template(context));
 }
 
+/*******************************************************************************
 
-function formatSound(obj)
-{
-	let context = {};
-	for (var i = 1; i < arguments.length; ++i) {
-		if(arguments[i]) {
-			jQuery.extend(true, context, arguments[i]);
-		}
-	}
+		Top Level
 
-	if (context.midiKnobs && context.midiKnobs.midiKnob) {
-		obj.append(midiKnobTemplate(forceArray(context.midiKnobs.midiKnob)));
-		// formatModKnobs(context.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
-	}
-
-	if (context.modKnobs && context.modKnobs.modKnob) {
-		formatModKnobs(context.modKnobs.modKnob, "Parameter Knob Mapping", obj);
-	}
-
-	// Populate mod sources fields with specified destinations
-	if (context.patchCables) {
-		let destMap = {};
-		let patchA = forceArray(context.patchCables.patchCable);
-		for (var i = 0; i < patchA.length; ++i) {
-			let cable = patchA[i];
-			let sName = "m_" + cable.source;
-			let aDest = cable.destination;
-			// Vibrato is represented by a patchCable between lfo1 and pitch
-			if (cable.source === 'lfo1' && aDest === 'pitch') {
-				let vibratoVal = fixm50to50(cable.amount);
-				context['vibrato'] = vibratoVal;
-			}
-			let amount = fixm50to50(cable.amount);
-			let info = aDest + "(" + amount + ")";
-			let val = destMap[sName];
-			if (val) val += ' ';
-				else val = "";
-			val += info;
-			destMap[sName]  = val;
-		}
-		
-		jQuery.extend(true, context, destMap);
-	}
-	context.sample_path_prefix = sample_path_prefix;
-	if ( (context.osc1 && context.osc1.fileName) || (context.osc2 && context.osc2.fileName) ) {
-		let subContext = jQuery.extend(true, {}, context);
-		// If Osc2 does not have a sample defined for it, strike osc2 from the context
-		if (!context.osc2 || !context.osc2.fileName || $.isEmptyObject(context.osc2.fileName)) {
-			delete subContext.osc2;
-		}
-		context.stprefix = sample_name_prefix(subContext);
-	}
-	obj.append(sound_template(context));
-}
-
-function formatMidi(obj)
-{
-	let context = {};
-	for (var i = 1; i < arguments.length; ++i) {
-		if(arguments[i]) {
-			jQuery.extend(true, context, arguments[i]);
-		}
-	}
-	if (context.modKnobs && context.modKnobs.modKnob) {
-		formatModKnobsMidi(context.modKnobs.modKnob, obj);
-	}
-}
-
-function viewSound(e) {
-	let target = e.target;
-	let trn =  Number(target.getAttribute('trackno'));
-
-	let hideShow = target.textContent;
-	let songJ = jsonDocument.song;
-	if (!songJ) return;
-
-	let trackA = forceArray(songJ.tracks.track);
-	let trackIX = trackA.length - trn - 1;
-	let trackD = trackA[trackIX];
-	
-	// Follow any indirect reference
-	if (trackD.instrument && trackD.instrument.referToTrackId !== undefined) {
-		let fromID = Number(trackD.instrument.referToTrackId);
-		trackD = trackA[fromID];
-	}
-
-	let divID = '#snd_place' + trn;
-	let where = $(divID);
-
-	if (hideShow === "▼") {
-		target.textContent = "►";
-		$(where)[0].innerHTML = "";
-	} else {
-		let trackType = trackKind(trackD);
-		if (trackType === 'sound' || trackType === 'kit'|| trackType === 'midi') {
-			target.textContent = "▼";
-		} else {
-			return;
-		}
-		if (trackType === 'sound') {
-		formatSound(where, trackD.sound, trackD.soundParams);
-	  } else if (trackType === 'kit') {
-			// We have a kit track,, 
-			let kitroot = trackD.kit;
-			if (trackD['soundSources']) {
-				kitroot = trackD;
-			}
-			formatKit(kitroot, where, trackD.kitParams, trackD);
-		} else if(trackType === 'midi') {
-			formatMidi(where, trackD);
-		}
-	 }
-}
-
-function openKitSound(e, kitTab, kitParams, track) {
-	let target = e.target;
-	let ourX = Number(target.getAttribute('kitItem'));
-
-	var aKitSound;
-	if (ourX >= 0) {
-		aKitSound = kitTab[ourX];
-	} else {
-		aKitSound = kitParams;
-		if(!aKitSound) return;
-	}
-
-	let ourRow = target.parentNode;
-	let nextRow = ourRow.nextElementSibling;
-	let ourTab = ourRow.parentNode;
-	if (nextRow && nextRow.classList.contains('soundentry')) {
-		ourTab.removeChild(nextRow);
-		target.textContent = "►";
-		return;
-	}
-	var noteSound = {};
-	if(track && track.noteRows && ourX >= 0) {
-		let noteRowA= forceArray(track.noteRows.noteRow);
-		for (var i = 0; i < noteRowA.length; ++i) {
-			let aRow = noteRowA[i];
-			if(Number(aRow.drumIndex) === ourX) {
-				 noteSound = aRow.soundParams;
-				 break;
-			}
-		}
-	}
-
-	let newRow = $("<tr class='soundentry'/>");
-	let newData =$("<td  colspan='8'/>");
-
-	formatSound(newData, aKitSound, aKitSound.defaultParams, aKitSound.soundParams, noteSound);
-
-	newRow.append(newData);
-	if (nextRow) {
-		ourTab.insertBefore(newRow[0], nextRow);
-	} else {
-		ourTab.appendChild(newRow[0]);
-	}
-	target.textContent = "▼";
-}
-
-function formatKit(json, obj, kitParams, track) {
-	
-	let kitList = forceArray(json.soundSources.sound);
-	
-	let tab = $("<table class='kit_tab'/>");
-	let hasKitParams = kitParams !== undefined;
-	tab.append(sample_list_header({hasKitParams: hasKitParams}));
-	
-	for(var i = 0; i < kitList.length; ++i) {
-		let kit = kitList[i];
-		formatSampleEntry(kit, tab, i);
-	}
-	
-	
-	obj.append(tab);
-
-	let opener = function (e) {
-		let js = json;
-		openKitSound(e, kitList, kitParams, track);
-	};
-	$('.kit_opener').on('click', opener);
-}
+ *******************************************************************************
+*/
 
 function jsonToTopTable(json, obj)
 {
@@ -1728,15 +1782,18 @@ function jsonToTopTable(json, obj)
 }
 
 
-// Trigger redraw of song
+// Trigger redraw of displayed object(s).
 function triggerRedraw() {
 	$('#jtab').empty();
 	jsonToTopTable(jsonDocument, $('#jtab'));
 }
 
-/******************* File and GUI ********************
-*/
+/*******************************************************************************
 
+		 File and GUI
+
+ *******************************************************************************
+*/
 function openLocal(evt)
 {
 	var files = evt.target.files;
