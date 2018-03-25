@@ -75,12 +75,14 @@ function getXmlDOMFromString(xmlStr) {
 	throw new Error( 'No XML parser available' );
 }
 
+
+
 // Changes XML Dom elements to JSON
 // Modified to ignore text elements
 // Modified version from here: http://davidwalsh.name/convert-xml-json
-function xmlToJson(xml) {
+function xmlToJson(xml, fill) {
   // Create the return object
-  let obj = {};
+  let obj = fill ? fill : {};
 
   if (xml.nodeType === 1) { // element
 	// do attributes
@@ -101,19 +103,24 @@ function xmlToJson(xml) {
 	obj = xml.childNodes[0].nodeValue;
   } else if (xml.hasChildNodes()) {
 	for (let i = 0; i < xml.childNodes.length; i += 1) {
-	  const item = xml.childNodes.item(i);
-	  const nodeName = item.nodeName;
-	  if (item.nodeType === 3) continue; // JFF don't bother with text nodes
-	  if (typeof (obj[nodeName]) === 'undefined') {
-		obj[nodeName] = xmlToJson(item);
+		const item = xml.childNodes.item(i);
+		const nodeName = item.nodeName;
+		if (item.nodeType === 3) continue; // JFF don't bother with text nodes
+		let classToMake = nameToClassTab[nodeName];
+		let childToFill;
+		if (classToMake) {
+			childToFill = new classToMake();
+		}
+	if (typeof (obj[nodeName]) === 'undefined') {
+		obj[nodeName] = xmlToJson(item, childToFill);
 	  } else {
 		if (typeof (obj[nodeName].push) === 'undefined') {
-		  const old = obj[nodeName];
-		  obj[nodeName] = [];
-		  obj[nodeName].push(old);
+			const old = obj[nodeName];
+			obj[nodeName] = [];
+			obj[nodeName].push(old);
 		}
-		obj[nodeName].push(xmlToJson(item));
-	  }
+		obj[nodeName].push(xmlToJson(item, childToFill));
+	   }
 	}
   }
   return obj;
@@ -698,6 +705,12 @@ function simplifyFraction(num, den)
 	
 */
 
+class DRObject {
+
+};
+
+
+
 
 /*******************************************************************************
 
@@ -705,6 +718,13 @@ function simplifyFraction(num, den)
 		
  *******************************************************************************
 */
+
+
+
+class Sound extends DRObject {
+
+};
+
 
 function formatSound(obj)
 {
@@ -826,6 +846,11 @@ function viewSound(e) {
  *******************************************************************************
 */
 
+
+
+class Kit extends DRObject {
+
+};
 
 function plotKit13(track, reftrack, obj) {
 	let kitItemH = 8;
@@ -1026,6 +1051,11 @@ function formatKit(json, obj, kitParams, track) {
 
  *******************************************************************************
 */
+
+class Track extends DRObject {
+
+};
+
 
 function plotTrack13(track, obj) {
 // first walk the track and find min and max y positions
@@ -1481,8 +1511,15 @@ function soundViewButton(trackNum, obj) {
  *******************************************************************************
 */
 
+
+class Song extends DRObject {
+
+};
+
 function pasteTrackText(text) {
-	let pastedJSON = JSON.parse(text);
+	let pastedJSON = JSON.parse(text, (k, v)=>{
+		return v;
+	});
 	// Clear the pasted-into-area
 	setTimeout( function() {
 		let ta =$("#paster")[0];
@@ -1787,6 +1824,13 @@ function triggerRedraw() {
 	$('#jtab').empty();
 	jsonToTopTable(jsonDocument, $('#jtab'));
 }
+
+var nameToClassTab = {
+	'kit':		Kit,
+	'track':	Track,
+	'sound':	Sound,
+	'song':		Song
+};
 
 /*******************************************************************************
 
