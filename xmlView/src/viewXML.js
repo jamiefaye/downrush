@@ -106,11 +106,11 @@ function xmlToJson(xml, fill) {
 		const item = xml.childNodes.item(i);
 		const nodeName = item.nodeName;
 		if (item.nodeType === 3) continue; // JFF don't bother with text nodes
-		let classToMake = nameToClassTab[nodeName];
+//		let classToMake = nameToClassTab[nodeName];
 		let childToFill;
-		if (classToMake) {
-			childToFill = new classToMake();
-		}
+//		if (classToMake) {
+//			childToFill = new classToMake();
+//		}
 	if (typeof (obj[nodeName]) === 'undefined') {
 		obj[nodeName] = xmlToJson(item, childToFill);
 	  } else {
@@ -119,7 +119,7 @@ function xmlToJson(xml, fill) {
 			obj[nodeName] = [];
 			obj[nodeName].push(old);
 		}
-		obj[nodeName].push(xmlToJson(item, childToFill));
+		obj[nodeName].push(xmlToJson(item)); // ,childToFill
 	   }
 	}
   }
@@ -132,8 +132,13 @@ function gentabs(d) {
 	return str;
 }
 
+function isObject(val) {
+    if (val === null) { return false;}
+    return ( (typeof val === 'function') || (typeof val === 'object') );
+}
+
 function jsonToXML(kv, j, d) {
-	if(j.constructor !== Object && j.constructor !== Array) {
+	if(!isObject(j)) {
 		return gentabs(d) + "<" + kv + ">" + j + "</" + kv + ">\n";
 	}
 	let atList = j["@attributes"];
@@ -705,12 +710,32 @@ function simplifyFraction(num, den)
 	
 */
 
-class DRObject {
-
+class DRView {
+	constructor(inits) {
+		if(inits) {
+			Object.assign(this, inits);
+		}
+	}
 };
 
-
-
+/*
+// JSON.parse reviver function that instantiates certain keys as classes.
+function reviveClass(k, v) {
+	let classToMake = nameToClassTab[k];
+	if (classToMake) {
+		if (Array.isArray(v)) {
+			for(var i = 0; i < v.length; ++i) {
+				v[i] = new classToMake(v[i]);
+			}
+			return v;
+		} else {
+			let nv = new classToMake(v);
+			return nv;
+		}
+	}
+	return v;
+}
+*/
 
 /*******************************************************************************
 
@@ -721,7 +746,7 @@ class DRObject {
 
 
 
-class Sound extends DRObject {
+class Sound extends DRView {
 
 };
 
@@ -841,16 +866,100 @@ function viewSound(e) {
 
 /*******************************************************************************
 
-		KIT
+	KIT
 
  *******************************************************************************
 */
 
 
 
-class Kit extends DRObject {
+class Kit extends DRView {
 
 };
+
+
+function openKitSound(e, kitTab, kitParams, track) {
+	let target = e.target;
+	let ourX = Number(target.getAttribute('kitItem'));
+
+	var aKitSound;
+	if (ourX >= 0) {
+		aKitSound = kitTab[ourX];
+	} else {
+		aKitSound = kitParams;
+		if(!aKitSound) return;
+	}
+
+	let ourRow = target.parentNode;
+	let nextRow = ourRow.nextElementSibling;
+	let ourTab = ourRow.parentNode;
+	if (nextRow && nextRow.classList.contains('soundentry')) {
+		ourTab.removeChild(nextRow);
+		target.textContent = "►";
+		return;
+	}
+	var noteSound = {};
+	if(track && track.noteRows && ourX >= 0) {
+		let noteRowA= forceArray(track.noteRows.noteRow);
+		for (var i = 0; i < noteRowA.length; ++i) {
+			let aRow = noteRowA[i];
+			if(Number(aRow.drumIndex) === ourX) {
+				 noteSound = aRow.soundParams;
+				 break;
+			}
+		}
+	}
+
+	let newRow = $("<tr class='soundentry'/>");
+	let newData =$("<td  colspan='8'/>");
+
+	formatSound(newData, aKitSound, aKitSound.defaultParams, aKitSound.soundParams, noteSound);
+
+	newRow.append(newData);
+	if (nextRow) {
+		ourTab.insertBefore(newRow[0], nextRow);
+	} else {
+		ourTab.appendChild(newRow[0]);
+	}
+	target.textContent = "▼";
+}
+
+function formatKit(json, obj, kitParams, track) {
+	
+	let kitList = forceArray(json.soundSources.sound);
+	
+	let tab = $("<table class='kit_tab'/>");
+	let hasKitParams = kitParams !== undefined;
+	tab.append(sample_list_header({hasKitParams: hasKitParams}));
+	
+	for(var i = 0; i < kitList.length; ++i) {
+		let kit = kitList[i];
+		formatSampleEntry(kit, tab, i);
+	}
+	
+	
+	obj.append(tab);
+
+	let opener = function (e) {
+		let js = json;
+		openKitSound(e, kitList, kitParams, track);
+	};
+	$('.kit_opener').on('click', opener);
+}
+
+
+
+/*******************************************************************************
+
+		TRACK
+
+ *******************************************************************************
+*/
+
+class Track extends DRView {
+
+};
+
 
 function plotKit13(track, reftrack, obj) {
 	let kitItemH = 8;
@@ -879,6 +988,9 @@ function plotKit13(track, reftrack, obj) {
 		let labName = '';
 		if (row.drumIndex) {
 			let rowInfo = kitList[row.drumIndex];
+			if (!rowInfo) {
+				let cat = 2;
+			}
 			labName = rowInfo.name;
 			if (labName != undefined) {
 				let labdiv = $("<div class='kitlab'/>");
@@ -972,90 +1084,6 @@ function plotKit(track, reftrack, obj) {
 		plotKit13(track, reftrack, obj);
 	}
 }
-
-
-function openKitSound(e, kitTab, kitParams, track) {
-	let target = e.target;
-	let ourX = Number(target.getAttribute('kitItem'));
-
-	var aKitSound;
-	if (ourX >= 0) {
-		aKitSound = kitTab[ourX];
-	} else {
-		aKitSound = kitParams;
-		if(!aKitSound) return;
-	}
-
-	let ourRow = target.parentNode;
-	let nextRow = ourRow.nextElementSibling;
-	let ourTab = ourRow.parentNode;
-	if (nextRow && nextRow.classList.contains('soundentry')) {
-		ourTab.removeChild(nextRow);
-		target.textContent = "►";
-		return;
-	}
-	var noteSound = {};
-	if(track && track.noteRows && ourX >= 0) {
-		let noteRowA= forceArray(track.noteRows.noteRow);
-		for (var i = 0; i < noteRowA.length; ++i) {
-			let aRow = noteRowA[i];
-			if(Number(aRow.drumIndex) === ourX) {
-				 noteSound = aRow.soundParams;
-				 break;
-			}
-		}
-	}
-
-	let newRow = $("<tr class='soundentry'/>");
-	let newData =$("<td  colspan='8'/>");
-
-	formatSound(newData, aKitSound, aKitSound.defaultParams, aKitSound.soundParams, noteSound);
-
-	newRow.append(newData);
-	if (nextRow) {
-		ourTab.insertBefore(newRow[0], nextRow);
-	} else {
-		ourTab.appendChild(newRow[0]);
-	}
-	target.textContent = "▼";
-}
-
-function formatKit(json, obj, kitParams, track) {
-	
-	let kitList = forceArray(json.soundSources.sound);
-	
-	let tab = $("<table class='kit_tab'/>");
-	let hasKitParams = kitParams !== undefined;
-	tab.append(sample_list_header({hasKitParams: hasKitParams}));
-	
-	for(var i = 0; i < kitList.length; ++i) {
-		let kit = kitList[i];
-		formatSampleEntry(kit, tab, i);
-	}
-	
-	
-	obj.append(tab);
-
-	let opener = function (e) {
-		let js = json;
-		openKitSound(e, kitList, kitParams, track);
-	};
-	$('.kit_opener').on('click', opener);
-}
-
-
-
-/*******************************************************************************
-
-		TRACK
-
- *******************************************************************************
-*/
-
-class Track extends DRObject {
-
-};
-
 
 function plotTrack13(track, obj) {
 // first walk the track and find min and max y positions
@@ -1512,14 +1540,12 @@ function soundViewButton(trackNum, obj) {
 */
 
 
-class Song extends DRObject {
+class Song extends DRView {
 
 };
 
 function pasteTrackText(text) {
-	let pastedJSON = JSON.parse(text, (k, v)=>{
-		return v;
-	});
+	let pastedJSON = JSON.parse(text, reviveClass);
 	// Clear the pasted-into-area
 	setTimeout( function() {
 		let ta =$("#paster")[0];
@@ -1825,12 +1851,14 @@ function triggerRedraw() {
 	jsonToTopTable(jsonDocument, $('#jtab'));
 }
 
+/*
 var nameToClassTab = {
 	'kit':		Kit,
 	'track':	Track,
 	'sound':	Sound,
 	'song':		Song
 };
+*/
 
 /*******************************************************************************
 
