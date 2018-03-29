@@ -12,6 +12,7 @@ import {
 local_exec_head,
 local_exec_info,
 note_tip_template,
+song_template,
 track_head_template,
 sample_list_template,
 param_plot_template,
@@ -39,6 +40,7 @@ var sample_path_prefix = '/';
 var xPlotOffset = 32;
 var jQuery = $;
 
+var gIdCounter = 0;
 var focusDoc;
 
 // End of variables to move into object.
@@ -984,8 +986,9 @@ function viewSound(e, songJ) {
 		trackD = trackA[fromID];
 	}
 
-	let divID = '#snd_place' + trn;
-	let where = $(divID);
+	// find head div, then place to put
+	let headdiv = $(target).closest('.trackhd');
+	let where = $('.sndplc', headdiv);
 
 	if (hideShow === "▼") {
 		target.textContent = "►";
@@ -1617,7 +1620,7 @@ class Song extends DRView {
 
 function pasteTrackios(e, jDoc) {
 	
-	let pasteel = $("#paster");
+	let pasteel = $(".paster", jDoc.docTopElement);
 	if(pasteel && pasteel.length > 0) {
 		let t = pasteel[0].value;
 		pasteTrackText(t, jDoc);
@@ -1630,23 +1633,23 @@ function pasteTrack(e, jDoc) {
 	let pastedData = clipboardData.getData('text');
 		// Clear the pasted-into-area
 	setTimeout( function() {
-		let ta =$("#paster")[0];
+		let ta =$(".paster", jDoc.docTopElement)[0];
 		ta.value = ta.defaultValue;
 	}, 200);
 	pasteTrackText(pastedData, jDoc);
 }
 
-function trackPasteField(obj) {
+function trackPasteField(obj, jDoc) {
 	let iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
 	let paster = paster_template({iOSDevice: iOSDevice});
 	obj.append($(paster));
 
 	if(iOSDevice) {
-		$('#iosSubmit').on('click', (e)=>{
+		$('.iosSubmit', jDoc.docTopElement).on('click', (e)=>{
 			pasteTrackios(e, focusDoc);
 		});
 	} else {
-		$('#paster').on('paste', (e)=>{
+		$('.paster', jDoc.docTopElement).on('paste', (e)=>{
 			pasteTrack(e, focusDoc);
 		});
 	}
@@ -1702,11 +1705,11 @@ function sampleReport(json, showAll, obj) {
 	obj.append(sample_list_template({sample_path_prefix: sample_path_prefix, sampList: sampList, showDrums: showAll}));
 }
 
-function genSampleReport(track)
+function genSampleReport(track,jdoc)
 {
-	let isChecked = $("#showdrums").is(':checked');
-	$('#samprepplace table').remove();
-	sampleReport(track, isChecked, $('#samprepplace'));
+	let isChecked = $(".showdrums", jdoc).is(':checked');
+	$('.samprepplace table', jdoc).remove();
+	sampleReport(track, isChecked, $('.samprepplace', jdoc));
 	$('#showdrums').on('click', function () {
 		genSampleReport(track);
 	});
@@ -1785,13 +1788,15 @@ function formatSong(jdoc, obj) {
 		activateNoteTips();
 	  }
 	}
-	trackPasteField(obj);
+	trackPasteField(obj, jdoc);
 	songTail(jsong, obj);
-	obj.append($("<div id='samprepplace'></div>"));
-	genSampleReport(jsong);
+	obj.append($("<div class='samprepplace'></div>"));
+	genSampleReport(jsong, jdoc);
 
-	// Populate copy to clippers.
-	new Clipboard('.clipbtn', {
+	// Populate copy to clip buttons.
+	//let clippers = $('.clipbtn', jdoc.docTopElement);
+	let clippers = jdoc.docTopElement[0].getElementsByClassName('clipbtn');
+	new Clipboard(clippers, {
 	   text: function(trigger) {
 		let asText = getTrackText(trigger.getAttribute('trackno'), jsong);
 		return asText;
@@ -1823,8 +1828,17 @@ function formatSampleEntry(sound, obj, ix)
 */
 
 class DelugeDoc {
-	constructor(fname, text) {
-		this.fname = fname;
+  constructor(fname, text) {
+  	this.idNumber = gIdCounter++;
+	this.idString = "" + this.idNumber;
+	this.fname = fname;
+
+	let songhead = song_template({idsuffix: this.idString});
+	// docspot
+	$('#docspot').empty();
+	$('#docspot').append(songhead);
+	this.docTopElement = $(this.idFor('docId'));
+
 	// Capture the current firmware version and then remove that from the string.
 	let firmHits = /<firmwareVersion>.*<.firmwareVersion>/i.exec(text);
 	if (firmHits && firmHits.length > 0) {
@@ -1840,22 +1854,26 @@ class DelugeDoc {
 	// enOrderTab(asDOM);
 	var asJSON = xmlToJson(asDOM);
 	this.jsonDocument = asJSON;
-	$('#jtab').empty();
-	this.jsonToTopTable(this, $('#jtab'));
-	}
-	
+	let jtabid = this.idFor('jtab');
+	$(jtabid).empty();
+	this.jsonToTopTable(this, $(jtabid));
+  }
+
+  idFor(root) {
+	return '#' + root + this.idString;
+  }
+
 	
 // Trigger redraw of displayed object(s).
   triggerRedraw() {
-	$('#jtab').empty();
-	this.jsonToTopTable(this, $('#jtab'));
+  	let jtabid = this.idFor('jtab');
+	$(jtabid).empty();
+	this.jsonToTopTable(this, $(jtabid));
 }
-
-
 
   jsonToTopTable(jdoc, obj)
 {
-	$('#fileTitle').html(this.fname);
+	$(this.idFor('fileTitle')).html(this.fname);
 	let json = jdoc.jsonDocument;
 	if(json['song']) {
 		formatSong(jdoc, obj);

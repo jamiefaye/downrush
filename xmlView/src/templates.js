@@ -2,7 +2,7 @@
 import Handlebars from './js/handlebars.min.js';
 
 var local_exec_head = Handlebars.compile(`			<table class='nobord'><tr>
-				<td><input ID='opener' name="file" type="file" accept=".xml,.XML" /></td>
+				<td><input id='opener' name="file" type="file" accept=".xml,.XML" /></td>
 				<!--
 				<td><input type="button" value="Open" style="width:55pt" onclick="btn_open()" ></td>
 				<td><input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"></td>
@@ -26,9 +26,16 @@ var note_tip_template = Handlebars.compile(`
 {{notename}} {{notevel}} {{noteprob}} {{notedur}} {{notestart}}
 `);
 
+var song_template = Handlebars.compile(`
+<div class='filedoc' id='docId{{idsuffix}}'>
+	<div id='fileTitle{{idsuffix}}'></div>
+	<p class='tinygap'/>
+	<div id='jtab{{idsuffix}}'> </div>
+</div>
+`);
 /* Track Head
 */
-var track_head_template = Handlebars.compile(`<p class='tinygap'>
+var track_head_template = Handlebars.compile(`<div class='trackhd'><p class='tinygap'>
 <table class='xmltab'>
 <tr><th colspan='8'>Track {{trackNum}}<//th></tr>
 <tr>
@@ -44,14 +51,14 @@ var track_head_template = Handlebars.compile(`<p class='tinygap'>
 <td>{{>getcopytoclip}}</td>
 </tr>
 </table><p class='tinygap'>
-<div id='snd_place{{trackIndex}}'> </div>`);
+<div class='sndplc'> </div>`);
 
 /* Sample List
 */
 var sample_list_template = Handlebars.compile(`<p class='tinygap'>
 <table class='samplelist xmltab'>
 <tr><th>Samples used in this song</th>
-<th><input id='showdrums' type='checkbox' {{#if showDrums}} checked{{/if}}>Show /SAMPLES/DRUMS</input></th>
+<th><input class='showdrums' type='checkbox' {{#if showDrums}} checked{{/if}}>Show /SAMPLES/DRUMS</input></th>
 </tr>
 {{#each sampList}}
 <tr><td>{{this}}</td>
@@ -59,7 +66,7 @@ var sample_list_template = Handlebars.compile(`<p class='tinygap'>
 </tr>
 {{/each}}
 </table>
-
+</div>
 `);
 
 /* Param Plotter
@@ -75,7 +82,7 @@ var param_plot_template = Handlebars.compile(`
 
 var paster_template = Handlebars.compile(`<hr><div>
 			<b>Paste track data in field below to add it to song.</b><br>
-			<textarea id='paster' rows='2' class='tinybox'></textarea>{{#if iOSDevice}}<br><input type='button' value='Add Track' id='iosSubmit'>{{/if}}
+			<textarea class='paster tinybox' rows='2'></textarea>{{#if iOSDevice}}<br><input type='button' value='Add Track' class='iosSubmit'>{{/if}}
 		</div><p class='tinygap'>`);
 
 // This table expands into a parameter display which follows the
@@ -682,6 +689,7 @@ export {
 local_exec_head,
 local_exec_info,
 note_tip_template,
+song_template,
 track_head_template,
 sample_list_template,
 param_plot_template,
