@@ -39,12 +39,7 @@ var sample_path_prefix = '/';
 var xPlotOffset = 32;
 var jQuery = $;
 
-// Variables to convert to instance variables for an object.
-var fname = "";
-var jsonDocument;
-var firmwareVersionFound = '';
-var newNoteFormat = false;
-
+var focusDoc;
 
 // End of variables to move into object.
 
@@ -705,11 +700,181 @@ function simplifyFraction(num, den)
 	return num.toString() + '/' + den.toString();
 }
 
+function formatModKnobs(knobs, title, obj)
+{
+	let context = {title: title};
+	for(var i = 0; i < knobs.length; ++i) {
+		let kName = 'mk' + i;
+		let aKnob = knobs[i];
+		if (aKnob.controlsParam) {
+			context[kName] = aKnob.controlsParam;
+		}
+	}
+	obj.append(modKnobTemplate(context));
+}
+
+function formatModKnobsMidi(knobs, obj)
+{
+	let context = {};
+	for(var i = 0; i < knobs.length; ++i) {
+		let kName = 'mk' + i;
+		let aKnob = knobs[i];
+		if (aKnob.cc) {
+			context[kName] = aKnob;
+		}
+	}
+	obj.append(midiModKnobTemplate(context));
+}
+
+
 /*
 	Demarcation for code to roll-up into objects followimg.
 	
 */
 
+/*******************************************************************************
+
+		MODEL MANIPULATION
+		
+ *******************************************************************************
+*/
+
+// Convert an old (pre 1.4) noteRow from the note array representation into the noteData representation.
+function oldToNewNotes(track)
+{
+	let rowList = forceArray(track.noteRows.noteRow);
+	track.noteRows.noteRow = rowList;
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx]; // make sure JSON is updated.
+		var noteList = forceArray(row.notes.note);
+		let noteData = '0x';
+		for (var nx = 0; nx < noteList.length; ++nx) {
+			let n = noteList[nx];
+			let x = Number(n.pos);
+			let dur = Number(n.length);
+			let vel = Number(n.velocity);
+
+			let noteInfo = encodeNoteInfo('', x, dur, vel, 0x14);
+			noteData += noteInfo;
+		}
+		row.noteData = noteData;
+		delete row.notes;
+	}
+}
+
+
+function newToOldNotes(track) {
+	let rowList = forceArray(track.noteRows.noteRow);
+	track.noteRows.noteRow = rowList;
+
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		var noteData = row.noteData;
+		let noteArray = [];
+
+		for (var nx = 2; nx < noteData.length; nx += 20) {
+			let notehex = noteData.substring(nx, nx + 20);
+			let t = parseInt(notehex.substring(0, 8), 16);
+			let dur =  parseInt(notehex.substring(8, 16), 16);
+			let vel = parseInt(notehex.substring(16, 18), 16);
+			// let cond = parseInt(notehex.substring(18, 20), 16);
+			let note = {
+				pos:		t,
+				length: 	dur,
+				velocity: 	vel,
+			};
+			noteArray.push(note);
+		}
+		delete row.noteData;
+		row.notes = {};
+		row.notes.note = noteArray;
+	}
+}
+
+
+function pasteTrackText(text, songDoc) {
+	if (!songDoc.jsonDocument) return;
+	let pastedJSON = JSON.parse(text) // , reviveClass);
+
+	if (!pastedJSON || !pastedJSON.track) {
+		alert("Invalid data on clipboard.");
+		return;
+	}
+
+	// If needed, convert the tracks note format
+	let clipUsingNewNotes = usesNewNotekFormat(pastedJSON.track);
+	if (clipUsingNewNotes !== songDoc.newNoteFormat) {
+		if (songDoc.newNoteFormat) {
+			console.log('converting old note format to new');
+			oldToNewNotes(pastedJSON.track);
+		} else {
+			console.log('converting new note format to old');
+			newToOldNotes(pastedJSON.track);
+		}
+	}
+
+	// Place the new track at the beginning of the track array
+	let trackA = forceArray(songDoc.jsonDocument.song.tracks.track);
+	songDoc.jsonDocument.song.tracks.track = trackA; // If we forced an array, we want that permanent.
+	// The beginning of the track array shows up at the screen bottom.
+	trackA.unshift(pastedJSON.track);
+
+	// Iterate thru the remaining tracks, updating the referToTrackId fields.
+	for(var i = 1; i < trackA.length; ++i) {
+		let aTrack = trackA[i];
+		if (aTrack.instrument && aTrack.instrument.referToTrackId !== undefined) {
+			let bumpedRef = Number(aTrack.instrument.referToTrackId) + 1;
+			aTrack.instrument.referToTrackId = bumpedRef;
+		}
+	}
+
+	// Now we try and element duplicate sound or kit elements
+	// Since our new item was inserted at the front of the list, we search the remmaining tracks
+	// for those that are equal to our element. We then replace their sound or kit with a referToTrackId of 0
+	let track0 = trackA[0];
+	let trackType;
+	if (track0['sound']) trackType = 'sound';
+	else if (track0['kit']) trackType = 'kit';
+	if (trackType !== undefined) {
+		for(var i = 1; i < trackA.length; ++i) {
+			let aTrack = trackA[i];
+			if (jsonequals(track0[trackType], aTrack[trackType])) {
+				delete aTrack[trackType];
+				aTrack.instrument = {"referToTrackId": 0};
+				// Since the track we just put a referToTrackId into may have
+				// been the target of another reference, check for that case and fix that too.
+				for (var j = 1; j < trackA.length; ++j) {
+					let bTrack = trackA[j];
+					if (bTrack.instrument && Number(bTrack.instrument.referToTrackId) === i) {
+						bTrack.instrument.referToTrackId = 0;
+					}
+				}
+			}
+		}
+	}
+	songDoc.triggerRedraw();
+}
+
+function trackKind(track) {
+	if(track['kit']) return 'kit';
+	if(track['sound']) return 'sound';
+	if(track['midiChannel']) return 'midi';
+	if(track['cvChannel']) return 'cv';
+	// deal with indirect refs
+	if(track['kitParams']) return 'kit';
+	if(track['soundParams']) return 'sound';
+	return 'unknown';
+}
+
+
+/*******************************************************************************
+
+		VIEW/CONTROLLERS
+		
+ *******************************************************************************
+*/
+
+// Root class for all view/controllers
 class DRView {
 	constructor(inits) {
 		if(inits) {
@@ -718,24 +883,8 @@ class DRView {
 	}
 };
 
-/*
-// JSON.parse reviver function that instantiates certain keys as classes.
-function reviveClass(k, v) {
-	let classToMake = nameToClassTab[k];
-	if (classToMake) {
-		if (Array.isArray(v)) {
-			for(var i = 0; i < v.length; ++i) {
-				v[i] = new classToMake(v[i]);
-			}
-			return v;
-		} else {
-			let nv = new classToMake(v);
-			return nv;
-		}
-	}
-	return v;
-}
-*/
+
+
 
 /*******************************************************************************
 
@@ -818,12 +967,11 @@ function formatMidi(obj)
 	}
 }
 
-function viewSound(e) {
+function viewSound(e, songJ) {
 	let target = e.target;
 	let trn =  Number(target.getAttribute('trackno'));
 
 	let hideShow = target.textContent;
-	let songJ = jsonDocument.song;
 	if (!songJ) return;
 
 	let trackA = forceArray(songJ.tracks.track);
@@ -1076,15 +1224,6 @@ function plotKit14(track, reftrack, obj) {
 }
 
 
-
-function plotKit(track, reftrack, obj) {
-	if(newNoteFormat) {
-		plotKit14(track, reftrack, obj);
-	} else {
-		plotKit13(track, reftrack, obj);
-	}
-}
-
 function plotTrack13(track, obj) {
 // first walk the track and find min and max y positions
 	let trackW = Number(track.trackLength);
@@ -1249,58 +1388,6 @@ function activateNoteTips()
 	});
 }
 
-// Convert an old (pre 1.4) noteRow from the note array representation into the noteData representation.
-function oldToNewNotes(track)
-{
-	let rowList = forceArray(track.noteRows.noteRow);
-	track.noteRows.noteRow = rowList;
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx]; // make sure JSON is updated.
-		var noteList = forceArray(row.notes.note);
-		let noteData = '0x';
-		for (var nx = 0; nx < noteList.length; ++nx) {
-			let n = noteList[nx];
-			let x = Number(n.pos);
-			let dur = Number(n.length);
-			let vel = Number(n.velocity);
-
-			let noteInfo = encodeNoteInfo('', x, dur, vel, 0x14);
-			noteData += noteInfo;
-		}
-		row.noteData = noteData;
-		delete row.notes;
-	}
-}
-
-
-function newToOldNotes(track) {
-	let rowList = forceArray(track.noteRows.noteRow);
-	track.noteRows.noteRow = rowList;
-
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		var noteData = row.noteData;
-		let noteArray = [];
-
-		for (var nx = 2; nx < noteData.length; nx += 20) {
-			let notehex = noteData.substring(nx, nx + 20);
-			let t = parseInt(notehex.substring(0, 8), 16);
-			let dur =  parseInt(notehex.substring(8, 16), 16);
-			let vel = parseInt(notehex.substring(16, 18), 16);
-			// let cond = parseInt(notehex.substring(18, 20), 16);
-			let note = {
-				pos:		t,
-				length: 	dur,
-				velocity: 	vel,
-			};
-			noteArray.push(note);
-		}
-		delete row.noteData;
-		row.notes = {};
-		row.notes.note = noteArray;
-	}
-}
-
 function usesNewNotekFormat(track) {
 	let rowList = forceArray(track.noteRows.noteRow);
 	for (var rx = 0; rx < rowList.length; ++rx) {
@@ -1311,13 +1398,6 @@ function usesNewNotekFormat(track) {
 	return false;
 }
 
-function plotTrack(track, obj) {
-	if(newNoteFormat) {
-		plotTrack14(track, obj);
-	} else {
-		plotTrack13(track, obj);
-	}
-}
 
 function plotParamChanges(k, ps, tracklen, prefix, elem)
 {
@@ -1417,16 +1497,7 @@ function plotParams(track, refTrack, elem) {
 	}
 }
 
-function trackKind(track) {
-	if(track['kit']) return 'kit';
-	if(track['sound']) return 'sound';
-	if(track['midiChannel']) return 'midi';
-	if(track['cvChannel']) return 'cv';
-	// deal with indirect refs
-	if(track['kitParams']) return 'kit';
-	if(track['soundParams']) return 'sound';
-	return 'unknown';
-}
+
 
 var trackKindNames = {"kit": "Kit",
 					"sound": "Synth",
@@ -1490,9 +1561,8 @@ function trackHeader(track, kind, inx, repeatTab, obj) {
 	obj.append(trtab);
 }
 
-function getTrackText(trackNum)
+function getTrackText(trackNum, songJ)
 {
-	let songJ = jsonDocument.song;
 	if (!songJ) return;
 
 	let trackA = forceArray(songJ.tracks.track);
@@ -1544,89 +1614,26 @@ class Song extends DRView {
 
 };
 
-function pasteTrackText(text) {
-	let pastedJSON = JSON.parse(text, reviveClass);
-	// Clear the pasted-into-area
-	setTimeout( function() {
-		let ta =$("#paster")[0];
-		ta.value = ta.defaultValue;
-	}, 100);
-	if (!pastedJSON || !pastedJSON.track) {
-		alert("Invalid data on clipboard.");
-		return;
-	}
 
-	// If needed, convert the tracks note format
-	let clipUsingNewNotes = usesNewNotekFormat(pastedJSON.track);
-	if (clipUsingNewNotes !== newNoteFormat) {
-		if (newNoteFormat) {
-			console.log('converting old note format to new');
-			oldToNewNotes(pastedJSON.track);
-		} else {
-			console.log('converting new note format to old');
-			newToOldNotes(pastedJSON.track);
-		}
-	}
-
-	// Place the new track at the beginning of the track array
-	let songJ = jsonDocument.song;
-	if (!songJ) return;
-
-	let trackA = forceArray(songJ.tracks.track);
-	songJ.tracks.track = trackA; // If we forced an array, we want that permanent.
-	// The beginning of the track array shows up at the screen bottom.
-	trackA.unshift(pastedJSON.track);
-
-	// Iterate thru the remaining tracks, updating the referToTrackId fields.
-	for(var i = 1; i < trackA.length; ++i) {
-		let aTrack = trackA[i];
-		if (aTrack.instrument && aTrack.instrument.referToTrackId !== undefined) {
-			let bumpedRef = Number(aTrack.instrument.referToTrackId) + 1;
-			aTrack.instrument.referToTrackId = bumpedRef;
-		}
-	}
-
-	// Now we try and element duplicate sound or kit elements
-	// Since our new item was inserted at the front of the list, we search the remmaining tracks
-	// for those that are equal to our element. We then replace their sound or kit with a referToTrackId of 0
-	let track0 = trackA[0];
-	let trackType;
-	if (track0['sound']) trackType = 'sound';
-	else if (track0['kit']) trackType = 'kit';
-	if (trackType !== undefined) {
-		for(var i = 1; i < trackA.length; ++i) {
-			let aTrack = trackA[i];
-			if (jsonequals(track0[trackType], aTrack[trackType])) {
-				delete aTrack[trackType];
-				aTrack.instrument = {"referToTrackId": 0};
-				// Since the track we just put a referToTrackId into may have
-				// been the target of another reference, check for that case and fix that too.
-				for (var j = 1; j < trackA.length; ++j) {
-					let bTrack = trackA[j];
-					if (bTrack.instrument && Number(bTrack.instrument.referToTrackId) === i) {
-						bTrack.instrument.referToTrackId = 0;
-					}
-				}
-			}
-		}
-	}
-	triggerRedraw();
-}
-
-function pasteTrackios(e) {
+function pasteTrackios(e, jDoc) {
 	
 	let pasteel = $("#paster");
 	if(pasteel && pasteel.length > 0) {
 		let t = pasteel[0].value;
-		pasteTrackText(t);
+		pasteTrackText(t, jDoc);
 	}
 }
 
-function pasteTrack(e) {
+function pasteTrack(e, jDoc) {
 	let clipboardData = e.clipboardData || e.originalEvent.clipboardData || window.clipboardData;
 
 	let pastedData = clipboardData.getData('text');
-	pasteTrackText(pastedData);
+		// Clear the pasted-into-area
+	setTimeout( function() {
+		let ta =$("#paster")[0];
+		ta.value = ta.defaultValue;
+	}, 200);
+	pasteTrackText(pastedData, jDoc);
 }
 
 function trackPasteField(obj) {
@@ -1635,12 +1642,15 @@ function trackPasteField(obj) {
 	obj.append($(paster));
 
 	if(iOSDevice) {
-		$('#iosSubmit').on('click', pasteTrackios);
+		$('#iosSubmit').on('click', (e)=>{
+			pasteTrackios(e, focusDoc);
+		});
 	} else {
-		$('#paster').on('paste', pasteTrack);
+		$('#paster').on('paste', (e)=>{
+			pasteTrack(e, focusDoc);
+		});
 	}
 }
-
 
 
 function songTail(jsong, obj) {
@@ -1726,7 +1736,9 @@ function scaleString(jsong) {
 	return str + "Chromatic";
 }
 
-function formatSong(jsong, obj) {
+function formatSong(jdoc, obj) {
+	let jsong = jdoc.jsonDocument.song;
+	let newNoteFormat = jdoc.newNoteFormat;
 	let ctab = genColorTab(jsong.preview);
 	obj.append(ctab);
 	obj.append($("<p class='tinygap'>"));
@@ -1755,15 +1767,23 @@ function formatSong(jsong, obj) {
 			}
 			trackHeader(track, tKind, i, sectionTab, obj);
 			if(tKind === 'kit') {
-				plotKit(track, refTrack, obj);
+				
+				if(newNoteFormat) {
+					plotKit14(track, refTrack, obj);
+				} else {
+					plotKit13(track, refTrack, obj);
+				}
 			} else {
-				plotTrack(track, obj);
+				if(newNoteFormat) {
+					plotTrack14(track, obj);
+				} else {
+					plotTrack13(track, obj);
+				}
 			}
 			plotParams(track, refTrack, obj);
 		}
 		activateNoteTips();
 	  }
-
 	}
 	trackPasteField(obj);
 	songTail(jsong, obj);
@@ -1773,42 +1793,14 @@ function formatSong(jsong, obj) {
 	// Populate copy to clippers.
 	new Clipboard('.clipbtn', {
 	   text: function(trigger) {
-		let asText = getTrackText(trigger.getAttribute('trackno'));
+		let asText = getTrackText(trigger.getAttribute('trackno'), jsong);
 		return asText;
 	}
 	});
 	$(".soundviewbtn").on('click', function(e) {
-		viewSound(e);
+		viewSound(e, jsong);
 	});
 }
-
-function formatModKnobs(knobs, title, obj)
-{
-	let context = {title: title};
-	for(var i = 0; i < knobs.length; ++i) {
-		let kName = 'mk' + i;
-		let aKnob = knobs[i];
-		if (aKnob.controlsParam) {
-			context[kName] = aKnob.controlsParam;
-		}
-	}
-	obj.append(modKnobTemplate(context));
-}
-
-function formatModKnobsMidi(knobs, obj)
-{
-	let context = {};
-	for(var i = 0; i < knobs.length; ++i) {
-		let kName = 'mk' + i;
-		let aKnob = knobs[i];
-		if (aKnob.cc) {
-			context[kName] = aKnob;
-		}
-	}
-	obj.append(midiModKnobTemplate(context));
-}
-
-
 
 function formatSampleEntry(sound, obj, ix)
 {
@@ -1830,11 +1822,43 @@ function formatSampleEntry(sound, obj, ix)
  *******************************************************************************
 */
 
-function jsonToTopTable(json, obj)
+class DelugeDoc {
+	constructor(fname, text) {
+		this.fname = fname;
+	// Capture the current firmware version and then remove that from the string.
+	let firmHits = /<firmwareVersion>.*<.firmwareVersion>/i.exec(text);
+	if (firmHits && firmHits.length > 0) {
+		this.firmwareVersionFound = firmHits[0];
+	} else {
+		this.firmwareVersionFound='';
+	}
+
+	this.newNoteFormat = !(this.firmwareVersionFound.indexOf('1.2') >= 0 || this.firmwareVersionFound.indexOf('1.3') >= 0);
+	var fixedText = text.replace(/<firmwareVersion>.*<.firmwareVersion>/i,"");
+	var asDOM = getXmlDOMFromString(fixedText);
+	// Uncomment following to generate ordering table based on a real-world example.
+	// enOrderTab(asDOM);
+	var asJSON = xmlToJson(asDOM);
+	this.jsonDocument = asJSON;
+	$('#jtab').empty();
+	this.jsonToTopTable(this, $('#jtab'));
+	}
+	
+	
+// Trigger redraw of displayed object(s).
+  triggerRedraw() {
+	$('#jtab').empty();
+	this.jsonToTopTable(this, $('#jtab'));
+}
+
+
+
+  jsonToTopTable(jdoc, obj)
 {
-	$('#fileTitle').html(fname);
+	$('#fileTitle').html(this.fname);
+	let json = jdoc.jsonDocument;
 	if(json['song']) {
-		formatSong(json.song, obj);
+		formatSong(jdoc, obj);
 	} else if(json['sound']) {
 		formatSound(obj, json.sound, json.sound.defaultParams, json.sound.soundParams);
 	} else if(json['kit']) {
@@ -1845,166 +1869,7 @@ function jsonToTopTable(json, obj)
 }
 
 
-// Trigger redraw of displayed object(s).
-function triggerRedraw() {
-	$('#jtab').empty();
-	jsonToTopTable(jsonDocument, $('#jtab'));
-}
-
-/*
-var nameToClassTab = {
-	'kit':		Kit,
-	'track':	Track,
-	'sound':	Sound,
-	'song':		Song
-};
-*/
-
-/*******************************************************************************
-
-		 File and GUI
-
- *******************************************************************************
-*/
-function openLocal(evt)
-{
-	var files = evt.target.files;
-	var f = files[0];
-	if (f === undefined) return;
-	var reader = new FileReader();
-// Closure to capture the file information.
-	reader.onload = (function(theFile) {
-		return function(e) {
-			// Display contents of file
-				let t = e.target.result;
-				setEditText(t);
-			};
-		})(f);
-
-	// Read in the image file as a data URL.
-	reader.readAsText(f);
-}
-
-//---------- When reading page -------------
-function onLoad()
-{
-	// Getting arguments
-	var urlarg = location.search.substring(1);
-	if(urlarg != "")
-	{
-		// Decode and assign to file name box
-		fname = decodeURI(urlarg);
-	}
-
-	if(!local_exec) {
-		loadFile(fname);
-	} else {
-		$('#filegroup').remove();
-		$('#filegroupplace').append(local_exec_head());
-		$('#jtab').append (local_exec_info());
-		$('#opener').on('change', openLocal);
-		if (custom_sample_path) {
-			sample_path_prefix = custom_sample_path;
-		} else {
-			if (document.URL.indexOf('DR/xmlView')> 0) {
-				sample_path_prefix = '../../';
-			} else if (document.URL.indexOf('xmlView')> 0) {
-				sample_path_prefix = '../';
-			} else sample_path_prefix = '';
-		}
-	}
-	setupGUI();
-}
-window.onload = onLoad;
-
-  function saveAs(){
-	saveFileBrowser({
-		initialPath: fname,
-		saver: function(name) {
-			save(name);
-		}
-	});
-}
-
-function setupGUI()
-{
-	$('.savebut').click(e=>{saveAs(e)});
-	
-	$('.openbutn').click(e=>{
-		let initial = fname;
-		if (!initial) initial = '/';
-		openFileBrowser({
-			initialPath:  initial,
-			opener: function(name) {
-				loadFile(name);
-				fname = name;
-			}
-		});
-	});
-}
-
-//editor
-function setEditText(text)
-{
-	// Capture the current firmware version and then remove that from the string.
-	let firmHits = /<firmwareVersion>.*<.firmwareVersion>/i.exec(text);
-	if (firmHits && firmHits.length > 0) {
-		firmwareVersionFound = firmHits[0];
-	} else {
-		firmwareVersionFound='';
-	}
-
-	newNoteFormat = !(firmwareVersionFound.indexOf('1.2') >= 0 || firmwareVersionFound.indexOf('1.3') >= 0);
-	var fixedText = text.replace(/<firmwareVersion>.*<.firmwareVersion>/i,"");
-	var asDOM = getXmlDOMFromString(fixedText);
-	// Uncomment following to generate ordering table based on a real-world example.
-	// enOrderTab(asDOM);
-	var asJSON = xmlToJson(asDOM);
-	jsonDocument = asJSON;
-	$('#jtab').empty();
-	jsonToTopTable(asJSON, $('#jtab'));
-}
-
-// use ajax to load wav data (instead of a web worker).
-  function loadFile(fname)
-{
-	$("#statind").text("Loading: " +  fname);
-	$.ajax({
-	url         : fname,
-	cache       : false,
-	processData : false,
-	method:		'GET',
-	type        : 'GET',
-	success     : function(data, textStatus, jqXHR){
-		setEditText(data);
-		$("#statind").text(fname + " loaded.");
-	},
-
-	error: function (data, textStatus, jqXHR) {
-		console.log("Error: " + textStatus);
-	},
-
-	xhr: function() {
-		var xhr = new window.XMLHttpRequest();
-		xhr.responseType= 'text';
-		return xhr;
-	},
-
-	});
-}
-
-function save(toName) {
-	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
-	if (firmwareVersionFound) {
-		headerStr += firmwareVersionFound + "\n";
-	}
- 	let saveText = headerStr + jsonToXMLString("song", jsonDocument.song);
- 	fname = toName;
-	saveFile(toName, saveText);
-}
-
-// use ajax to save-back wav data (instead of a web worker).
-  function saveFile(filepath, data)
+  saveFile(filepath, data)
 {
 	var timestring;
 	var dt = new Date();
@@ -2054,5 +1919,195 @@ function save(toName) {
 		 	return xhr;
 		 }
 		});
+	});
+  }
+
+ save(toName) {
+	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
+	if (this.firmwareVersionFound) {
+		headerStr += this.firmwareVersionFound + "\n";
+	}
+ 	let saveText = headerStr + jsonToXMLString("song", this.jsonDocument.song);
+ 	this.fname = toName;
+	this.saveFile(toName, saveText);
+}
+
+// use ajax to save-back wav data (instead of a web worker).
+  saveFile(filepath, data)
+{
+	var timestring;
+	var dt = new Date();
+	var year = (dt.getFullYear() - 1980) << 9;
+	var month = (dt.getMonth() + 1) << 5;
+	var date = dt.getDate();
+	var hours = dt.getHours() << 11;
+	var minutes = dt.getMinutes() << 5;
+	var seconds = Math.floor(dt.getSeconds() / 2);
+	var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
+	var urlDateSet = '/upload.cgi?FTIME=' + timestring + "&TIME="+(Date.now());;
+	$.get(urlDateSet, function() {
+		$.ajax(filepath, {
+		headers:	{'Overwrite': 't', 'Content-type': 'text/plain'},
+		cache:		false,
+		contentType: false,
+		data:		data,
+		processData : false,
+		method:		'PUT',
+		error:		function(jqXHR, textStatus, errorThrown) {
+			alert(textStatus + "\n" + errorThrown);
+		},
+		success: function(data, textStatus, jqXHR){
+			console.log("Save OK");
+			$.ajax("/upload.cgi?WRITEPROTECT=OFF",{
+				error:	function(jqXHR, textStatus, errorThrown) {
+					alert(textStatus + "\n" + errorThrown);
+				},
+				headers: {"If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT"},
+				success: function(data, textStatus, jqXHR){
+					console.log("save and unlock done");
+					$("#statind").text(filepath + " saved.");
+				},
+			})
+		},
+		
+		xhr: function() {
+			var xhr = new window.XMLHttpRequest();
+		  	xhr.upload.addEventListener("progress", function(evt){
+			  if (evt.lengthComputable) {
+				  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
+				  //Do something with upload progress
+				 $("#statind").text(filepath + " " + percentComplete + "%");
+				 //console.log(percentComplete);
+			  }
+			}, false);
+		 	return xhr;
+		 }
+		});
+	});
+}
+
+};
+
+
+/*******************************************************************************
+
+		 File and GUI
+
+ *******************************************************************************
+*/
+
+
+function setupGUI()
+{
+	$('.savebut').click(e=>{saveAs(e)});
+	
+	$('.openbutn').click(e=>{
+		let initial; // fname
+		if (!initial) initial = '/';
+		openFileBrowser({
+			initialPath:  initial,
+			opener: function(name) {
+				loadFile(name);
+//				fname = name;
+			}
+		});
+	});
+}
+
+
+function openLocal(evt)
+{
+	var files = evt.target.files;
+	var f = files[0];
+	if (f === undefined) return;
+	var reader = new FileReader();
+// Closure to capture the file information.
+	reader.onload = (function(theFile) {
+		return function(e) {
+			// Display contents of file
+				let t = e.target.result;
+				setEditText(theFile, t);
+			};
+		})(f);
+
+	// Read in the image file as a data URL.
+	reader.readAsText(f);
+}
+
+//---------- When reading page -------------
+function onLoad()
+{
+	// Getting arguments
+	var urlarg = location.search.substring(1);
+	var fname;
+	if(urlarg != "")
+	{
+		// Decode and assign to file name box
+		fname = decodeURI(urlarg);
+	}
+
+	if(!local_exec) {
+		loadFile(fname);
+	} else {
+		$('#filegroup').remove();
+		$('#filegroupplace').append(local_exec_head());
+		$('#jtab').append (local_exec_info());
+		$('#opener').on('change', openLocal);
+		if (custom_sample_path) {
+			sample_path_prefix = custom_sample_path;
+		} else {
+			if (document.URL.indexOf('DR/xmlView')> 0) {
+				sample_path_prefix = '../../';
+			} else if (document.URL.indexOf('xmlView')> 0) {
+				sample_path_prefix = '../';
+			} else sample_path_prefix = '';
+		}
+	}
+	setupGUI();
+}
+window.onload = onLoad;
+
+  function saveAs(){
+  	if (!focusDoc) return;
+	saveFileBrowser({
+		initialPath: focusDoc.fname,
+		saver: function(name) {
+			focusDoc.save(name);
+		}
+	});
+}
+
+
+//editor
+function setEditText(fname, text)
+{
+	focusDoc = new DelugeDoc(fname, text);
+}
+
+// use ajax to load xml data (instead of a web worker).
+  function loadFile(fname)
+{
+	$("#statind").text("Loading: " +  fname);
+	$.ajax({
+	url         : fname,
+	cache       : false,
+	processData : false,
+	method:		'GET',
+	type        : 'GET',
+	success     : function(data, textStatus, jqXHR){
+		setEditText(fname, data);
+		$("#statind").text(fname + " loaded.");
+	},
+
+	error: function (data, textStatus, jqXHR) {
+		console.log("Error: " + textStatus);
+	},
+
+	xhr: function() {
+		var xhr = new window.XMLHttpRequest();
+		xhr.responseType= 'text';
+		return xhr;
+	},
+
 	});
 }
