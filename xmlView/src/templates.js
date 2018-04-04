@@ -685,6 +685,17 @@ var sound_template = Handlebars.compile(`<table class='sound_grid xmltab'>
 
 // **** Thats all for the sound table
 
+
+
+var wavegroup_template = Handlebars.compile(`
+<div id='wavegroup{{idsuffix}}'>
+<div id='jtab{{idsuffix}}'> </div>
+<div id="waveform{{idsuffix}}"></div>
+<div id='procmods{{idsuffix}}'>
+</div>
+</div>
+`);
+
 export {
 local_exec_head,
 local_exec_info,
@@ -700,5 +711,6 @@ midiModKnobTemplate,
 sample_list_header,
 sample_entry_template,
 sample_name_prefix,
-sound_template
+sound_template,
+wavegroup_template
 };

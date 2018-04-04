@@ -5,9 +5,12 @@ import tippy from "./js/tippy.all.min.js";
 import {patchNames, kitNames} from "./js/delugepatches.js";
 require('file-loader?name=[name].[ext]!../viewXML.htm');
 require('file-loader?name=[name].[ext]!../css/edit.css');
-import Handlebars from './js/handlebars.min.js';
 import {keyOrderTab} from "./keyOrderTab.js";
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
+import {formatKit} from "./KitEdit.js";
+import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, jsonToTable, forceArray} from "./JsonXMLUtils.js";
+import {convertHexTo50, fixm50to50} from "./HBHelpers.js";
+
 import {
 local_exec_head,
 local_exec_info,
@@ -20,7 +23,6 @@ paster_template,
 midiKnobTemplate,
 modKnobTemplate,
 midiModKnobTemplate,
-sample_list_header,
 sample_entry_template,
 sample_name_prefix,
 sound_template
@@ -43,528 +45,6 @@ var jQuery = $;
 var gIdCounter = 0;
 var focusDoc;
 
-// End of variables to move into object.
-
-
-/*******************************************************************************
-
-		JSON and XML conversions and aids.
-
-********************************************************************************
-*/
-
-/**
-* Converts passed XML string into a DOM element.
-* @param 		{String}			xmlStr
-* @return		{Object}			XML DOM object
-* @exception	{GeneralException}	Throws exception if no XML parser is available.
-* @TODO Should use this instead of loading XML into DOM via $.ajax()
- */
-function getXmlDOMFromString(xmlStr) {
-	if (window.ActiveXObject && window.GetObject) {
-		var dom = new ActiveXObject('Microsoft.XMLDOM');
-		dom.loadXML(xmlStr);
-		return dom;
-	}
-	if (window.DOMParser){
-		return new DOMParser().parseFromString(xmlStr,'text/xml');
-	}
-	throw new Error( 'No XML parser available' );
-}
-
-
-
-// Changes XML Dom elements to JSON
-// Modified to ignore text elements
-// Modified version from here: http://davidwalsh.name/convert-xml-json
-function xmlToJson(xml, fill) {
-  // Create the return object
-  let obj = fill ? fill : {};
-
-  if (xml.nodeType === 1) { // element
-	// do attributes
-	if (xml.attributes.length > 0) {
-	  obj['@attributes'] = {};
-	  for (let j = 0; j < xml.attributes.length; j += 1) {
-		const attribute = xml.attributes.item(j);
-		obj['@attributes'][attribute.nodeName] = attribute.nodeValue;
-	  }
-	}
-  } else if (xml.nodeType === 3) { // text
-	obj = xml.nodeValue;
-  }
-
-  // do children
-  // If just one text node inside
-  if (xml.hasChildNodes() && xml.childNodes.length === 1 && xml.childNodes[0].nodeType === 3) {
-	obj = xml.childNodes[0].nodeValue;
-  } else if (xml.hasChildNodes()) {
-	for (let i = 0; i < xml.childNodes.length; i += 1) {
-		const item = xml.childNodes.item(i);
-		const nodeName = item.nodeName;
-		if (item.nodeType === 3) continue; // JFF don't bother with text nodes
-//		let classToMake = nameToClassTab[nodeName];
-		let childToFill;
-//		if (classToMake) {
-//			childToFill = new classToMake();
-//		}
-	if (typeof (obj[nodeName]) === 'undefined') {
-		obj[nodeName] = xmlToJson(item, childToFill);
-	  } else {
-		if (typeof (obj[nodeName].push) === 'undefined') {
-			const old = obj[nodeName];
-			obj[nodeName] = [];
-			obj[nodeName].push(old);
-		}
-		obj[nodeName].push(xmlToJson(item)); // ,childToFill
-	   }
-	}
-  }
-  return obj;
-}
-
-function gentabs(d) {
-	var str = "";
-	for(var i = 0; i< d; ++i) str += '\t';
-	return str;
-}
-
-function isObject(val) {
-    if (val === null) { return false;}
-    return ( (typeof val === 'function') || (typeof val === 'object') );
-}
-
-function jsonToXML(kv, j, d) {
-	if(!isObject(j)) {
-		return gentabs(d) + "<" + kv + ">" + j + "</" + kv + ">\n";
-	}
-	let atList = j["@attributes"];
-	let atStr = "";
-	if (atList) {
-		for (var ak in atList) {
-			if(atList.hasOwnProperty(ak)) {
-				atStr += ' ';
-				atStr += ak;
-				atStr += '="';
-				atStr += atList[ak];
-				atStr +='"';
-			}
-		}
-	}
-	let insides = "";
-	
-	let keyOrder = [];
-	let keyTab = keyOrderTab[kv];
-
-	if (keyTab) {
-		let keySet = new Set();
-		for(var ek in j) { 
-			if(j.hasOwnProperty(ek) && ek != "@attributes") {
-				keySet.add(ek);
-			}
-		}
-		for (var ktx = 0; ktx < keyTab.length; ++ktx) {
-			let nkv = keyTab[ktx];
-			if (j.hasOwnProperty(nkv)) {
-				keyOrder.push(nkv);
-				keySet.delete(nkv);
-			}
-		}
-
-		if (keySet.size > 0) {
-			for (let sk of keySet.keys()) {
-				keyOrder.push(sk);
-				console.log("Missing: " + sk + " in: " + kv);
-			}
-		}
-	} else { // No keytab entry, do it the old-fashioned way.
-		for(var ek in j) { 
-			if(j.hasOwnProperty(ek) && ek != "@attributes") {
-				keyOrder.push(ek);
-			}
-		}
-	}
-
-	for(var i = 0; i < keyOrder.length; ++i) {
-		let kv = keyOrder[i];
-		let v = j[kv];
-		if (v === undefined) {
-			continue;
-		}
-		if (v.constructor === Array) {
-			for(var i = 0; i < v.length; ++i) {
-				insides += jsonToXML(kv, v[i], d + 1);
-				}
-		} else if (v.constructor == Object) {
-			insides += jsonToXML(kv, v, d + 1);
-		} else {
-				// Simple k/v pair
-			if(typeof v === "string") v = v.trim();
-			insides += jsonToXML(kv, v, d);
-		}
-	}
-	let str = gentabs(d - 1) + "<" + kv + atStr;
-	
-	if (insides.length > 0) {
-		str += '>\n' + insides + gentabs(d - 1) + '</' + kv + '>\n';
-	} else {
-		str += "/>";
-	}
-	return str;
-}
-
-function jsonToXMLString(root, json) {
-	let depth = 0;
-	return jsonToXML(root, json, depth);
-}
-
-// Thanks to Dr. White for the jsonequals function.
-// https://stackoverflow.com/users/2215072/drwhite
-// https://stackoverflow.com/questions/26049303/how-to-compare-two-json-have-the-same-properties-without-order
-function jsonequals(x, y) {
-	// If both x and y are null or undefined and exactly the same
-	if ( x === y ) {
-		return true;
-	}
-
-	// If they are not strictly equal, they both need to be Objects
-	if ( ! ( x instanceof Object ) || ! ( y instanceof Object ) ) {
-		return false;
-	}
-
-	// They must have the exact same prototype chain, the closest we can do is
-	// test the constructor.
-	if ( x.constructor !== y.constructor ) {
-		return false;
-	}
-
-	for ( var p in x ) {
-		// Inherited properties were tested using x.constructor === y.constructor
-		if ( x.hasOwnProperty( p ) ) {
-			// Allows comparing x[ p ] and y[ p ] when set to undefined
-			if ( ! y.hasOwnProperty( p ) ) {
-				return false;
-			}
-
-			// If they have the same strict value or identity then they are equal
-			if ( x[ p ] === y[ p ] ) {
-				continue;
-			}
-
-			// Numbers, Strings, Functions, Booleans must be strictly equal
-			if ( typeof( x[ p ] ) !== "object" ) {
-				return false;
-			}
-
-			// Objects and Arrays must be tested recursively
-			if ( !jsonequals( x[ p ],  y[ p ] ) ) {
-				return false;
-			}
-		}
-	}
-
-	for ( p in y ) {
-		// allows x[ p ] to be set to undefined
-		if ( y.hasOwnProperty( p ) && ! x.hasOwnProperty( p ) ) {
-			return false;
-		}
-	}
-	return true;
-}
-
-function sizeLimitScalar(v)
-{
-	if(v.constructor !== String) return v;
-	if(v.length < 64) return v;
-	return v.substr(0, 64) + '…';
-}
-
-function jsonToTable(json, obj, formatters) {
-	for (var k in json) {
-		if(json.hasOwnProperty(k)) {
-			let tr = $('<tr/>');
-			if(formatters && formatters[k]) {
-				let ourTD = $("<td class='tabval' colspan='2'/>");
-				formatters[k](json, k, ourTD);
-				tr.append(ourTD);
-				obj.append(tr);
-				continue;
-			}
-
-			let v = json[k];
-			if (v.constructor === Array) {
-				let intTab = $('<table/>'); // subtable for array elements
-				intTab.append($("<th class='arhead' colspan='3'/>").html(k + ':'));
-				for(var ix = 0; ix < v.length; ++ix) {
-					let tra = $('<tr/>');
-					tra.append($("<td class='arindex'/>").html(ix)); // show array index
-					let aobj = v[ix];
-					if (aobj.constructor == Array || aobj.constructor == Object) {
-						let deepTab = $('<table/>'); 
-						let deeper = jsonToTable(aobj, deepTab, formatters);
-						tra.append($("<td class='arsubtab'/>").html(deeper));
-					} else {
-						tra.append($("<td class='arscal'/>").html(sizeLimitScalar(aobj)));
-					}
-					intTab.append(tra);
-				}
-				tr.append(intTab);
-			} else if(v.constructor === Object) {
-				tr.append($("<td class='keyval'/>").html(k + ':'));
-				let intTab = $('<table/>');
-				let inside = jsonToTable(v, intTab, formatters);
-				tr.append($("<td class='tabval' colspan='2'/>").html(inside));
-				
-			} else {
-				tr.append($("<td class='keyval'/>").html(k + ':'));
-				tr.append($("<td class='tabval'/>").html(sizeLimitScalar(v)));
-				//tr.append($('<td/>'));
-			}
-			obj.append(tr);
-		}	
-	}
-	return obj;
-}
-
-
-/*******************************************************************************
-
-		Handlebars formatters
-
-********************************************************************************
-*/
-
-function convertHexTo50(str)
-{
-	let v = parseInt(str, 16);
-	if (v & 0x80000000) {
-			v -= 0x100000000;
-		}
-	let vr = Math.round( ((v + 0x80000000) * 50) / 0x100000000);
-	return vr;
-}
-
-function fixhex(v) {
-	if(v === undefined) return v;
-	if(typeof v !== "string") return v;
-	let ranged = v;
-	if (v.startsWith('0x')) {
-
-		let asInt= parseInt(v.substring(2, 10), 16);
-		// Convert to signed 32 bit.
-		if (asInt & 0x80000000) {
-			asInt -= 0x100000000;
-		}
-		ranged = Math.round( ((asInt + 0x80000000) * 50) / 0x100000000);
-		if (v.length > 10) {
-			ranged += '…';
-		}
-	}
-	return ranged;
-}
-
-// scale 0x00000000 to 0x7FFFFFFF to 0-50
-function fixpos50(v) {
-	if(v === undefined) return undefined;
-	if(typeof v !== "string") return v;
-	let ranged = v;
-	if (v.startsWith('0x')) {
-		let asInt= parseInt(v.substring(2, 10), 16);
-		ranged = Math.round( (asInt * 50) / 0x7FFFFFFF);
-		if (v.length > 10) {
-			ranged += '…';
-		}
-	}
-	return ranged;
-}
-
-
-function fmtMidiCC(v) {
-	if(v === undefined) return 0;
-	if(typeof v !== "string") return v;
-
-	let res = v;
-	if (v.startsWith('0x')) {
-		let asInt= parseInt(v.substring(2, 10), 16);
-		// Convert to signed 32 bit.
-		if (asInt & 0x80000000) {
-			asInt -= 0x100000000;
-		}
-		// Midi CC params range from 0 to 127
-		res = Math.round( (asInt + 0x80000000) * 127 / 0x100000000);
-	}
-	if (v.length > 10) {
-		res += '…';
-	}
-	return res;
-}
-
-
-function fixpan(v) {
-	if(v === undefined) return 0;
-	if(typeof v !== "string") return v;
-	let ranged = v;
-	if (v.startsWith('0x')) {
-		let asInt= parseInt(v.substring(2, 10), 16);
-		// Convert to signed 32 bit.
-		if (asInt & 0x80000000) {
-			asInt -= 0x100000000;
-		}
-		let rangedm32to32 = Math.round( ((asInt + 0x80000000) * 64) / 0x100000000) - 32;
-		if (rangedm32to32 === 0) ranged = 0;
-		else if (rangedm32to32 < 0) ranged = Math.abs(rangedm32to32) + 'L';
-		 else ranged = rangedm32to32 + 'R';
-	}
-	if (v.length > 10) {
-		ranged += '…';
-	}
-	return ranged;
-}
-
-Handlebars.registerHelper('fixh', fixhex);
-Handlebars.registerHelper('fixpan',fixpan);
-Handlebars.registerHelper('fixpos50',fixpos50);
-Handlebars.registerHelper('fmtMidiCC',fmtMidiCC);
-// Vibrato (and other mod source scaling).
-function fixm50to50(v) {
-	if(v === undefined) return 0;
-	if(typeof v !== "string") return v;
-	let res = v;
-	if (v.startsWith('0x')) {
-		let asInt= parseInt(v.substring(2, 10), 16);
-		// Convert to signed 32 bit.
-		if (asInt & 0x80000000) {
-			asInt -= 0x100000000;
-		}
-		// mod matrix weights range from 0xC0000000 to 0x3FFFFFF, and we want to show it
-		// as -50 to 50
-		res = Math.round( ((asInt + 0x80000000) * 200) / 0x100000000) - 100;
-	}
-	if (v.length > 10) {
-		res += '…';
-	}
-	return res;
-}
-
-
-Handlebars.registerHelper('fixrev', function (v) {
-	if (v === undefined) return v;
-	let vn = Number(v);
-	let ranged = Math.round( (vn * 50) / 0x7FFFFFFF);
-	return ranged;
-});
-
-
-Handlebars.registerHelper('fixphase', function (v) {
-	if (v === undefined) return v;
-	let vn = Number(v);
-	if (vn == -1) return 'off';
-	// convert to unsigned 32 bits and divide by scaling factor.
-	return Math.round((Number(vn) >>> 0) / 11930464);
-});
-
-
-Handlebars.registerHelper('fmtmoddest', function (tv) {
-	if (tv === undefined) return "";
-	let tvn = Number(tv);
-	if (tvn === 0) return 'carrier';
-	if (tvn === 1) return 'mod 1';
-	return 'Unknown';
-
-});
-
-Handlebars.registerHelper('fmttime', function (tv) {
-	if(tv === undefined) return tv;
-	let t = Number(tv) / 1000;
-	let v = t.toFixed(3);
-	return v;
-});
-
-
-Handlebars.registerHelper('fmtonoff', function (tv) {
-	if(tv === undefined) return "";
-	let tvn = Number(tv);
-	if (tvn > 0) return 'on';
-	return 'off';
-});
-
-
-Handlebars.registerHelper('fmttransp', function (osc) {
-	if(osc === undefined) return "";
-	let amt = Number(osc.transpose) + Number(osc.cents) / 100;
-	return amt.toFixed(2);
-});
-
-var priorityTab = ["low", "medium", "high"];
-
-Handlebars.registerHelper('fmtprior', function (p) {
-	if(p === undefined) return "";
-	p = Number(p);
-	if(p < 0 || p >= priorityTab.length) return '';
-	return priorityTab[p];
-});
-
-
-var syncLevelTab = ["off", "4 bars", "2 bars", "1 bar", "2nd", "4th", "8th", "16th", "32nd", "64th"];
-
-Handlebars.registerHelper('fmtsync', function (tv) {
-	if(tv === undefined) return "";
-	let tvn = Number(tv);
-	return syncLevelTab[tvn];
-});
-
-
-Handlebars.registerHelper('shrinkifneeded', function (s) {
-	if(s === undefined) return "";
-	if (s.length <= 6) {
-		return s;
-	}
-	return"<div class='textsm2'>" + s + "</div>";
-});
-
-var sidechain_release = [261528,38632, 19552, 13184, 9872, 7840, 6472, 5480, 4736, 4152, 3680, 3296, 2976,
-2704, 2472, 2264, 2088, 1928, 1792, 1664, 1552, 1448, 1352, 1272, 1192, 1120, 1056, 992, 936, 880, 832,
-784, 744, 704, 664, 624, 592, 560, 528, 496, 472, 448, 424, 400, 376, 352, 328, 312, 288, 272, 256];
-
-var sidechain_attack = [1048576, 887876, 751804, 636588, 539028, 456420, 386472, 327244, 277092,
-234624, 198668, 168220, 142440, 120612, 102128, 86476, 73224, 62000, 52500, 44452, 37640, 31872,
-26988, 22852, 19348, 16384, 13876, 11748, 9948, 8428, 7132, 6040, 5112, 4328, 3668, 3104, 2628,
-2224, 1884, 1596, 1352, 1144, 968, 820, 696, 558, 496, 420, 356, 304, 256];
-
-function binaryIndexOf(tab,	seek) {
-	if (seek === undefined) return undefined;
- 
-	var	minX = 0;
-	var	maxX= tab.length - 1;
-	var	curX;
-	var	curItem;
- 
-	while (minX	<= maxX) {
-		curX = (minX + maxX) / 2 | 0;
-		curItem	= tab[curX];
- 
-		if (curItem	> seek)	{
-			minX = curX	+ 1;
-		}
-		else if	(curItem < seek) {
-			maxX = curX	- 1;
-		}
-		else {
-			return curX;
-		}
-	}
-	return maxX;
-}
-
-Handlebars.registerHelper('fmtscrelease', function (sv) {
-	return binaryIndexOf(sidechain_release, sv);
-	
-});
-
-Handlebars.registerHelper('fmtscattack', function (sv) {
-	return binaryIndexOf(sidechain_attack, sv);
-	
-});
 
 /* Plotters
 */
@@ -607,13 +87,6 @@ function genColorTab(colors)
 	return colTab;
 }
 
-function forceArray(obj) {
-	if(obj !== undefined && obj.constructor === Array) return obj;
-	let aObj = [];
-	if(obj === undefined) return aObj;
-	aObj[0] = obj;
-	return aObj;
-}
 
 // Used to cope with y addresses of -32768
 function rowYfilter(row) {
@@ -876,16 +349,6 @@ function trackKind(track) {
  *******************************************************************************
 */
 
-// Root class for all view/controllers
-class DRView {
-	constructor(inits) {
-		if(inits) {
-			Object.assign(this, inits);
-		}
-	}
-};
-
-
 
 
 /*******************************************************************************
@@ -894,12 +357,6 @@ class DRView {
 		
  *******************************************************************************
 */
-
-
-
-class Sound extends DRView {
-
-};
 
 
 function formatSound(obj)
@@ -1015,90 +472,6 @@ function viewSound(e, songJ) {
 	 }
 }
 
-/*******************************************************************************
-
-	KIT
-
- *******************************************************************************
-*/
-
-
-
-class Kit extends DRView {
-
-};
-
-
-function openKitSound(e, kitTab, kitParams, track) {
-	let target = e.target;
-	let ourX = Number(target.getAttribute('kitItem'));
-
-	var aKitSound;
-	if (ourX >= 0) {
-		aKitSound = kitTab[ourX];
-	} else {
-		aKitSound = kitParams;
-		if(!aKitSound) return;
-	}
-
-	let ourRow = target.parentNode;
-	let nextRow = ourRow.nextElementSibling;
-	let ourTab = ourRow.parentNode;
-	if (nextRow && nextRow.classList.contains('soundentry')) {
-		ourTab.removeChild(nextRow);
-		target.textContent = "►";
-		return;
-	}
-	var noteSound = {};
-	if(track && track.noteRows && ourX >= 0) {
-		let noteRowA= forceArray(track.noteRows.noteRow);
-		for (var i = 0; i < noteRowA.length; ++i) {
-			let aRow = noteRowA[i];
-			if(Number(aRow.drumIndex) === ourX) {
-				 noteSound = aRow.soundParams;
-				 break;
-			}
-		}
-	}
-
-	let newRow = $("<tr class='soundentry'/>");
-	let newData =$("<td  colspan='8'/>");
-
-	formatSound(newData, aKitSound, aKitSound.defaultParams, aKitSound.soundParams, noteSound);
-
-	newRow.append(newData);
-	if (nextRow) {
-		ourTab.insertBefore(newRow[0], nextRow);
-	} else {
-		ourTab.appendChild(newRow[0]);
-	}
-	target.textContent = "▼";
-}
-
-function formatKit(json, obj, kitParams, track) {
-	
-	let kitList = forceArray(json.soundSources.sound);
-	
-	let tab = $("<table class='kit_tab'/>");
-	let hasKitParams = kitParams !== undefined;
-	tab.append(sample_list_header({hasKitParams: hasKitParams}));
-	
-	for(var i = 0; i < kitList.length; ++i) {
-		let kit = kitList[i];
-		formatSampleEntry(kit, tab, i);
-	}
-	
-	
-	obj.append(tab);
-
-	let opener = function (e) {
-		let js = json;
-		openKitSound(e, kitList, kitParams, track);
-	};
-	$('.kit_opener').on('click', opener);
-}
-
-
 
 /*******************************************************************************
 
@@ -1106,11 +479,6 @@ function formatKit(json, obj, kitParams, track) {
 
  *******************************************************************************
 */
-
-class Track extends DRView {
-
-};
-
 
 function plotKit13(track, reftrack, obj) {
 	let kitItemH = 8;
@@ -1611,12 +979,6 @@ function soundViewButton(trackNum, obj) {
 
  *******************************************************************************
 */
-
-
-class Song extends DRView {
-
-};
-
 
 function pasteTrackios(e, jDoc) {
 	
@@ -2129,3 +1491,5 @@ function setEditText(fname, text)
 
 	});
 }
+
+export {formatSound, formatSampleEntry};

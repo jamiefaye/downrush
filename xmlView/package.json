@@ -11,6 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "jquery": "^3.3.1",
+    "jquery-contextmenu": "^3.0.0-beta.2",
     "webpack": "^4.1.1"
   },
   "devDependencies": {
