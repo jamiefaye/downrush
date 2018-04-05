@@ -1,6 +1,6 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import {formatSound, formatSampleEntry} from "./viewXML.js";
-import {sample_list_header, wavegroup_template} from "./templates.js";
+import {formatSound, sample_path_prefix} from "./viewXML.js";
+import {sample_list_header, sample_entry_template, wavegroup_template} from "./templates.js";
 import {forceArray} from "./JsonXMLUtils.js";
 import WaveSurfer from './js/wavesurfer.js';
 import RegionPlugin  from'./js/plugins/wavesurfer.regions.js';
@@ -149,7 +149,7 @@ function openKitWave(e, kitTab, kitParams, track) {
 	var kitEditor;
 	if (filePath) {
 		console.log("open: " + filePath);
-		kitEditor = new KitEdit(filePath);
+		kitEditor = new KitEdit(filePath, aKitSound);
 		newData.append(kitEditor.waveElement);
 		newRow.append(newData);
 		kitEditor.loadFile(filePath);
@@ -160,6 +160,30 @@ function openKitWave(e, kitTab, kitParams, track) {
 		ourTab.appendChild(newRow[0]);
 	}
 	target.textContent = "▼";
+}
+
+function fmtTime(tv) {
+	if(tv === undefined) return tv;
+	let t = Number(tv) / 1000;
+	let v = t.toFixed(3);
+	return v;
+}
+
+function fmtTime3(tv) {
+	let t = Number(tv);
+	return t.toFixed(3);
+}
+function formatSampleEntry(sound, obj, ix)
+{
+	let context = $.extend(true, {}, sound);
+	context.index = ix;
+	context.sample_path_prefix = sample_path_prefix;
+
+	// If Osc2 does not have a sample defined for it, strike osc2 from the context
+	if (!context.osc2 || !context.osc2.fileName || $.isEmptyObject(context.osc2.fileName)) {
+		delete context.osc2;
+	}
+	obj.append(sample_entry_template(context));
 }
 
 
@@ -192,11 +216,12 @@ var gIdCounter = 0;
 
 class KitEdit {
 	
-  constructor(fname, whenDone) {
+  constructor(fname, kitSound, whenDone) {
 	this.fname = fname;
 	this.idNumber = gIdCounter++;
 	this.idString = "" + this.idNumber;
 	this.homeId = this.idFor(name);
+	this.kitSound = kitSound;
 	this.whenDone = whenDone;
 	this.waveElement = wavegroup_template({idsuffix: this.idNumber});
   }
@@ -211,12 +236,27 @@ class KitEdit {
 		this.wave = new Wave(this.idFor('waveform'));
 	}
 	this.wave.openOnBuffer(data);
+	if (this.kitSound) {
+		this.wave.initialZone = this.kitSound.osc1.zone;
+	}
 	if(this.whenDone) {
 		this.whenDone(data);
 	}
-	// this.startGuiCheck();
-	// let loadEndTime = performance.now();
-	// console.log("Load time: " + (loadEndTime - loadStartTime));
+
+	this.wave.surfer.on('start-end-change', (w, e)=>{
+		let {start, end} = this.wave.getSelection();
+		this.kitSound.osc1.zone.startMilliseconds = Math.round(start * 1000);
+		this.kitSound.osc1.zone.endMilliseconds = Math.round(end * 1000);
+
+		let soundE = $(w.rootDivId).closest('.soundentry')[0];
+		let soundHdr = soundE.previousElementSibling;
+		let textEl = $('.startms', soundHdr);
+		$(textEl).text(fmtTime3(start));
+		$('.endms', soundHdr).text(fmtTime3(end));
+	
+		// Find the display value (for now, React soon!)
+		
+	});
 }
 
 // use ajax to load wav data
@@ -248,8 +288,6 @@ class KitEdit {
 	});
 }
 
-	
-	
 }; // End of class
 
 

@@ -1169,18 +1169,6 @@ function formatSong(jdoc, obj) {
 	});
 }
 
-function formatSampleEntry(sound, obj, ix)
-{
-	let context = jQuery.extend(true, {}, sound);
-	context.index = ix;
-	context.sample_path_prefix = sample_path_prefix;
-
-	// If Osc2 does not have a sample defined for it, strike osc2 from the context
-	if (!context.osc2 || !context.osc2.fileName || $.isEmptyObject(context.osc2.fileName)) {
-		delete context.osc2;
-	}
-	obj.append(sample_entry_template(context));
-}
 
 /*******************************************************************************
 
@@ -1492,4 +1480,4 @@ function setEditText(fname, text)
 	});
 }
 
-export {formatSound, formatSampleEntry};
+export {formatSound, sample_path_prefix};
