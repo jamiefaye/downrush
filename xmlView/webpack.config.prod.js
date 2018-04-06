@@ -7,5 +7,16 @@ module.exports = {
   output: {
     filename: 'viewXML.js',
 	 path: path.resolve(__dirname, '../DR/xmlView/')
-  }
+  },
+  module: {
+      rules: [
+      {
+        test: /\.(jsx)$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "babel-loader"
+        }
+      }
+    ]
+  },
 };

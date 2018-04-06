@@ -238,7 +238,8 @@ var sample_list_header = Handlebars.compile(`<tr class='kithead'>
 <th>Start</th>
 <th>End</th>
 <th>Player</th>
-</tr>`);
+</tr>
+`);
 
 var sample_entry_template = Handlebars.compile(`<tr class='kitentry' contenteditable='true'>
 <td class='kit_opener' kitItem='{{index}}'>&#x25BA</td>

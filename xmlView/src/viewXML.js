@@ -7,7 +7,7 @@ require('file-loader?name=[name].[ext]!../viewXML.htm');
 require('file-loader?name=[name].[ext]!../css/edit.css');
 import {keyOrderTab} from "./keyOrderTab.js";
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
-import {formatKit} from "./KitEdit.js";
+import {formatKit} from "./WaveView.jsx";
 import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, jsonToTable, forceArray} from "./JsonXMLUtils.js";
 import {convertHexTo50, fixm50to50} from "./HBHelpers.js";
 
