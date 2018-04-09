@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from 'jquery';
 
 /*******************************************************************************
 
@@ -6,6 +6,10 @@ import $ from'./js/jquery-3.2.1.min.js';
 
 ********************************************************************************
 */
+
+// Table of classes to create for given JSON object property names
+
+var nameToClassTab = {};
 
 /**
 * Converts passed XML string into a DOM element.
@@ -55,11 +59,11 @@ function xmlToJson(xml, fill) {
 		const item = xml.childNodes.item(i);
 		const nodeName = item.nodeName;
 		if (item.nodeType === 3) continue; // JFF don't bother with text nodes
-//		let classToMake = nameToClassTab[nodeName];
+		let classToMake = nameToClassTab[nodeName];
 		let childToFill;
-//		if (classToMake) {
-//			childToFill = new classToMake();
-//		}
+		if (classToMake) {
+			childToFill = new classToMake();
+		}
 	if (typeof (obj[nodeName]) === 'undefined') {
 		obj[nodeName] = xmlToJson(item, childToFill);
 	  } else {
@@ -68,11 +72,28 @@ function xmlToJson(xml, fill) {
 			obj[nodeName] = [];
 			obj[nodeName].push(old);
 		}
-		obj[nodeName].push(xmlToJson(item)); // ,childToFill
+		obj[nodeName].push(xmlToJson(item, childToFill)); // ,childToFill
 	   }
 	}
   }
   return obj;
+}
+
+
+function reviveClass(k, v) {
+	let classToMake = nameToClassTab[k];
+	if (classToMake) {
+		if (Array.isArray(v)) {
+			for(var i = 0; i < v.length; ++i) {
+				v[i] = new classToMake(v[i]);
+			}
+			return v;
+		} else {
+			let nv = new classToMake(v);
+			return nv;
+		}
+	}
+	return v;
 }
 
 function gentabs(d) {
@@ -287,4 +308,4 @@ function forceArray(obj) {
 }
 
 
-export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, jsonToTable, forceArray};
+export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, nameToClassTab};

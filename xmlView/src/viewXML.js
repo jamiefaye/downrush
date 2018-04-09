@@ -1,5 +1,5 @@
 
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from'jquery';
 import Clipboard from "./js/clipboard.min.js";
 import tippy from "./js/tippy.all.min.js";
 import {patchNames, kitNames} from "./js/delugepatches.js";
@@ -7,9 +7,12 @@ require('file-loader?name=[name].[ext]!../viewXML.htm');
 require('file-loader?name=[name].[ext]!../css/edit.css');
 import {keyOrderTab} from "./keyOrderTab.js";
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
-import {formatKit} from "./WaveView.jsx";
-import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, jsonToTable, forceArray} from "./JsonXMLUtils.js";
+import {formatKit} from "./KitList.jsx";
+import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray} from "./JsonXMLUtils.js";
 import {convertHexTo50, fixm50to50} from "./HBHelpers.js";
+import React from 'react';
+import ReactDOM from "react-dom";
+import {Kit, Track, Sound, Song} from "./Classes.js";
 
 import {
 local_exec_head,
@@ -269,7 +272,7 @@ function newToOldNotes(track) {
 
 function pasteTrackText(text, songDoc) {
 	if (!songDoc.jsonDocument) return;
-	let pastedJSON = JSON.parse(text) // , reviveClass);
+	let pastedJSON = JSON.parse(text, reviveClass);
 
 	if (!pastedJSON || !pastedJSON.track) {
 		alert("Invalid data on clipboard.");
@@ -449,6 +452,7 @@ function viewSound(e, songJ) {
 
 	if (hideShow === "▼") {
 		target.textContent = "►";
+		ReactDOM.unmountComponentAtNode($(where)[0]);
 		$(where)[0].innerHTML = "";
 	} else {
 		let trackType = trackKind(trackD);
@@ -465,7 +469,8 @@ function viewSound(e, songJ) {
 			if (trackD['soundSources']) {
 				kitroot = trackD;
 			}
-			formatKit(kitroot, where, trackD.kitParams, trackD);
+
+			formatKit(kitroot, trackD.kitParams, where[0]);
 		} else if(trackType === 'midi') {
 			formatMidi(where, trackD);
 		}
@@ -1230,7 +1235,8 @@ class DelugeDoc {
 	} else if(json['sound']) {
 		formatSound(obj, json.sound, json.sound.defaultParams, json.sound.soundParams);
 	} else if(json['kit']) {
-		formatKit(json.kit, obj, json.kitParams);
+		let wherePut = $(this.idFor('jtab'))[0];
+		formatKit(json.kit, json.kitParams, wherePut);
 	} else {
 		jsonToTable(json, obj);
 	}

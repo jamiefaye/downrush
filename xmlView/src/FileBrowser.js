@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from 'jquery';
 import Handlebars from './js/handlebars.min.js';
 import {FileWidget, makeDateTime} from './FileWidget.js';
 import {open_frame, save_frame, dir_template} from './fileWidgetTemplates.js';
