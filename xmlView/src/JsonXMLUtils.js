@@ -1,4 +1,6 @@
 import $ from 'jquery';
+import {keyOrderTab} from "./keyOrderTab.js";
+import {isObservableArray} from 'mobx';
 
 /*******************************************************************************
 
@@ -10,6 +12,14 @@ import $ from 'jquery';
 // Table of classes to create for given JSON object property names
 
 var nameToClassTab = {};
+
+
+function isArrayLike(val) {
+    if (val === null) { return false;}
+    if (Array.isArray(val)) return true;
+    if (isObservableArray(val)) return true;
+    return false;
+}
 
 /**
 * Converts passed XML string into a DOM element.
@@ -83,7 +93,7 @@ function xmlToJson(xml, fill) {
 function reviveClass(k, v) {
 	let classToMake = nameToClassTab[k];
 	if (classToMake) {
-		if (Array.isArray(v)) {
+		if (isArrayLike(v)) {
 			for(var i = 0; i < v.length; ++i) {
 				v[i] = new classToMake(v[i]);
 			}
@@ -106,6 +116,10 @@ function isObject(val) {
     if (val === null) { return false;}
     return ( (typeof val === 'function') || (typeof val === 'object') );
 }
+
+
+
+
 
 function jsonToXML(kv, j, d) {
 	if(!isObject(j)) {
@@ -164,7 +178,7 @@ function jsonToXML(kv, j, d) {
 		if (v === undefined) {
 			continue;
 		}
-		if (v.constructor === Array) {
+		if (isArrayLike(v)) {
 			for(var i = 0; i < v.length; ++i) {
 				insides += jsonToXML(kv, v[i], d + 1);
 				}

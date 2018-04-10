@@ -34,7 +34,7 @@ class WaveView extends React.Component {
 
 	this.wave.surfer.on('start-end-change', (w, e)=>{
 		let {start, end} = this.wave.getSelection();
-		this.props.selectionUpdate(start, end, this.props.index);
+		this.props.selectionUpdate(start, end);
 	});
 
 }

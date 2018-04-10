@@ -5,14 +5,13 @@ import tippy from "./js/tippy.all.min.js";
 import {patchNames, kitNames} from "./js/delugepatches.js";
 require('file-loader?name=[name].[ext]!../viewXML.htm');
 require('file-loader?name=[name].[ext]!../css/edit.css');
-import {keyOrderTab} from "./keyOrderTab.js";
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";
 import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray} from "./JsonXMLUtils.js";
 import {convertHexTo50, fixm50to50} from "./HBHelpers.js";
 import React from 'react';
 import ReactDOM from "react-dom";
-import {Kit, Track, Sound, Song} from "./Classes.js";
+import {Kit, Track, Sound, Song} from "./Classes.jsx";
 
 import {
 local_exec_head,
@@ -1301,7 +1300,13 @@ class DelugeDoc {
 	if (this.firmwareVersionFound) {
 		headerStr += this.firmwareVersionFound + "\n";
 	}
- 	let saveText = headerStr + jsonToXMLString("song", this.jsonDocument.song);
+	let jsonDoc =  this.jsonDocument
+	let toMake;
+	if (jsonDoc['song']) toMake = 'song';
+	  else if (jsonDoc['sound']) toMake = 'sound';
+	   else if (jsonDoc['kit']) toMake = 'kit';
+	if (!toMake) return;
+ 	let saveText = headerStr + jsonToXMLString(toMake, this.jsonDocument[toMake]);
  	this.fname = toName;
 	this.saveFile(toName, saveText);
 }
