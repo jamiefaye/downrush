@@ -25,7 +25,6 @@ paster_template,
 midiKnobTemplate,
 modKnobTemplate,
 midiModKnobTemplate,
-sample_entry_template,
 sample_name_prefix,
 sound_template
 } from "./templates.js";

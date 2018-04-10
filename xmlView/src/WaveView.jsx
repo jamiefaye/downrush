@@ -6,9 +6,9 @@ class WaveView extends React.Component {
 
   componentDidMount() {
   	this.$el = $(this.el);
-	this.kitSound = this.props.kitProps;
+	this.osc = this.props.osc;
 	
-	this.filename = this.kitSound.osc1.fileName;
+	this.filename = this.osc.fileName;
 	console.log("Load: " + this.filename);
 	this.loadFile("/" + this.filename);
   }
@@ -28,8 +28,8 @@ class WaveView extends React.Component {
 		this.wave = new Wave(this.el);
 	}
 	this.wave.openOnBuffer(data);
-	if (this.kitSound) {
-		this.wave.initialZone = this.kitSound.osc1.zone;
+	if (this.osc) {
+		this.wave.initialZone = this.osc.zone;
 	}
 
 	this.wave.surfer.on('start-end-change', (w, e)=>{

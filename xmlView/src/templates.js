@@ -241,24 +241,6 @@ var sample_list_header = Handlebars.compile(`<tr class='kithead'>
 </tr>
 `);
 
-var sample_entry_template = Handlebars.compile(`<tr class='kitentry' contenteditable='true'>
-<td class='kit_opener' kitItem='{{index}}'>&#x25BA</td>
-<td>{{name}}</td>
-<td style='text-align: left'>{{osc1.fileName}}</td>
-<td class='startms'>{{fmttime osc1.zone.startMilliseconds}}</td>
-<td class='endms'>{{fmttime osc1.zone.endMilliseconds}}</td>
-<td><audio controls class='smallplayer' preload='none' style='background-color: blue'><source src='{{sample_path_prefix}}{{osc1.fileName}}' type='audio/wav'></audio></td>
-</tr>
-{{#if osc2.fileName}}
-<tr><td colspan='2'></td>
-<td>{{osc2.fileName}}</td>
-<td class='startms2'>{{fmttime osc2.zone.startMilliseconds}}</td>
-<td class='endmms2'>{{fmttime osc2.zone.endMilliseconds}}</td>
-<td><controls audio class='smallplayer'  preload='none'><source src='{{sample_path_prefix}}{{osc2.fileName}}' type='audio/wav'></audio></td>
-</tr>
-{{/if}}
-<div class='kit_spot'> <div>`);
-
 var sample_name_prefix = Handlebars.compile(`<tr class='sampleprefix'>
 <tr>
 <td class='sampfile sample1' style='text-align: left' colspan='10'>{{osc1.fileName}}
@@ -710,7 +692,6 @@ midiKnobTemplate,
 modKnobTemplate,
 midiModKnobTemplate,
 sample_list_header,
-sample_entry_template,
 sample_name_prefix,
 sound_template,
 wavegroup_template

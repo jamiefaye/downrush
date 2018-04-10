@@ -1,11 +1,12 @@
-import $ from 'jquery';
 import createClass from "create-react-class";
 import React from 'react';
 import ReactDOM from "react-dom";
+import Dropdown from 'react-dropdown';
 import {WaveView} from './WaveView.jsx';
+import {openFileBrowser} from './FileBrowser.js';
 import {forceArray} from "./JsonXMLUtils.js";
 import {formatSound, sample_path_prefix} from "./viewXML.js";
-import { observer } from 'mobx-react';
+import {observer} from 'mobx-react';
 import {observable} from 'mobx';
 
 function fmtTime(tv) {
@@ -16,6 +17,51 @@ function fmtTime(tv) {
 }
 
 var loopModeTab = ["Cut", "Once", "Loop", "Stretch"];
+
+var KIT_SOUND_NAMES = ["KICK",
+"SNARE",
+"HATC",
+"HATO",
+"SHAK",
+"TAMB",
+"CLAV",
+"CLAP",
+"CRAS",
+"COWB",
+"MARACA",
+"RIDE",
+"RIM",
+"TOMB",
+"TOMH",
+"TOML",
+"TOMM",
+"TOMT",
+"TRIA",
+"SNAP",
+"BLOC",
+"BONH",
+"BONL",
+"CABA",
+"CHIM",
+"CHIN",
+"CLIC",
+"CONH",
+"CONL",
+"CONM",
+"CONT",
+"DRON",
+"GUIR",
+"HCLO",
+"HOME",
+"META",
+"PERC",
+"QUIJ",
+"RANK",
+"SOLA",
+"TIMH",
+"TIML",
+"TRAS",
+"TRUC"];
 
 function WedgeIndicator(props) {
 	return (<span className='wedge' onClick={props.toggler}>
@@ -31,33 +77,66 @@ function WedgeIndicator(props) {
   	};
   }
 
-  doClick(e) {
-  	this.props.osc1.loopMode = (this.props.osc1.loopMode) + 1 & 3;
+  selectionUpdate(b, e) {
+  	let newZone = {startMilliseconds: Math.round(b * 1000) , endMilliseconds: Math.round(e * 1000)};
+  	this.props.osc.zone = newZone;
   }
 
-  selectionUpdate(b, e) {
+  onLoopSelect(item) {
+  	let ix = loopModeTab.findIndex((v)=>{
+  	let r = v === item.value;
+  	return r});
+  	if (ix >= 0) {
+		this.props.osc.loopMode = ix;
+  	}
+  }
 
-  	let newZone = {startMilliseconds: Math.round(b * 1000) , endMilliseconds: Math.round(e * 1000)};
-  	this.props.osc1.zone = newZone;
+  onNameSelect(item) {
+  	console.log(item.value);
+	this.props.kito.name = item.value;
+  }
+
+  onChangeFilePath(e) {
+  	let initial = this.props.osc.fileName;
+	if (!initial) initial = '/';
+	let me = this; 
+	openFileBrowser({
+		initialPath:  initial,
+		opener: function(name) {
+			me.props.osc.fileName = name;
+		}
+	});
   }
 
   render() {
+   const defaultOption = loopModeTab[this.props.osc.loopMode];
    return (<React.Fragment>
 		<tr className="kitentry" key='sinfo'>
 		  <td className="kit_open" kititem={this.props.index}><WedgeIndicator openned={this.state.openned} toggler={e=>{this.setState((prevState, props) =>{
 		  	return  {openned: !prevState.openned}})}}/></td>
-		  <td>{this.props.name}</td>
-		  <td style={{textAlign: 'left'}}>{this.props.osc1.fileName}</td>
-		  <td className="startms">{fmtTime(this.props.osc1.zone.startMilliseconds)}</td>
-		  <td className="endms">{fmtTime(this.props.osc1.zone.endMilliseconds)}</td>
-		  <td className="loopMode" onClick={(e)=>{this.doClick(e)}}>{loopModeTab[this.props.osc1.loopMode]}</td>
-		  <td><audio controls className="smallplayer" preload="none" style={{backgroundColor: 'blue'}}><source src={'/' + this.props.osc1.fileName} type="audio/wav" /></audio></td>
+		  {this.state.openned ? (<td><Dropdown options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} value={this.props.name} /></td>)
+		  					  :  <td>{this.props.name}</td>}
+		  {this.state.openned ? (<td onClick={this.onChangeFilePath.bind(this)} style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)
+		  					  : (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)}
+	  	  <td className="startms">{fmtTime(this.props.osc.zone.startMilliseconds)}</td>
+		  <td className="endms">{fmtTime(this.props.osc.zone.endMilliseconds)}</td>
+		   {this.state.openned ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
+							: (<td className="loopMode">{defaultOption}</td>)}
+		  <td><audio controls className="smallplayer" preload="none"><source src={'/' + this.props.osc.fileName} type="audio/wav" /></audio></td>
 		</tr>
-		{this.state.openned ? (<WaveView key='wview' kitProps={this.props} selectionUpdate={this.selectionUpdate.bind(this)} />) : null}
+		{this.state.openned ? (<WaveView key='wview' osc={this.props.osc} selectionUpdate={this.selectionUpdate.bind(this)} />) : null}
    </React.Fragment>)
   }
+};
 
 
+@observer class KitEntry extends React.Component {
+
+  render() {
+	return (<tbody>
+	<SampleEntry className='kitentry' kito={this.props.kito} index={this.props.index} name={this.props.name} key='osc1' osc={this.props.osc1} />
+	</tbody>)
+  }
 };
 
 
@@ -65,7 +144,7 @@ function WedgeIndicator(props) {
   render() {
 
 	return (
-	<table className='kit_tab'><tbody>
+	<table className='kit_tab'><thead>
  	<tr className='kithead'>
 	<th className='kit_opener xmltab' kititem='-1'>►</th>
 	<th>Name</th>
@@ -74,19 +153,16 @@ function WedgeIndicator(props) {
 	<th>End</th>
 	<th>Mode</th>
 	<th>Player</th>
-	</tr>
+	</tr></thead>
 	{this.props.kitList.map((line, ix) =>{
-		return <SampleEntry index={ix} key={ix} {...line} />
+		return <KitEntry index={ix} key={ix} kito={line} {...line} />
 	})}
-	</tbody>
 	</table>
 	);
   }
 };
 
-@observer class KitView {
-	@observable kitList;
-
+class KitView {
 	constructor(context) {
 		this.context = context;
 		this.kitObj = context.kitObj;
