@@ -2,7 +2,11 @@ import {jsonequals, xmlToJson, reviveClass, forceArray, nameToClassTab} from "./
 import { observer, observable} from 'mobx';
 
 class DRObject {
-
+	constructor(o) {
+		if(o) {
+			Object.assign(this, o);
+		}
+	}
 };
 
 class Osc extends DRObject {
@@ -33,10 +37,9 @@ class Song extends DRObject {
 
 };
 
-nameToClassTab.kit = Kit;
-nameToClassTab.track = Track;
+//nameToClassTab.kit = Kit;
 nameToClassTab.sound = Sound;
-nameToClassTab.song = Song;
+//nameToClassTab.song = Song;
 nameToClassTab.osc1 = Osc;
 nameToClassTab.osc2 = Osc;
 nameToClassTab.soundSources = SoundSources;

@@ -500,6 +500,9 @@ function plotKit13(track, reftrack, obj) {
 		}
 	}
 	let totH = ((ymax - ymin) + 1) * kitItemH;
+	if (!reftrack.kit.soundSources) {
+		let meow = 2;
+	}
 	let kitList = forceArray(reftrack.kit.soundSources.sound);
 	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
 	for (var rx = 0; rx < rowList.length; ++rx) {
