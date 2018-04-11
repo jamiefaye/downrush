@@ -71,13 +71,19 @@ export default class Wave {
 		let dur = me.surfer.getDuration();
 		let w = me.surfer.drawer.getWidth();
 		if (dur !== 0) {
-			let pps = w / dur * 0.9;
+			let pps = w / dur * 0.95;
 			me.surfer.zoom(pps);
 		}
 		// me.disableWaveTracker = me.setupWaveTracker();
 		
 		if (me.initialZone) {
-			me.setSelection(me.initialZone.startMilliseconds / 1000, me.initialZone.endMilliseconds / 1000);
+			if (me.initialZone.endMilliseconds === -1) {
+				let dur = me.surfer.getDuration();
+				me.setSelection(0, dur);
+				me.surfer.fireEvent('start-end-change', me);
+			} else {
+				me.setSelection(me.initialZone.startMilliseconds / 1000, me.initialZone.endMilliseconds / 1000);
+			}
 		}
 		me.setupSelectionWatcher();
 

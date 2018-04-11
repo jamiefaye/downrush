@@ -25,7 +25,7 @@ class FileBrowser {
 	let me = this;
 	$('.fw-close', widg).click(e=> {me.cancel(e)});
 	let h = Math.min(Math.max(window.innerHeight / 2, 200), 450);
-	console.log(window.innerHeight + " " + h);
+	// console.log(window.innerHeight + " " + h);
 	$('.wrapper').css('height', h + 'px');
 
 	this.browser = new FileWidget({template: dir_template,

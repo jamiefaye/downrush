@@ -8,9 +8,8 @@ class WaveView extends React.Component {
   	this.$el = $(this.el);
 	this.osc = this.props.osc;
 	
-	this.filename = this.osc.fileName;
-	console.log("Load: " + this.filename);
-	this.loadFile("/" + this.filename);
+	this.filename = this.props.fname;
+	this.loadFile("/" + this.filename,(d)=>{this.setEditData(d, false)});
   }
 
   componentWillUnmount() {
@@ -21,26 +20,43 @@ class WaveView extends React.Component {
     return <tr><td colSpan='8'><div ref={el => this.el = el}> </div></td></tr>;
   }
 
+  shouldComponentUpdate(nextProps, prevState) {
+	let should = this.filename !== nextProps.fname;
+	if(should) this.changeToFile();
+	return should;
+  }
 
-  setEditData(data)
+  changeToFile(filen) {
+	this.osc = this.props.osc;
+	this.filename = this.osc.fileName;
+	this.loadFile("/" + this.filename, (d)=>{
+		this.setEditData(d, true);
+		this.forceUpdate();
+	});
+  }
+
+  setEditData(data, reselect)
 {
 	if(!this.wave) {
 		this.wave = new Wave(this.el);
 	}
 	this.wave.openOnBuffer(data);
-	if (this.osc) {
-		this.wave.initialZone = this.osc.zone;
-	}
 
 	this.wave.surfer.on('start-end-change', (w, e)=>{
 		let {start, end} = this.wave.getSelection();
 		this.props.selectionUpdate(start, end);
 	});
 
+	if (reselect) {
+		this.wave.initialZone = {startMilliseconds: 0, endMilliseconds: -1};
+	} else if (this.osc) {
+		this.wave.initialZone = this.osc.zone;
+		this.wave.initialZone.endMilliseconds = Number(this.wave.initialZone.endMilliseconds);
+	}
 }
 
 // use ajax to load wav data
-  loadFile(fname)
+  loadFile(fname, done)
 {
 	this.fname = fname;
 	let me = this;
@@ -51,8 +67,7 @@ class WaveView extends React.Component {
 	method:		'GET',
 	type        : 'GET',
 	success     : function(data, textStatus, jqXHR){
-		//me.whenDone(data);
-		me.setEditData(data);
+		done(data);
 	},
 
 	error: function (data, textStatus, jqXHR) {

@@ -314,7 +314,7 @@ function jsonToTable(json, obj, formatters) {
 }
 
 function forceArray(obj) {
-	if(obj !== undefined && obj.constructor === Array) return obj;
+	if(obj !== undefined && isArrayLike(obj)) return obj;
 	let aObj = [];
 	if(obj === undefined) return aObj;
 	aObj[0] = obj;

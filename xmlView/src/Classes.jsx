@@ -16,6 +16,10 @@ class Sound extends DRObject {
 	@observable name;
 };
 
+class SoundSources extends DRObject {
+	@observable.shallow sound;
+};
+
 class Kit extends DRObject {
 
 };
@@ -35,5 +39,6 @@ nameToClassTab.sound = Sound;
 nameToClassTab.song = Song;
 nameToClassTab.osc1 = Osc;
 nameToClassTab.osc2 = Osc;
+nameToClassTab.soundSources = SoundSources;
 
 export {Kit, Track, Sound, Song};

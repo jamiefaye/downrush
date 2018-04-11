@@ -8,6 +8,8 @@ import {forceArray} from "./JsonXMLUtils.js";
 import {formatSound, sample_path_prefix} from "./viewXML.js";
 import {observer} from 'mobx-react';
 import {observable} from 'mobx';
+import {empty_sound_template} from './templates.js';
+import {getXmlDOMFromString, xmlToJson} from './JsonXMLUtils.js';
 
 function fmtTime(tv) {
 	if(tv === undefined) return tv;
@@ -69,11 +71,21 @@ function WedgeIndicator(props) {
 	</span>);
 }
 
+@observer class PlayerControl extends React.Component {
+  render() {
+  console.log("PlayerControl " + this.props.fileName);
+	return <audio controls className="smallplayer" preload="none"><source src={'/' + this.props.fileName} type="audio/wav" /></audio>;
+  }
+};
+
+
 @observer class SampleEntry extends React.Component {
-  constructor() {
+  constructor(props) {
 	super();
+	// We use an endMilliseconds == -1 as a trigger flag to cause the WaveView to update the selection immediately
+	// with actual valid data. It also serves as indicator to open the WaveView initially.
 	this.state = {
-		openned: false,
+		openned: Number(props.osc.zone.endMilliseconds) === -1,
   	};
   }
 
@@ -122,9 +134,9 @@ function WedgeIndicator(props) {
 		  <td className="endms">{fmtTime(this.props.osc.zone.endMilliseconds)}</td>
 		   {this.state.openned ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
 							: (<td className="loopMode">{defaultOption}</td>)}
-		  <td><audio controls className="smallplayer" preload="none"><source src={'/' + this.props.osc.fileName} type="audio/wav" /></audio></td>
+		  <td><PlayerControl fileName={this.props.osc.fileName}/></td>
 		</tr>
-		{this.state.openned ? (<WaveView key='wview' osc={this.props.osc} selectionUpdate={this.selectionUpdate.bind(this)} />) : null}
+		{this.state.openned ? (<WaveView key='wview' osc={this.props.osc} fname={this.props.osc.fileName} selectionUpdate={this.selectionUpdate.bind(this)} />) : null}
    </React.Fragment>)
   }
 };
@@ -141,12 +153,36 @@ function WedgeIndicator(props) {
 
 
 @observer class KitList extends React.Component {
+  newDrum(e) {
+    
+	if (!this.browsePath) this.browsePath = '/SAMPLES/';
+	let me = this; 
+	openFileBrowser({
+		initialPath:  this.browsePath,
+		opener: function(name) {
+			me.browsePath = name;
+			me.addDrum(name);
+		}
+	});
+  }
+
+  addDrum(name) {
+	if(name.startsWith('/')) { 
+	name = name.slice(1);
+	}
+	let filledSoundT = empty_sound_template({fileName: name, name: 'USER'});
+	let newDrumX = getXmlDOMFromString(filledSoundT);
+	let newSound = xmlToJson(newDrumX).sound;
+	this.props.kitList.push(newSound);
+	// this.forceUpdate();
+  }
+ 
   render() {
 
 	return (
 	<table className='kit_tab'><thead>
  	<tr className='kithead'>
-	<th className='kit_opener xmltab' kititem='-1'>►</th>
+	<th className='kit_opener xmltab' kititem='-1' onClick={this.newDrum.bind(this)}>+</th>
 	<th>Name</th>
 	<th>Path</th>
 	<th>Start</th>
@@ -162,7 +198,7 @@ function WedgeIndicator(props) {
   }
 };
 
-class KitView {
+  class KitView {
 	constructor(context) {
 		this.context = context;
 		this.kitObj = context.kitObj;
@@ -176,7 +212,7 @@ class KitView {
 };
 
 function formatKit(json, kitParams, where) {
-	let kitList = forceArray(json.soundSources.sound);
+	let kitList = json.soundSources.sound; // forceArray(json.soundSources.sound);
 	let context = {};
 	context.kitList = kitList;
 	context.sample_path_prefix = sample_path_prefix;
