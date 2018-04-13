@@ -2,35 +2,39 @@ import $ from 'jquery';
 import React from 'react';
 import Wave from './Wave.js';
 
+
 class WaveView extends React.Component {
   constructor() {
 	super();
 	this.state = {};
   }
+
   componentDidMount() {
 	this.osc = this.props.osc;
 	this.filename = this.props.filename;
 	this.hasNewData = false;
 	this.state = {};
-	// this.loadFile("/" + this.filename,(d)=>{this.setEditData(d, false)});
   }
 
   componentWillUnmount() {
     // this.$el.somePlugin('destroy');
   }
 
-/*
-  captureSurferRef(el) {
-	console.log("CaptureRef");
-	this.el = el;
-	//this.$el = $(this.el);
-  }
-*/
   command(name, e) {
-  	if(name = 'play' && this.wave) {
+  	if(name = 'play') {
   		let startT = Number(this.osc.zone.startMilliseconds) / 1000;
   		let endT =  Number(this.osc.zone.endMilliseconds) / 1000;
-		this.wave.surfer.play(startT, endT);
+		if(this.wave) {
+			this.wave.surfer.play(startT, endT);
+		} else {
+			if(!this.state.data) {
+				this.loadFile("/" + this.props.filename,(d)=>{
+					this.playLocal(d, startT, endT);
+				});
+			} else {
+				this.playLocal(this.state.data, startT, endT);
+			}
+		}
   	}
   }
 
@@ -100,7 +104,7 @@ class WaveView extends React.Component {
   }
 
 // use ajax to load wav data
-  loadFile(filename)
+  loadFile(filename, done)
 {	// console.log("loadFile");
 	this.loadInProgress = true;
 	this.filename = this.props.filename;
@@ -114,6 +118,7 @@ class WaveView extends React.Component {
 	type        : 'GET',
 	success     : function(data, textStatus, jqXHR){
 		me.setEditData(data);
+		if(done) done(data);
 	},
 
 	error: function (data, textStatus, jqXHR) {
@@ -127,8 +132,52 @@ class WaveView extends React.Component {
 	},
 
 	});
-}
+  }
+
+  setupTinyPlayer() {
+    if(this.tinyPlayer) return;
+    this.tinyPlayer = new TinyPlayer();
+  }
+
+  playLocal(buf, startT, endT) {
+	this.setupTinyPlayer();
+	this.tinyPlayer.setBlob(buf,()=>{
+		this.tinyPlayer.play(startT, endT);
+	});
+  }
 
 }; // End of class
+
+var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+class TinyPlayer {
+	setBlob(blob, ready) {
+		let me = this;
+		if(this.blob === blob) {
+			ready(this);
+		}
+		this.blob = blob;
+		
+		let fileReader = new FileReader();
+		let arrayBuffer;
+
+		fileReader.onloadend = () => {
+			arrayBuffer = fileReader.result;
+			audioCtx.decodeAudioData(arrayBuffer, function(buffer) {
+				me.buffer = buffer;
+				ready(me);
+			});
+		};
+		fileReader.readAsArrayBuffer(blob);
+	}
+
+  play(startT, endT) {
+	this.source = audioCtx.createBufferSource(); // creates a sound source
+	this.source.buffer = this.buffer;
+	this.source.connect(audioCtx.destination);
+	this.source.start(0, startT, endT - startT);
+  }
+};
+
 
 export {WaveView};
