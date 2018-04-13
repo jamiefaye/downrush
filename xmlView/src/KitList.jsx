@@ -67,15 +67,22 @@ var KIT_SOUND_NAMES = ["KICK",
 
 function WedgeIndicator(props) {
 	return (<span className='wedge' onClick={props.toggler}>
-	{props.openned ? '▼' : '►'}
+	{props.opened ? '▼' : '►'}
 	</span>);
 }
 
 @observer class PlayerControl extends React.Component {
+/*
   render() {
   console.log("PlayerControl " + this.props.fileName);
 	return <audio controls className="smallplayer" preload="none"><source src={'/' + this.props.fileName} type="audio/wav" /></audio>;
   }
+*/
+   render() {
+    return (<React.Fragment>
+	<button className='butn plsybut' title='Play'><img width='16px'height='18px' className='playbutimg' onClick={(e)=>{this.props.command('play', e)}} src='img/glyphicons-174-play.png'/></button>
+   </React.Fragment>);
+	}
 };
 
 
@@ -85,7 +92,7 @@ function WedgeIndicator(props) {
 	// We use an endMilliseconds == -1 as a trigger flag to cause the WaveView to update the selection immediately
 	// with actual valid data. It also serves as indicator to open the WaveView initially.
 	this.state = {
-		openned: Number(props.osc.zone.endMilliseconds) === -1,
+		opened: Number(props.osc.zone.endMilliseconds) === -1,
   	};
   }
 
@@ -104,7 +111,7 @@ function WedgeIndicator(props) {
   }
 
   onNameSelect(item) {
-  	console.log(item.value);
+  	//console.log(item.value);
 	this.props.kito.name = item.value;
   }
 
@@ -116,27 +123,36 @@ function WedgeIndicator(props) {
 		initialPath:  initial,
 		opener: function(name) {
 			me.props.osc.fileName = name;
+			me.props.osc.zone.endMilliseconds = -1; // trigger recalc of zone.
 		}
 	});
+  }
+
+  command(name, val) {
+	if(!this.waveViewRef) {
+		console.log("Trouble!");
+	} else {
+		this.waveViewRef.command(name, val);
+	}
   }
 
   render() {
    const defaultOption = loopModeTab[this.props.osc.loopMode];
    return (<React.Fragment>
 		<tr className="kitentry" key='sinfo'>
-		  <td className="kit_open" kititem={this.props.index}><WedgeIndicator openned={this.state.openned} toggler={e=>{this.setState((prevState, props) =>{
-		  	return  {openned: !prevState.openned}})}}/></td>
-		  {this.state.openned ? (<td><Dropdown options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} value={this.props.name} /></td>)
+		  <td className="kit_open" kititem={this.props.index}><WedgeIndicator opened={this.state.opened} toggler={e=>{this.setState((prevState, props) =>{
+		  	return  {opened: !prevState.opened}})}}/></td>
+		  {this.state.opened ? (<td><Dropdown options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} value={this.props.name} /></td>)
 		  					  :  <td>{this.props.name}</td>}
-		  {this.state.openned ? (<td onClick={this.onChangeFilePath.bind(this)} style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)
+		  {this.state.opened ? (<td onClick={this.onChangeFilePath.bind(this)} style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)
 		  					  : (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)}
 	  	  <td className="startms">{fmtTime(this.props.osc.zone.startMilliseconds)}</td>
 		  <td className="endms">{fmtTime(this.props.osc.zone.endMilliseconds)}</td>
-		   {this.state.openned ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
+		   {this.state.opened ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
 							: (<td className="loopMode">{defaultOption}</td>)}
-		  <td><PlayerControl fileName={this.props.osc.fileName}/></td>
+		  <td><PlayerControl fileName={this.props.osc.fileName} command={(e)=>{this.command('play', e)}}/></td>
 		</tr>
-		{this.state.openned ? (<WaveView key='wview' osc={this.props.osc} fname={this.props.osc.fileName} selectionUpdate={this.selectionUpdate.bind(this)} />) : null}
+		<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} osc={this.props.osc} filename={this.props.osc.fileName} selectionUpdate={this.selectionUpdate.bind(this)} />
    </React.Fragment>)
   }
 };

@@ -413,3 +413,9 @@ div.paramrun {
   display: block;
   padding: 8px 10px;
 }
+
+.butn {
+vertical-align: top;
+height: 28px;
+min-height: 28px;
+}
