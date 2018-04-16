@@ -13,6 +13,9 @@ import {isObservableArray} from 'mobx';
 
 var nameToClassTab = {};
 
+var doNotSerialize = new Set();
+doNotSerialize.add('uniqueId');
+
 
 function isArrayLike(val) {
     if (val === null) { return false;}
@@ -91,6 +94,7 @@ function xmlToJson(xml, fill) {
 
 
 function reviveClass(k, v) {
+	if (doNotSerialize.has(k)) return undefined;
 	let classToMake = nameToClassTab[k];
 	if (classToMake) {
 		if (isArrayLike(v)) {
@@ -118,9 +122,6 @@ function isObject(val) {
 }
 
 
-
-
-
 function jsonToXML(kv, j, d) {
 	if(!isObject(j)) {
 		return gentabs(d) + "<" + kv + ">" + j + "</" + kv + ">\n";
@@ -146,13 +147,13 @@ function jsonToXML(kv, j, d) {
 	if (keyTab) {
 		let keySet = new Set();
 		for(var ek in j) { 
-			if(j.hasOwnProperty(ek) && ek != "@attributes") {
+			if(!doNotSerialize.has(ek) && j.hasOwnProperty(ek) && ek != "@attributes") {
 				keySet.add(ek);
 			}
 		}
 		for (var ktx = 0; ktx < keyTab.length; ++ktx) {
 			let nkv = keyTab[ktx];
-			if (j.hasOwnProperty(nkv)) {
+			if (!doNotSerialize.has(nkv) && j.hasOwnProperty(nkv)) {
 				keyOrder.push(nkv);
 				keySet.delete(nkv);
 			}
@@ -166,7 +167,7 @@ function jsonToXML(kv, j, d) {
 		}
 	} else { // No keytab entry, do it the old-fashioned way.
 		for(var ek in j) { 
-			if(j.hasOwnProperty(ek) && ek != "@attributes") {
+			if(!doNotSerialize.has(ek) && j.hasOwnProperty(ek) && ek != "@attributes") {
 				keyOrder.push(ek);
 			}
 		}
@@ -227,7 +228,7 @@ function jsonequals(x, y) {
 
 	for ( var p in x ) {
 		// Inherited properties were tested using x.constructor === y.constructor
-		if ( x.hasOwnProperty( p ) ) {
+		if (!doNotSerialize.has(p) && x.hasOwnProperty( p ) ) {
 			// Allows comparing x[ p ] and y[ p ] when set to undefined
 			if ( ! y.hasOwnProperty( p ) ) {
 				return false;
@@ -252,7 +253,7 @@ function jsonequals(x, y) {
 
 	for ( p in y ) {
 		// allows x[ p ] to be set to undefined
-		if ( y.hasOwnProperty( p ) && ! x.hasOwnProperty( p ) ) {
+		if (!doNotSerialize.has(p) && y.hasOwnProperty( p ) && ! x.hasOwnProperty( p ) ) {
 			return false;
 		}
 	}

@@ -20,6 +20,7 @@
     "react-autocomplete-input": "^1.0.8",
     "react-dom": "^16.3.1",
     "react-dropdown": "^1.4.0",
+    "shortid": "^2.2.8",
     "webpack": "^4.1.1"
   },
   "devDependencies": {

@@ -1,11 +1,13 @@
 import {jsonequals, xmlToJson, reviveClass, forceArray, nameToClassTab} from "./JsonXMLUtils.js";
 import { observer, observable} from 'mobx';
+import shortid from 'shortid';
 
 class DRObject {
 	constructor(o) {
 		if(o) {
 			Object.assign(this, o);
 		}
+		this.uniqueId = shortid.generate();
 	}
 };
 

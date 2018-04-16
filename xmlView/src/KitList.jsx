@@ -9,7 +9,9 @@ import {formatSound, sample_path_prefix} from "./viewXML.js";
 import {observer} from 'mobx-react';
 import {observable} from 'mobx';
 import {empty_sound_template} from './templates.js';
-import {getXmlDOMFromString, xmlToJson} from './JsonXMLUtils.js';
+import {getXmlDOMFromString, xmlToJson, reviveClass} from './JsonXMLUtils.js';
+import shortid from 'shortid';
+import {WedgeIndicator, IconPushButton, PushButton, CopyToClipButton, PasteTarget} from './GUIstuff.jsx';
 
 function fmtTime(tv) {
 	if(tv === undefined) return tv;
@@ -65,24 +67,39 @@ var KIT_SOUND_NAMES = ["KICK",
 "TRAS",
 "TRUC"];
 
-function WedgeIndicator(props) {
-	return (<span className='wedge' onClick={props.toggler}>
-	{props.opened ? '▼' : '►'}
-	</span>);
+class Checkbox extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {checked: false};
+	}
+
+	render() {
+		return (<input className='achkbox' type='checkbox' checked={this.state.checked} onClick={e=>{
+			let newState = !this.state.checked;
+			this.setState({checked: newState});
+			this.props.checker(this, newState);
+		}}></input>);
+	
+	}
 }
 
-@observer class PlayerControl extends React.Component {
-/*
+class PlayerControl extends React.Component {
   render() {
-  console.log("PlayerControl " + this.props.fileName);
-	return <audio controls className="smallplayer" preload="none"><source src={'/' + this.props.fileName} type="audio/wav" /></audio>;
+	return (
+	<IconPushButton className='plsybut' title='Play'
+		onPush={(e)=>{this.props.command('play', e)}}
+		src='img/glyphicons-174-play.png'/>)
   }
-*/
-   render() {
-    return (<React.Fragment>
-	<button className='butn plsybut' title='Play'><img width='16px'height='18px' className='playbutimg' onClick={(e)=>{this.props.command('play', e)}} src='img/glyphicons-174-play.png'/></button>
-   </React.Fragment>);
-	}
+};
+
+class EditButtons extends React.Component {
+  render() {
+	return (<React.Fragment>
+	<td><Checkbox checker={this.props.checker} /></td>
+	<td>↕</td>
+	</React.Fragment>);
+
+  }
 };
 
 
@@ -97,8 +114,10 @@ function WedgeIndicator(props) {
   }
 
   selectionUpdate(b, e) {
-  	let newZone = {startMilliseconds: Math.round(b * 1000) , endMilliseconds: Math.round(e * 1000)};
-  	this.props.osc.zone = newZone;
+	if (this.props.editing) {
+		let newZone = {startMilliseconds: Math.round(b * 1000) , endMilliseconds: Math.round(e * 1000)};
+		this.props.osc.zone = newZone;
+	}
   }
 
   onLoopSelect(item) {
@@ -111,21 +130,8 @@ function WedgeIndicator(props) {
   }
 
   onNameSelect(item) {
-  	//console.log(item.value);
+  	console.log("Name select: " + item.value);
 	this.props.kito.name = item.value;
-  }
-
-  onChangeFilePath(e) {
-  	let initial = this.props.osc.fileName;
-	if (!initial) initial = '/';
-	let me = this; 
-	openFileBrowser({
-		initialPath:  initial,
-		opener: function(name) {
-			me.props.osc.fileName = name;
-			me.props.osc.zone.endMilliseconds = -1; // trigger recalc of zone.
-		}
-	});
   }
 
   command(name, val) {
@@ -138,21 +144,23 @@ function WedgeIndicator(props) {
 
   render() {
    const defaultOption = loopModeTab[this.props.osc.loopMode];
+   let openEditing = this.props.editing && this.state.opened;
    return (<React.Fragment>
 		<tr className="kitentry" key='sinfo'>
 		  <td className="kit_open" kititem={this.props.index}><WedgeIndicator opened={this.state.opened} toggler={e=>{this.setState((prevState, props) =>{
 		  	return  {opened: !prevState.opened}})}}/></td>
-		  {this.state.opened ? (<td><Dropdown options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} value={this.props.name} /></td>)
+		  {this.props.editing ? (<EditButtons checker={this.props.checker}/>) : null}
+		  {openEditing ? (<td><Dropdown options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} value={this.props.name} /></td>)
 		  					  :  <td>{this.props.name}</td>}
-		  {this.state.opened ? (<td onClick={this.onChangeFilePath.bind(this)} style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)
+		  {openEditing ? (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)
 		  					  : (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)}
 	  	  <td className="startms">{fmtTime(this.props.osc.zone.startMilliseconds)}</td>
 		  <td className="endms">{fmtTime(this.props.osc.zone.endMilliseconds)}</td>
-		   {this.state.opened ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
+		   {openEditing ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
 							: (<td className="loopMode">{defaultOption}</td>)}
-		  <td><PlayerControl fileName={this.props.osc.fileName} command={(e)=>{this.command('play', e)}}/></td>
+		  <td><PlayerControl command={(e)=>{this.command('play', e)}}/></td>
 		</tr>
-		<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} osc={this.props.osc} filename={this.props.osc.fileName} selectionUpdate={this.selectionUpdate.bind(this)} />
+		<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} editing={openEditing} osc={this.props.osc} filename={this.props.osc.fileName} selectionUpdate={this.selectionUpdate.bind(this)} />
    </React.Fragment>)
   }
 };
@@ -160,15 +168,35 @@ function WedgeIndicator(props) {
 
 @observer class KitEntry extends React.Component {
 
+	constructor(props) {
+		super(props);
+		this.selected = new Set();
+		this.checker = this.checker.bind(this);
+	}
+
+  checker(which, state) {
+	this.props.informCheck(this, which, state);
+  }
+ 
   render() {
 	return (<tbody>
-	<SampleEntry className='kitentry' kito={this.props.kito} index={this.props.index} name={this.props.name} key='osc1' osc={this.props.osc1} />
+	<SampleEntry className='kitentry' ref={el => this.kitref = el} kito={this.props.kito} checker={this.checker}
+		editing={this.props.editing} index={this.props.index} name={this.props.name} key='osc1' osc={this.props.osc1} />
 	</tbody>)
   }
 };
 
 
+
 @observer class KitList extends React.Component {
+  constructor(props) {
+  	super(props);
+
+  	this.state = {};
+  	this.informCheck = this.informCheck.bind(this);
+  	this.selected = new Set();
+  }
+
   newDrum(e) {
     
 	if (!this.browsePath) this.browsePath = '/SAMPLES/';
@@ -182,9 +210,19 @@ function WedgeIndicator(props) {
 	});
   }
 
+  informCheck(entry, box, state) {
+	if (state) {
+		this.selected.add(entry.props.kito);
+		console.log("Added entry " + entry.props.keyValue);
+	} else {
+		this.selected.delete(entry.props.kito);
+		console.log("Removed entry " + entry.props.keyValue);
+	}
+  }
+
   addDrum(name) {
 	if(name.startsWith('/')) { 
-	name = name.slice(1);
+		name = name.slice(1);
 	}
 	let filledSoundT = empty_sound_template({fileName: name, name: 'USER'});
 	let newDrumX = getXmlDOMFromString(filledSoundT);
@@ -192,13 +230,15 @@ function WedgeIndicator(props) {
 	this.props.kitList.push(newSound);
 	// this.forceUpdate();
   }
- 
+
   render() {
 
 	return (
 	<table className='kit_tab'><thead>
  	<tr className='kithead'>
-	<th className='kit_opener xmltab' kititem='-1' onClick={this.newDrum.bind(this)}>+</th>
+	 <th className="edit_open"><WedgeIndicator opened={this.state.editOpened} toggler={e=>{this.setState((prevState, props) =>{
+		return  {editOpened: !prevState.editOpened}})}}/></th>
+	{this.state.editOpened ? (<th colSpan='2'></th>) : null}
 	<th>Name</th>
 	<th>Path</th>
 	<th>Start</th>
@@ -207,10 +247,67 @@ function WedgeIndicator(props) {
 	<th>Player</th>
 	</tr></thead>
 	{this.props.kitList.map((line, ix) =>{
-		return <KitEntry index={ix} key={ix} kito={line} {...line} />
+		return <KitEntry index={ix} key={line.uniqueId} keyValue={line.uniqueId} kito={line} {...line} editing={this.state.editOpened} informCheck={this.informCheck}/>
 	})}
+	{this.state.editOpened ? (
+		<tbody>
+		<tr>
+		<td colSpan='10'>
+		<PushButton title='Add Sample' onPush={this.newDrum.bind(this)}/>
+		<PushButton title='Change' onPush={this.changeFile.bind(this)}/>
+		<CopyToClipButton title='Copy' getText={this.copySel.bind(this)} />
+		<PushButton title='Delete' onPush={this.deleteSel.bind(this)}/>
+		<PasteTarget label=' Paste kits: ' paste={this.handlePaste.bind(this)}/>
+		</td>
+		</tr>
+		</tbody>
+	) : null}
 	</table>
 	);
+  }
+
+  handlePaste(text) {
+  	let pastedIn = JSON.parse(text, reviveClass);
+  	if (!pastedIn.sound) return;
+  	this.props.kitList.push(...pastedIn.sound);
+  	
+	console.log(text);
+  }
+
+  changeFile(e) {
+	let selList = [...this.selected];
+	if (selList.length === 0) return;
+
+	let toChange = selList[0];
+	
+
+  	let initial = toChange.osc1.fileName;
+  	if (!initial.startsWith('/')) initial = '/' + initial;
+	if (!initial) initial = '/';
+	let me = this; 
+	openFileBrowser({
+		initialPath:  initial,
+		opener: function(name) {
+			toChange.osc1.fileName = name.startsWith('/') ? name.substring(1) : name;
+			toChange.osc1.zone.endMilliseconds = -1;	// trigger recalc of zone.
+		}
+	});
+  }
+
+  deleteSel() {
+	for (let k of this.selected) {
+		let ix = this.props.kitList.indexOf(k);
+		if (ix >= 0) {
+			this.props.kitList.splice(ix, 1);
+		}
+	}
+  }
+
+  copySel() {
+	let copyList = [...this.selected];
+	let clipObj = {sound: copyList};
+	let asText = JSON.stringify(clipObj, null, 1);
+	return asText;
   }
 };
 

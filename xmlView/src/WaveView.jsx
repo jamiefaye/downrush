@@ -40,7 +40,7 @@ class WaveView extends React.Component {
 
   render() {
   	if (this.props.open) {
-    	return <tr><td colSpan='8'><div  ref={el => this.el = el}> </div></td></tr>;
+    	return <tr><td colSpan={this.props.editing ? 10 : 8}><div  ref={el => this.el = el}> </div></td></tr>;
     } else return null;
   }
 
@@ -97,6 +97,7 @@ class WaveView extends React.Component {
   setEditData(data) {
 	// console.log("setEditData");
 	this.hasNewData = true;
+	this.tinyPlayer = undefined;
 	let newState = Object.assign({}, this.state);
 	newState.data = data;
 	this.setState(newState);
