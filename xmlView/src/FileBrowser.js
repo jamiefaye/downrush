@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from 'jquery';
 import Handlebars from './js/handlebars.min.js';
 import {FileWidget, makeDateTime} from './FileWidget.js';
 import {open_frame, save_frame, dir_template} from './fileWidgetTemplates.js';
@@ -25,7 +25,7 @@ class FileBrowser {
 	let me = this;
 	$('.fw-close', widg).click(e=> {me.cancel(e)});
 	let h = Math.min(Math.max(window.innerHeight / 2, 200), 450);
-	console.log(window.innerHeight + " " + h);
+	// console.log(window.innerHeight + " " + h);
 	$('.wrapper').css('height', h + 'px');
 
 	this.browser = new FileWidget({template: dir_template,
