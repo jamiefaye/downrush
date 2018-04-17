@@ -12,6 +12,8 @@ import {empty_sound_template} from './templates.js';
 import {getXmlDOMFromString, xmlToJson, reviveClass} from './JsonXMLUtils.js';
 import shortid from 'shortid';
 import {WedgeIndicator, IconPushButton, PushButton, CopyToClipButton, PasteTarget} from './GUIstuff.jsx';
+import {SortableContainer, SortableElement, SortableHandle, arrayMove} from 'react-sortable-hoc';
+import TextInput from 'react-autocomplete-input';
 
 function fmtTime(tv) {
 	if(tv === undefined) return tv;
@@ -92,16 +94,18 @@ class PlayerControl extends React.Component {
   }
 };
 
+const DragHandle = SortableHandle(() => <span>::</span>); // This can be any component you want ↕
+
+
 class EditButtons extends React.Component {
   render() {
 	return (<React.Fragment>
+	<td><DragHandle/></td>
 	<td><Checkbox checker={this.props.checker} /></td>
-	<td>↕</td>
 	</React.Fragment>);
 
   }
 };
-
 
 @observer class SampleEntry extends React.Component {
   constructor(props) {
@@ -129,9 +133,9 @@ class EditButtons extends React.Component {
   	}
   }
 
-  onNameSelect(item) {
-  	console.log("Name select: " + item.value);
-	this.props.kito.name = item.value;
+  onNameSelect(name) {
+  	console.log("Name select: " + name);
+	this.props.kito.name = name;
   }
 
   command(name, val) {
@@ -146,12 +150,14 @@ class EditButtons extends React.Component {
    const defaultOption = loopModeTab[this.props.osc.loopMode];
    let openEditing = this.props.editing && this.state.opened;
    return (<React.Fragment>
-		<tr className="kitentry" key='sinfo'>
+		<tr className="kitentry unselectable" key='sinfo'>
+		  {this.props.editing ? (<EditButtons checker={this.props.checker}/>) : null}
 		  <td className="kit_open" kititem={this.props.index}><WedgeIndicator opened={this.state.opened} toggler={e=>{this.setState((prevState, props) =>{
 		  	return  {opened: !prevState.opened}})}}/></td>
-		  {this.props.editing ? (<EditButtons checker={this.props.checker}/>) : null}
-		  {openEditing ? (<td><Dropdown options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} value={this.props.name} /></td>)
-		  					  :  <td>{this.props.name}</td>}
+		  {openEditing ? (<td><div class='autocompletediv'><TextInput options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} 
+			rows='1' cols='10' offsetX='120'
+			trigger='' defaultValue={this.props.name}/></div></td>)
+			 :  <td>{this.props.name}</td>}
 		  {openEditing ? (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)
 		  					  : (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)}
 	  	  <td className="startms">{fmtTime(this.props.osc.zone.startMilliseconds)}</td>
@@ -186,7 +192,7 @@ class EditButtons extends React.Component {
   }
 };
 
-
+const SortableKitEntry = SortableElement(KitEntry);
 
 @observer class KitList extends React.Component {
   constructor(props) {
@@ -195,7 +201,9 @@ class EditButtons extends React.Component {
   	this.state = {};
   	this.informCheck = this.informCheck.bind(this);
   	this.selected = new Set();
+
   }
+
 
   newDrum(e) {
     
@@ -236,9 +244,9 @@ class EditButtons extends React.Component {
 	return (
 	<table className='kit_tab'><thead>
  	<tr className='kithead'>
+ 	{this.state.editOpened ? (<th colSpan='2'></th>) : null}
 	 <th className="edit_open"><WedgeIndicator opened={this.state.editOpened} toggler={e=>{this.setState((prevState, props) =>{
 		return  {editOpened: !prevState.editOpened}})}}/></th>
-	{this.state.editOpened ? (<th colSpan='2'></th>) : null}
 	<th>Name</th>
 	<th>Path</th>
 	<th>Start</th>
@@ -247,11 +255,11 @@ class EditButtons extends React.Component {
 	<th>Player</th>
 	</tr></thead>
 	{this.props.kitList.map((line, ix) =>{
-		return <KitEntry index={ix} key={line.uniqueId} keyValue={line.uniqueId} kito={line} {...line} editing={this.state.editOpened} informCheck={this.informCheck}/>
+		return <SortableKitEntry index={ix} key={line.uniqueId} keyValue={line.uniqueId} kito={line} {...line} editing={this.state.editOpened} informCheck={this.informCheck}/>
 	})}
 	{this.state.editOpened ? (
 		<tbody>
-		<tr>
+		<tr className='kithead'>
 		<td colSpan='10'>
 		<PushButton title='Add Sample' onPush={this.newDrum.bind(this)}/>
 		<PushButton title='Change' onPush={this.changeFile.bind(this)}/>
@@ -311,17 +319,32 @@ class EditButtons extends React.Component {
   }
 };
 
-  class KitView {
-	constructor(context) {
-		this.context = context;
-		this.kitObj = context.kitObj;
-		this.jqElem = context.jqElem;
-	}
 
-	render() {
-		this.kitElem = React.createElement(KitList, this.context);
-		ReactDOM.render(this.kitElem, this.jqElem);
+const SortableKitList = SortableContainer(KitList);
+
+class KitView {
+  constructor(context) {
+		this.context = context;
+		this.soundSources = context.soundSources;
+		this.jqElem = context.jqElem;
+		this.kitList = context.kitList;
+		context.onSortEnd = this.onSortEnd.bind(this);
+  }
+
+  onSortEnd(move, evt) {
+  	let {oldIndex, newIndex} = move;
+	if (oldIndex !== newIndex) {
+		// console.log("Moving: " + oldIndex + " to: " + newIndex);
+		let movee = this.kitList[oldIndex];
+		this.kitList.splice(oldIndex, 1);
+		this.kitList.splice(newIndex, 0, movee);
 	}
+  }
+
+  render() {
+		this.kitElem = React.createElement(SortableKitList, this.context);
+		ReactDOM.render(this.kitElem, this.jqElem);
+  }
 };
 
 function formatKit(json, kitParams, where) {
@@ -329,7 +352,9 @@ function formatKit(json, kitParams, where) {
 	let context = {};
 	context.kitList = kitList;
 	context.sample_path_prefix = sample_path_prefix;
+	context.useDragHandle = true;
 	context.jqElem =  where;
+	context.soundSources = json.soundSources;
 	let kitView = new KitView(context);
 	kitView.render();
 }
