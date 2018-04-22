@@ -11,7 +11,7 @@ import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass
 import {convertHexTo50, fixm50to50} from "./HBHelpers.js";
 import React from 'react';
 import ReactDOM from "react-dom";
-import {Kit, Track, Sound, Song} from "./Classes.jsx";
+import {Kit, Track, Sound, Song, SoundSources} from "./Classes.jsx";
 
 import {
 local_exec_head,
@@ -26,6 +26,7 @@ midiKnobTemplate,
 modKnobTemplate,
 midiModKnobTemplate,
 sample_name_prefix,
+empty_kit_template,
 sound_template
 } from "./templates.js";
 
@@ -1184,7 +1185,7 @@ function formatSong(jdoc, obj) {
 */
 
 class DelugeDoc {
-  constructor(fname, text) {
+  constructor(fname, text, newKitFlag) {
   	this.idNumber = gIdCounter++;
 	this.idString = "" + this.idNumber;
 	this.fname = fname;
@@ -1209,6 +1210,10 @@ class DelugeDoc {
 	// Uncomment following to generate ordering table based on a real-world example.
 	// enOrderTab(asDOM);
 	var asJSON = xmlToJson(asDOM);
+	if (newKitFlag) {
+		asJSON.kit.soundSources = new SoundSources();
+		asJSON.kit.soundSources.sound = [];
+	}
 	this.jsonDocument = asJSON;
 	let jtabid = this.idFor('jtab');
 	$(jtabid).empty();
@@ -1393,6 +1398,8 @@ function setupGUI()
 			}
 		});
 	});
+	
+	$('.nkitbut').click(e=>{newKitDoc()});
 }
 
 
@@ -1457,6 +1464,12 @@ window.onload = onLoad;
 		}
 	});
 }
+
+function newKitDoc(e) {
+	let filledKitT = empty_kit_template();
+	focusDoc = new DelugeDoc("/KITS/KIT0.XML", filledKitT, true);
+	// this.forceUpdate();
+  }
 
 
 //editor

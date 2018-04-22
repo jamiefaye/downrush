@@ -71,7 +71,7 @@ export default class Wave {
 		let dur = me.surfer.getDuration();
 		let w = me.surfer.drawer.getWidth();
 		if (dur !== 0) {
-			let pps = w / dur * 0.95;
+			let pps = w / dur * 0.99;
 			me.surfer.zoom(pps);
 		}
 		// me.disableWaveTracker = me.setupWaveTracker();

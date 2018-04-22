@@ -46,4 +46,4 @@ nameToClassTab.osc1 = Osc;
 nameToClassTab.osc2 = Osc;
 nameToClassTab.soundSources = SoundSources;
 
-export {Kit, Track, Sound, Song};
+export {Kit, Track, Sound, Song, SoundSources};

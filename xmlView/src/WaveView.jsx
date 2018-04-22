@@ -1,31 +1,78 @@
 import $ from 'jquery';
 import React from 'react';
 import Wave from './Wave.js';
+import {WedgeIndicator, IconPushButton, PushButton} from './GUIstuff.jsx';
 
+
+class ZoomControls extends React.Component {
+
+	render() {
+	
+		return (<table><tbody><tr><td className='boffo'>
+			<IconPushButton className='butn' title='Zoom In'
+			onPush={(e)=>{this.props.command('zoomIn', e)}}
+			src='img/glyphicons-237-zoom-in.png'/>
+		</td></tr><tr><td className='boffo'>
+			<IconPushButton className='butn' title='Zoom Out'
+			onPush={(e)=>{this.props.command('zoomOut', e)}}
+			src='img/glyphicons-238-zoom-out.png'/>
+		</td></tr>
+		<tr><td height='32px'className='boffo'>
+			<WedgeIndicator opened={this.props.showTab} toggler={e=>{this.props.command('toggletab', e)}} />
+		</td></tr>	
+		</tbody></table>);
+	}
+};
 
 class WaveView extends React.Component {
   constructor() {
 	super();
 	this.state = {};
+	this.command = this.command.bind(this);
+	this.noteDone = this.noteDone.bind(this);
   }
 
   componentDidMount() {
 	this.osc = this.props.osc;
 	this.filename = this.props.filename;
 	this.hasNewData = false;
-	this.state = {};
+	if(this.props.open) {
+		this.loadFile("/" + this.props.filename);
+	}
   }
 
   componentWillUnmount() {
     // this.$el.somePlugin('destroy');
   }
 
-  command(name, e) {
-  	if(name = 'play') {
-  		let startT = Number(this.osc.zone.startMilliseconds) / 1000;
-  		let endT =  Number(this.osc.zone.endMilliseconds) / 1000;
+
+  zoom(amt) {
+	
+	let minPxWas = this.wave.surfer.params.minPxPerSec;
+	let newPx = minPxWas * amt;
+	let zoomLimit = 192000;
+	if (newPx > zoomLimit) newPx = zoomLimit;
+// console.log('zoom rate: ' + newPx);
+	this.wave.surfer.zoom(newPx);
+}
+
+  noteDone() {
+	this.panel.setPlayState(false);
+  }
+
+  command(name, e, panel) {
+	if(name === 'play') {
+		let startT = Number(this.osc.zone.startMilliseconds) / 1000;
+		let endT =  Number(this.osc.zone.endMilliseconds) / 1000;
+		// console.log("Play: " + startT + " End: " + endT);
+		this.panel = panel;
+		panel.setPlayState(true);
 		if(this.wave) {
-			this.wave.surfer.play(startT, endT);
+			if (this.wave.surfer.isPlaying()) {
+				this.wave.surfer.pause();
+			} else {
+				this.wave.surfer.play(startT, endT);
+			}
 		} else {
 			if(!this.state.data) {
 				this.loadFile("/" + this.props.filename,(d)=>{
@@ -35,15 +82,22 @@ class WaveView extends React.Component {
 				this.playLocal(this.state.data, startT, endT);
 			}
 		}
-  	}
+	} else if (name === 'zoomIn') {
+		this.zoom(2.0);
+	} else if (name === 'zoomOut') {
+		this.zoom(0.5);
+	} else if (name === 'toggletab') {
+		this.props.toggleTab();
+	}
   }
 
   render() {
-  	if (this.props.open) {
-    	return <tr><td colSpan={this.props.editing ? 10 : 8}><div  ref={el => this.el = el}> </div></td></tr>;
-    } else return null;
+	if (this.props.open) {
+		return <tr><td colSpan={this.props.editing ? 8 : 6}><div ref={el => this.el = el}> </div></td><td><ZoomControls command={this.command} showTab={this.props.showTab}/></td></tr>;
+	} else return null;
   }
-
+ 
+ /*
   shouldComponentUpdate(nextProps, prevState) {
 	let fileChanged = this.filename !== nextProps.filename;
 	let openChanged = this.props.open != nextProps.open;
@@ -51,7 +105,7 @@ class WaveView extends React.Component {
 
 	// return fileChanged || openChanged;
   }
-
+*/
   componentDidUpdate() {
 	// console.log("componentDidUpdate start");
 
@@ -71,7 +125,7 @@ class WaveView extends React.Component {
   }
 
   openWaveSurfer(data) {
-  	// console.log("b4 openWaveSurfer " + this.props.filename);
+	// console.log("b4 openWaveSurfer " + this.props.filename);
 	if(!this.wave) {
 		this.wave = new Wave(this.el);
 		// console.log("new Wave");
@@ -86,6 +140,14 @@ class WaveView extends React.Component {
 		}
 	});
 
+	this.wave.surfer.on('finish', (e)=>{
+		this.noteDone(e);
+	});
+
+	this.wave.surfer.on('pause', (e)=>{
+		this.noteDone(e);
+	});
+
 	if (this.osc) {
 		this.wave.initialZone = {};
 		this.wave.initialZone.startMilliseconds = Number(this.osc.zone.startMilliseconds);
@@ -98,9 +160,7 @@ class WaveView extends React.Component {
 	// console.log("setEditData");
 	this.hasNewData = true;
 	this.tinyPlayer = undefined;
-	let newState = Object.assign({}, this.state);
-	newState.data = data;
-	this.setState(newState);
+	this.setState({data: data});
 	this.loadInProgress = false;
   }
 
@@ -137,11 +197,16 @@ class WaveView extends React.Component {
 
   setupTinyPlayer() {
     if(this.tinyPlayer) return;
-    this.tinyPlayer = new TinyPlayer();
+    this.tinyPlayer = new TinyPlayer(this.noteDone);
   }
 
   playLocal(buf, startT, endT) {
 	this.setupTinyPlayer();
+	if (this.tinyPlayer.isPlaying()) {
+		this.tinyPlayer.stop();
+		this.noteDone();
+		return;
+	}
 	this.tinyPlayer.setBlob(buf,()=>{
 		this.tinyPlayer.play(startT, endT);
 	});
@@ -152,6 +217,21 @@ class WaveView extends React.Component {
 var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 class TinyPlayer {
+	constructor(noteDone) {
+		this.noteDone = noteDone;
+		this.ended = this.ended.bind(this);
+		this.playing = false;
+	}
+
+	ended() {
+		this.playing = false;
+		this.noteDone();
+	}
+
+	isPlaying() {
+		return this.playing;
+	}
+
 	setBlob(blob, ready) {
 		let me = this;
 		if(this.blob === blob) {
@@ -172,10 +252,17 @@ class TinyPlayer {
 		fileReader.readAsArrayBuffer(blob);
 	}
 
+  stop() {
+	if(this.playing) {
+		this.source.stop();
+	}
+  }
   play(startT, endT) {
 	this.source = audioCtx.createBufferSource(); // creates a sound source
 	this.source.buffer = this.buffer;
 	this.source.connect(audioCtx.destination);
+	this.source.onended = this.ended;
+	this.playing = true;
 	this.source.start(0, startT, endT - startT);
   }
 };

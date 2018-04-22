@@ -28,6 +28,27 @@ class IconPushButton extends React.Component {
 	}
 };
 
+class Icon2PushButton extends React.Component {
+  constructor(props) {
+	super(props);
+	this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick(e) {
+		this.buttonEl.blur();
+		this.props.onPush(e);
+  }
+
+  render() {
+	return (
+		<button className='butn' title={this.props.title} ref={(el) => { this.buttonEl = el}}>
+			<img width='16px' height='18px' className='playbutimg' src={this.props.pushed ? this.props.srcD : this.props.srcU}
+			 onClick={this.handleClick} />
+		</button>);
+	}
+};
+
+
 class PushButton extends React.Component {
   constructor(props) {
 	super(props);
@@ -88,4 +109,4 @@ class PasteTarget extends React.Component {
 	}
 };
 
-export {WedgeIndicator, IconPushButton, PushButton, CopyToClipButton, PasteTarget};
+export {WedgeIndicator, IconPushButton, Icon2PushButton, PushButton, CopyToClipButton, PasteTarget};
