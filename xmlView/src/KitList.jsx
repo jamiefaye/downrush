@@ -130,16 +130,16 @@ class EditButtons extends React.Component {
   }
 
   onLoopSelect(item) {
-  	let ix = loopModeTab.findIndex((v)=>{
-  	let r = v === item.value;
-  	return r});
-  	if (ix >= 0) {
+	let ix = loopModeTab.findIndex((v)=>{
+	let r = v === item.value;
+	return r});
+	if (ix >= 0) {
 		this.props.osc.loopMode = ix;
   	}
   }
 
   onNameSelect(name) {
-  	console.log("Name select: " + name);
+	console.log("Name select: " + name);
 	this.props.kito.name = name;
   }
 
@@ -167,8 +167,8 @@ class EditButtons extends React.Component {
 		  {this.props.editing ? (<EditButtons checker={this.props.checker}/>) : null}
 		  <td className="kit_open" kititem={this.props.index}><WedgeIndicator opened={this.state.opened} toggler={e=>{this.setState((prevState, props) =>{
 		  	return  {opened: !prevState.opened}})}}/></td>
-		  {openEditing ? (<td><div class='autocompletediv'><TextInput options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} 
-			rows='1' cols='10' offsetX='120'
+		  {openEditing ? (<td><div className='autocompletediv'><TextInput options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} 
+			rows='1' cols='10' offsetX={120}
 			trigger='' defaultValue={this.props.name}/></div></td>)
 			 :  <td>{this.props.name}</td>}
 		  {openEditing ? (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)
@@ -238,10 +238,10 @@ const SortableKitEntry = SortableElement(KitEntry);
   informCheck(entry, box, state) {
 	if (state) {
 		this.selected.add(entry.props.kito);
-		console.log("Added entry " + entry.props.keyValue);
+	//	console.log("Added entry " + entry.props.keyValue);
 	} else {
 		this.selected.delete(entry.props.kito);
-		console.log("Removed entry " + entry.props.keyValue);
+	//	console.log("Removed entry " + entry.props.keyValue);
 	}
   }
 

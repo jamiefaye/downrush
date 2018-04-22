@@ -679,8 +679,7 @@ var wavegroup_template = Handlebars.compile(`
 </div>
 `);
 
-var empty_kit_template =`
-<?xml version="1.0" encoding="UTF-8"?>
+var empty_kit_template = Handlebars.compile(`<?xml version="1.0" encoding="UTF-8"?>
 <kit>
 	<lpfMode>24dB</lpfMode>
 	<modFXType>flanger</modFXType>
@@ -720,7 +719,7 @@ var empty_kit_template =`
 	</soundSources>
 	<selectedDrumIndex>0</selectedDrumIndex>
 </kit>
-`;
+`);
 
 var empty_sound_template= Handlebars.compile(`
 		<sound>
@@ -750,7 +749,7 @@ var empty_sound_template= Handlebars.compile(`
 				<fileName></fileName>
 				<zone>
 					<startMilliseconds>0</startMilliseconds>
-					<endMilliseconds>9999999</endMilliseconds>
+					<endMilliseconds>0</endMilliseconds>
 				</zone>
 			</osc2>
 			<polyphonic>0</polyphonic>

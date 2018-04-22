@@ -36,7 +36,9 @@ class WaveView extends React.Component {
 	this.osc = this.props.osc;
 	this.filename = this.props.filename;
 	this.hasNewData = false;
-	this.state = {};
+	if(this.props.open) {
+		this.loadFile("/" + this.props.filename);
+	}
   }
 
   componentWillUnmount() {
@@ -62,7 +64,7 @@ class WaveView extends React.Component {
 	if(name === 'play') {
 		let startT = Number(this.osc.zone.startMilliseconds) / 1000;
 		let endT =  Number(this.osc.zone.endMilliseconds) / 1000;
-		console.log("Play: " + startT + " End: " + endT);
+		// console.log("Play: " + startT + " End: " + endT);
 		this.panel = panel;
 		panel.setPlayState(true);
 		if(this.wave) {
@@ -94,7 +96,8 @@ class WaveView extends React.Component {
 		return <tr><td colSpan={this.props.editing ? 8 : 6}><div ref={el => this.el = el}> </div></td><td><ZoomControls command={this.command} showTab={this.props.showTab}/></td></tr>;
 	} else return null;
   }
-
+ 
+ /*
   shouldComponentUpdate(nextProps, prevState) {
 	let fileChanged = this.filename !== nextProps.filename;
 	let openChanged = this.props.open != nextProps.open;
@@ -102,7 +105,7 @@ class WaveView extends React.Component {
 
 	// return fileChanged || openChanged;
   }
-
+*/
   componentDidUpdate() {
 	// console.log("componentDidUpdate start");
 
@@ -122,7 +125,7 @@ class WaveView extends React.Component {
   }
 
   openWaveSurfer(data) {
-  	// console.log("b4 openWaveSurfer " + this.props.filename);
+	// console.log("b4 openWaveSurfer " + this.props.filename);
 	if(!this.wave) {
 		this.wave = new Wave(this.el);
 		// console.log("new Wave");
@@ -157,9 +160,7 @@ class WaveView extends React.Component {
 	// console.log("setEditData");
 	this.hasNewData = true;
 	this.tinyPlayer = undefined;
-	let newState = Object.assign({}, this.state);
-	newState.data = data;
-	this.setState(newState);
+	this.setState({data: data});
 	this.loadInProgress = false;
   }
 
