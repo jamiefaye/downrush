@@ -221,16 +221,18 @@ const SortableKitEntry = SortableElement(KitEntry);
 
   }
 
-
   newDrum(e) {
-    
 	if (!this.browsePath) this.browsePath = '/SAMPLES/';
 	let me = this; 
 	openFileBrowser({
 		initialPath:  this.browsePath,
-		opener: function(name) {
-			me.browsePath = name;
-			me.addDrum(name);
+		multi:	true,
+		opener: function(nameList) {
+		for (let x in nameList) {
+				let name = nameList[x];
+				me.browsePath = name;
+				me.addDrum(name);
+			}
 		}
 	});
   }
@@ -278,7 +280,7 @@ const SortableKitEntry = SortableElement(KitEntry);
 		<tbody>
 		<tr className='kithead'>
 		<td colSpan='10'>
-		<PushButton title='Add Sample' onPush={this.newDrum.bind(this)}/>
+		<PushButton title='Add Samples' onPush={this.newDrum.bind(this)}/>
 		<PushButton title='Change' onPush={this.changeFile.bind(this)}/>
 		<CopyToClipButton title='Copy' getText={this.copySel.bind(this)} />
 		<PushButton title='Delete' onPush={this.deleteSel.bind(this)}/>
@@ -312,7 +314,8 @@ const SortableKitEntry = SortableElement(KitEntry);
 	let me = this; 
 	openFileBrowser({
 		initialPath:  initial,
-		opener: function(name) {
+		opener: function(nameList) {
+			let name = nameList[0];
 			toChange.osc1.fileName = name.startsWith('/') ? name.substring(1) : name;
 			toChange.osc1.zone.endMilliseconds = -1;	// trigger recalc of zone.
 		}

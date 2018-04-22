@@ -1392,7 +1392,8 @@ function setupGUI()
 		if (!initial) initial = '/';
 		openFileBrowser({
 			initialPath:  initial,
-			opener: function(name) {
+			opener: function(nameList) {
+				let name = nameList[0];
 				loadFile(name);
 //				fname = name;
 			}
