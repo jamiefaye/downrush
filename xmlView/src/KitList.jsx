@@ -70,6 +70,33 @@ var KIT_SOUND_NAMES = ["KICK",
 "TRAS",
 "TRUC"];
 
+// Borrowed from the Python script with a few ambigious digraphs omitted.
+var pbd = ["KICK","kick","Kick","Bassdrum"];
+var psd = ["snare","SNARE","Snare"];
+var poh = ["Ohh","ophihat","Hhopen","hihatopen","open_hi_hat","Hatop","open_hi_hat","Hat_Open"];
+var pch = ["hihat","cl_hat","Hhclose","hihatclosed","hi_hat","closed_hi_hat","Hatclosed","hi_hat","Hat_Closed"];
+
+function matchList(list, path)
+{
+	for(let i = 0; i < list.length; ++i) {
+		if(path.indexOf(list[i]) >= 0) return true;
+	}
+	return false;
+}
+
+
+function suggestName(path) {
+	if(matchList(pbd, path)) return 'KICK';
+	if(matchList(psd, path)) return 'SNARE';
+	if(matchList(poh, path)) return 'HATO';
+	if(matchList(pch, path)) return 'HATC';
+
+	let parts = path.split('/');
+	if (parts.length === 0) return 'USER';
+	let lastP = parts.pop();
+	return lastP.substring(0, 4).toUpperCase() ;
+}
+
 class Checkbox extends React.Component {
 	constructor(props) {
 		super(props);
@@ -251,7 +278,8 @@ const SortableKitEntry = SortableElement(KitEntry);
 	if(name.startsWith('/')) { 
 		name = name.slice(1);
 	}
-	let filledSoundT = empty_sound_template({fileName: name, name: 'USER'});
+	let suggestion = suggestName(name);
+	let filledSoundT = empty_sound_template({fileName: name, name: suggestion});
 	let newDrumX = getXmlDOMFromString(filledSoundT);
 	let newSound = xmlToJson(newDrumX).sound;
 	this.props.kitList.push(newSound);
