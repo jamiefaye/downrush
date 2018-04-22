@@ -11,9 +11,10 @@ import {observable} from 'mobx';
 import {empty_sound_template} from './templates.js';
 import {getXmlDOMFromString, xmlToJson, reviveClass} from './JsonXMLUtils.js';
 import shortid from 'shortid';
-import {WedgeIndicator, IconPushButton, PushButton, CopyToClipButton, PasteTarget} from './GUIstuff.jsx';
+import {WedgeIndicator, IconPushButton, Icon2PushButton, PushButton, CopyToClipButton, PasteTarget} from './GUIstuff.jsx';
 import {SortableContainer, SortableElement, SortableHandle, arrayMove} from 'react-sortable-hoc';
 import TextInput from 'react-autocomplete-input';
+import {SoundTab} from './SoundTab.jsx';
 
 function fmtTime(tv) {
 	if(tv === undefined) return tv;
@@ -88,9 +89,10 @@ class Checkbox extends React.Component {
 class PlayerControl extends React.Component {
   render() {
 	return (
-	<IconPushButton className='plsybut' title='Play'
-		onPush={(e)=>{this.props.command('play', e)}}
-		src='img/glyphicons-174-play.png'/>)
+	<Icon2PushButton className='plsybut' title='Play' pushed={this.props.pushed}
+		onPush={(e)=>{this.props.command('play', e, this)}}
+		srcU='img/glyphicons-174-play.png'
+		srcD='img/glyphicons-176-stop.png'/>)
   }
 };
 
@@ -114,7 +116,10 @@ class EditButtons extends React.Component {
 	// with actual valid data. It also serves as indicator to open the WaveView initially.
 	this.state = {
 		opened: Number(props.osc.zone.endMilliseconds) === -1,
-  	};
+		pushed: false,
+		showTab: false,
+	};
+	this.toggleTab = this.toggleTab.bind(this);
   }
 
   selectionUpdate(b, e) {
@@ -142,8 +147,16 @@ class EditButtons extends React.Component {
 	if(!this.waveViewRef) {
 		console.log("Trouble!");
 	} else {
-		this.waveViewRef.command(name, val);
+		this.waveViewRef.command(name, val, this);
 	}
+  }
+
+  setPlayState(toState) {
+	this.setState({pushed: toState});
+  }
+
+  toggleTab() {
+  	this.setState({showTab: !this.state.showTab});
   }
 
   render() {
@@ -164,9 +177,13 @@ class EditButtons extends React.Component {
 		  <td className="endms">{fmtTime(this.props.osc.zone.endMilliseconds)}</td>
 		   {openEditing ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
 							: (<td className="loopMode">{defaultOption}</td>)}
-		  <td><PlayerControl command={(e)=>{this.command('play', e)}}/></td>
+		  <td><PlayerControl pushed={this.state.pushed} command={(e)=>{this.command('play', e)}}/></td>
 		</tr>
-		<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} editing={openEditing} osc={this.props.osc} filename={this.props.osc.fileName} selectionUpdate={this.selectionUpdate.bind(this)} />
+		<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} editing={openEditing}
+		 toggleTab={this.toggleTab} showTab={this.state.showTab}
+			osc={this.props.osc} filename={this.props.osc.fileName} selectionUpdate={this.selectionUpdate.bind(this)}
+		 />
+		 {this.state.showTab && this.state.opened ? (<tr><td colSpan={openEditing ? 9 : 7}><SoundTab sound={this.props.kito}/></td></tr>) : null}
    </React.Fragment>)
   }
 };
@@ -252,7 +269,7 @@ const SortableKitEntry = SortableElement(KitEntry);
 	<th>Start</th>
 	<th>End</th>
 	<th>Mode</th>
-	<th>Player</th>
+	<th> </th>
 	</tr></thead>
 	{this.props.kitList.map((line, ix) =>{
 		return <SortableKitEntry index={ix} key={line.uniqueId} keyValue={line.uniqueId} kito={line} {...line} editing={this.state.editOpened} informCheck={this.informCheck}/>

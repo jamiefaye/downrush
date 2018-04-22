@@ -30,7 +30,7 @@ export default class Wave {
 	openOnBuffer(decoded) {
 	var plugs =  [
 		RegionPlugin.create({
-			dragSelection: true,
+			dragSelection: false,
 			})
 		];
 
@@ -71,7 +71,7 @@ export default class Wave {
 		let dur = me.surfer.getDuration();
 		let w = me.surfer.drawer.getWidth();
 		if (dur !== 0) {
-			let pps = w / dur * 0.95;
+			let pps = w / dur * 0.99;
 			me.surfer.zoom(pps);
 		}
 		// me.disableWaveTracker = me.setupWaveTracker();
@@ -85,8 +85,8 @@ export default class Wave {
 				me.setSelection(me.initialZone.startMilliseconds / 1000, me.initialZone.endMilliseconds / 1000);
 			}
 		}
-		me.setupSelectionWatcher();
-
+		// me.setupSelectionWatcher();
+		me.disableWaveTracker = me.setupWaveTracker();
 		// me.startGuiCheck();
 	})
 }	
@@ -181,6 +181,145 @@ export default class Wave {
 	this.surfer.on('region-update-end', eventUp);
 	this.surfer.on('region-updated', eventUpdate);
   }
+
+  setupWaveTracker() {
+	var region;
+	var dragActive;
+	var t0;
+	var t1;
+	var duration;
+	var scroll = this.surfer.params.scrollParent;
+	var scrollSpeed = this.surfer.params.scrollSpeed || 1;
+	var scrollThreshold = this.surfer.params.scrollThreshold || 10;
+	var maxScroll = void 0;
+	var scrollDirection = void 0;
+	var wrapperRect = void 0;
+	var wrapper = this.surfer.drawer.wrapper;
+	var repeater;
+	
+	var me = this;
+
+	var rangeUpdater = function(e) {
+		t1 = me.surfer.drawer.handleEvent(e);
+		let tS = t0;
+		let tE = t1;
+		if (t1 < t0) {
+			tS = t1;
+			tE = t0;
+			me.seekTo(t1);
+		}
+		region.update({
+			start:	tS * duration,
+			end:	tE * duration
+		});
+	}
+
+	var edgeScroll = function edgeScroll(e) {
+		if (!region || !scrollDirection) return;
+
+	// Update scroll position
+		var scrollLeft = wrapper.scrollLeft + scrollSpeed * scrollDirection;
+		var nextLeft =  Math.min(maxScroll, Math.max(0, scrollLeft));
+		wrapper.scrollLeft = scrollLeft = Math.min(maxScroll, Math.max(0, scrollLeft));
+		rangeUpdater(e);
+		// Check that there is more to scroll and repeat
+		if(scrollLeft < maxScroll && scrollLeft > 0) {
+			window.requestAnimationFrame(function () {
+			edgeScroll(e);
+			});
+		}
+	};
+
+	var eventMove = function (e) {
+		if (!dragActive) return;
+		rangeUpdater(e);
+		// If scrolling is enabled
+		if (scroll && me.surfer.drawer.container.clientWidth < wrapper.scrollWidth) {
+			// Check threshold based on mouse
+			var x = e.clientX - wrapperRect.left;
+			if (x <= scrollThreshold) {
+				scrollDirection = -1;
+			} else if (x >= wrapperRect.right - scrollThreshold) {
+				scrollDirection = 1;
+			} else {
+				scrollDirection = null;
+			}
+			scrollDirection && edgeScroll(e);
+		}
+	}
+
+	var eventUp = function (e) {
+		dragActive = false;
+		if (region) {
+			region.fireEvent('update-end', e);
+			me.surfer.fireEvent('region-update-end', region, e);
+		}
+		region = null;
+		let win = $(window); // disconnect listeners.
+		win.off('mousemove', eventMove);
+		win.off('touchmove', eventMove);
+		win.off('mouseup', eventUp);
+		win.off('touchend', eventUp);
+	}
+
+
+	var eventDown = function (e) {
+		duration = me.surfer.getDuration();
+		// Filter out events intended for the scroll bar
+		let hasScroll = me.surfer.params.scrollParent;
+		let r = e.target.getBoundingClientRect();
+
+		if (hasScroll && e.clientY > (r.bottom - 16)) return; // *** JFF Hack magic number.
+
+		maxScroll = wrapper.scrollWidth - wrapper.clientWidth;
+		wrapperRect = wrapper.getBoundingClientRect();
+
+		t0 = me.surfer.drawer.handleEvent(e);
+
+		let xD = e.clientX;
+
+		if (hasScroll) {
+			xD += wrapper.scrollLeft;
+		}
+
+		t1 = t0;
+		if (me.surfer.isPlaying()) {
+			dragActive = false;
+			let progress = me.surfer.drawer.handleEvent(e);
+			me.seekTo(progress);
+		} else {
+			dragActive = true;
+			me.surfer.regions.clear();
+			me.seekTo(t0);
+			let pos = {
+				start:	t0 * duration,
+				end:	t1 * duration,
+				drag:	false,
+				resize: false,
+			};
+			region = me.surfer.regions.add(pos);
+		}
+		let win = $(window);
+		win.on('mousemove', eventMove); // dynamic listeners
+		win.on('touchmove', eventMove);
+		win.on('mouseup', eventUp);
+		win.on('touchend', eventUp);
+		//console.log('down');
+	}
+
+	let waveElem = $(this.rootDivId);
+
+	waveElem.on('mousedown', eventDown);
+	waveElem.on('touchstart', eventDown);
+
+	return function() {
+		waveElem.off('mousedown', eventDown);
+		waveElem.off('touchstart', eventDown);
+	 };
+}
+
+
+
 
   changeBuffer(buffer) {
 	if (!buffer) return;
