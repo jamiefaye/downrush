@@ -42,6 +42,7 @@ class FileBrowser {
 			openPlace = splits.join('/');
 		}
 	}
+	this.dirPath = openPlace;
 	this.browser.start(openPlace);
 	$('#cancelbut').click(e=>{me.cancel(e)});	
 }
@@ -52,7 +53,7 @@ class FileBrowser {
 	$('#popupspot').empty();
   }
 
-
+/*
   getSelectedFiles() {
 	let selfiles = $('.file-select');
 	if (selfiles && selfiles.length > 0) {
@@ -62,8 +63,9 @@ class FileBrowser {
 	} else {
 		console.log('nobody');
 	}
-  }
 
+  }
+*/
 
 
 }; // End of class
@@ -75,6 +77,10 @@ class OpenFileBrowser extends FileBrowser {
 		super(params);
 		let me = this;
 		setDisable($('#openfilebut'), true);
+		this.previousSelectedFiles = new Set();
+		this.selectedFileNames = [];
+		this.lastDrop = -1;
+		this.multi = params.multi;
 		$('#openfilebut').click(e=>{me.openFile(e)});
 		$('.fw-body').dblclick(e=>{me.openFile(e)});
 	}
@@ -82,28 +88,86 @@ class OpenFileBrowser extends FileBrowser {
   openFile(e) {
 	let cbf = this.params.opener;
 	if (cbf) {
-		cbf(this.selectedFile);
+		cbf(this.selectedFileNames);
 	}
 	this.cancel();
   }
- 
+
   fileSelect(browser, file, event, context) {
+  	let multi = this.multi;
 	let td = event.target.parentElement;
+
+	let allFiles = $('.fileentry');
+	let dropX = -1;
+	for(let x in allFiles) {
+		if(td === allFiles[x]) {
+			dropX = x;
+			break;
+		}
+	}
+	//console.log("pos: " + dropX);
+
+	// Update lastDrop if shift not down
+	if (!multi || !event.shiftKey) {
+		this.lastDrop = dropX;
+	}
+
+	let low = this.lastDrop;
+	let high = dropX;
+
+	if(high < low) {
+		high = this.lastDrop;
+		low = dropX;
+	}
+
+	// If Ctrl is held, initialize new selection set based on the previous one.
+	let selSet;
+	if (multi && event.metaKey) {
+		selSet = new Set(this.previousSelectedFiles);
+	} else {
+		selSet = new Set();
+	}
+	// If Ctrl is held, and shift is not, and we have only one item and it was previously selected, remove it from new selection.
+	if (event.metaKey && !event.shiftKey && this.previousSelectedFiles.has(td)) {
+		selSet.delete(td);
+	} else { // Otherwise add the range to the set.
+		for(let x = low; x <= high; ++x) {
+			selSet.add(allFiles[x]);
+		}
+	}
+
+	if(!event.shiftKey) {
+		this.previousSelectedFiles = selSet;
+	}
+
 	$('.fileentry').removeClass('file-select');
-	let fNames = file.split('/');
-	let simpleName = fNames.pop();
-	this.selectedFile = file;
-	$('#file_selected').text(simpleName);
-	$(td).addClass('file-select');
-	setDisable($('#openfilebut'), false);
+
+	this.selectedFileNames = [];
+	let nameListStr = '';
+	for(let sel of selSet) {
+		let simpleName = sel.outerText;
+		let fullPath = this.fullPathFor(simpleName);
+		this.selectedFileNames.push(fullPath);
+		if (nameListStr !== '') nameListStr += ', ';
+		nameListStr += simpleName;
+		$(sel).addClass('file-select');
+	}
+	$('#file_selected').text(nameListStr);
+	setDisable($('#openfilebut'), this.selectedFileNames.length === 0);
   }
 
   dirSelect(browser, path) {
 	// Invalidate on directory change.
-	this.selectedFile = undefined;
+	this.dirPath = path;
+	this.selectedFileNames = [];
 	$('#file_selected').empty();
 	setDisable($('#openfilebut'), true);
  }
+
+  fullPathFor(name) {
+  	if (this.dirPath === '/') return '/' + name;
+	return this.dirPath + '/' + name;
+  }
 
 };
 
