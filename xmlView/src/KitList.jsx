@@ -94,7 +94,9 @@ function suggestName(path) {
 	let parts = path.split('/');
 	if (parts.length === 0) return 'USER';
 	let lastP = parts.pop();
-	return lastP.substring(0, 4).toUpperCase() ;
+	let upName = lastP.substring(0, 4).toUpperCase();
+	upName = upName.replace('.','');
+	return upName;
 }
 
 class Checkbox extends React.Component {
