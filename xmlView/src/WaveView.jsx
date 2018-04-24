@@ -17,6 +17,11 @@ class ZoomControls extends React.Component {
 			onPush={(e)=>{this.props.command('zoomOut', e)}}
 			src='img/glyphicons-238-zoom-out.png'/>
 		</td></tr>
+		<tr><td className='boffo'>
+		<IconPushButton className='butn' title='Waverly'
+			onPush={(e)=>{this.props.command('openwave', e)}}
+			src='img/glyphicons-594-voice.png'/>
+		</td></tr>
 		<tr><td height='32px'className='boffo'>
 			<WedgeIndicator opened={this.props.showTab} toggler={e=>{this.props.command('toggletab', e)}} />
 		</td></tr>	
@@ -88,6 +93,11 @@ class WaveView extends React.Component {
 		this.zoom(0.5);
 	} else if (name === 'toggletab') {
 		this.props.toggleTab();
+	} else if (name === 'openwave') {
+		// Link to the Waverly editor
+		console.log("openWaverly " + this.props.filename);
+		window.open("/DR/waverly/viewWAV.htm?"+ '/' + this.props.filename);
+		
 	}
   }
 
