@@ -95,9 +95,8 @@ class WaveView extends React.Component {
 		this.props.toggleTab();
 	} else if (name === 'openwave') {
 		// Link to the Waverly editor
-		console.log("openWaverly " + this.props.filename);
+//		console.log("openWaverly " + this.props.filename);
 		window.open("/DR/waverly/viewWAV.htm?"+ '/' + this.props.filename);
-		
 	}
   }
 
