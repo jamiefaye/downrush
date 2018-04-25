@@ -68,12 +68,11 @@ Editing an XML file and storing it back can create a corrupted file that the Del
 
 ## The XML Viewer
 
-Clicking on the name of an XML file in the File Manager list takes you to a custom viewer/editor which is very much under development.
+Clicking on the name of an XML file in the File Manager list takes you to a custom viewer/editor.
 
 SYNTH files show a 'periodic table' giving the synthesizer parameters used to create a sound.
 
-KIT files display a list of samples and their start and stop times. There is an audio player on the right which plays the sample locally. If you click on the triangle on the left, you will see
-a 'periodic table' used for that particular sample.
+KIT files display a list of samples and their start and stop times. There is an audio player on the right which plays the sample locally. The Kit Editor recently grew in features and is described in a later section.
 
 SONG files are shown in more sophisticated way.
 
@@ -98,9 +97,64 @@ After all the tracks there is a small text field labeled "Paste track data in fi
 For most users, the act of pasting is enough to trigger the system to load, parse, and modify the song so as to add a track. The pasted text may appear briefly and then disappear. This is normal.
 You can copy from one song and paste into another. You can also paste the text into a text editor and view a JSON version of the track data, which is easier to read than the XML original.
 
-You need to activate the "Save(F1)" button at the top of the page for your changes to stick. The preview pattern at the top won't change, and when you call up the song on the Deluge, the preview pattern will be wrong. Don't worry, twisting the 'up/down" knob will fix it.
+You need to activate the "Save" button at the top of the page for your changes to stick. The preview pattern at the top won't change, and when you call up the song on the Deluge, the preview pattern will be wrong. Don't worry, twisting the 'up/down" knob will fix it.
 
 The bottom of the Song page shows the sound parameter table for the overall song. If you click on the black triangles in the sound header, you can see the sound parameters for that track. This parameter table is described in more detail next.
 
 The periodic table is used in severall places. The layout corresponds to the Deluge shortcut labels on the Deluge LED button matrix.
+
+## The Kit Editor
+
+The Kit Editor can be used in two different situations. One is within a song, where a particular track has a kit element. There is one of these for each kit track in a song.
+The other context is when you open a KIT.XML file directly. I will use this second case for our description.
+
+Each instrument in a kit has its own table entry. The leftmost column holds a "disclosure wedge", which when clicked, 'opens it up'. The weddge next to an instrument Name (KICK, SNARE, etc.) opens up
+a sample plot. On the right hand side is a vertical menu of icons which you can click on. The top two zoom in and out. Below those is a button which launches the Waverly wave editor (which is described later).
+There is one more wedge below the 'waveform', which shows the 'periodic table' details of the sound.
+
+If you click on the triangle on the right, below the magnifying glass, you will see
+the 'periodic table' used for that particular sample.
+
+The very first wedge, at the upper left hand corner, next to the titles, unlocks a special editing ability. the Name and Mode fields become editable. You can also change the start and stop points for the sample
+by placing your mouse at the beginning or ending of the selected area in the waveform where the cursor changes (very subtly) from a 'X,Y moving indication' into a 'left/right resizing indication. Dragging these handles around causes the start/end to change.
+Pressing the play button will play the designated zone now.
+
+To the left of where most of the wedges are are two new columns. One is a 'move around box' shown as four dots. Clicking and draggin on that rearranges the order of the kit elements.
+Next to that is a checkbox which is used to select entries. These work with the buttons added at the bottom. "Change" lets you select a different sample for the first selected/checked entry.
+'Copy' places all the checked items on the browser clipboard as JSON text. 'Delete' does what you expect. After you have copied some kit items onto the clipboard you can go the 'Paste kits' field and do a control/V or use the browser edit menu Paste command.
+The tracks on the clipboard are then added to the end of the kit. Copy/Paste works across Kits and between Songs and Kits. (If you paste in a sample multiple times, you can change the start and end times as needed to 'split' the sample.
+
+You will need to 'save back' your edited kit (or song) for the Deluge to be able to load it into its own memory. This is triggered by twisting the Select know back and forth, which causes the reload.
+
+Next to the Save button at the top of the Kit Editor is a 'New Kit' button. Press that and you will get an empty kit to start with. To add samples press the 'Add Samples' button. You will then see a file browser that lets you select a sample file to add. Click on a .WAV file then press the Open button. A kit entry will be added for this sample and the program will guess a Name for this entry based on the file name.
+If you hold the command key down while you are in the file browser, you can select multiple files. Using the shift key will 'extend the selection', making it easy to select an entire range.
+
+## The Waverly .WAV Editor
+
+You can enter Waverly by cling on the Edit link in the right column of the File Browser list, or you can press on the 'Wave' icon in the sample viewer (just below the magnifying glasses). This will lauch this special sound editing program.
+Waverly is a lot like Audacity, but with far fewer features.
+
+Below the 'Open' and 'Save' buttons we have the waveform display area, with a scroll bar if needed. Below that is an overview waveform that shows the entire wave in one view. Clicking on that jumps to that part of the wave. You can select a region of the wave in the main display by clicking and dragging.
+
+Below the waveforms are two rows of buttons. The + and - magnifiers zoom in and out. The rewind button resets the playback to the beginning. The play button plays. The 'Play button in a circle'plays only the selected region. The right and left arrows 
+The left facing arrow undoes the last change and the right facing arrow redoes. The button with both arrows does a 'select all'. 'Del' deletes, 'Cut' cuts, 'Copy' copies, and 'Paste' pastes. If you can, you are better off using copy and paste browser menu items or control-C and control-V.
+Using the browser's commands lets you copy from one Wavery instance and paste into another. (The Cut/Copy/Paste buttons only work within a given wave, this is due to some very annoying browser limitations).
+
+On the bottom row you find an 'Effects' drop down. Next to that are a couple of simple editing commands. 'Trim' shrinks a selected area of a waveform to start and stop on a zero crossing point.
+'Crop' crops the selected area and throws away what was before and after. Normalize adjusts the waveform range to 'fill in' from -1 to +1. Reverse reverses the selected area. Fade In and Fade Out change the volume from 0 to max and from max to 0, which sounds like a fade.
+
+The Effects drop-down has Quad Filter, Simple Reverb, Delay, and Oscillator. Picking one of these patches a filter into the playback chain and shows a control panel. Each panel is different, but the first row is the same. 'Apply' runs the filter over the selected area of the wave. Close closes the filter down, and 'Audition' controls wether
+you can hear the results of the filters during playback. Pressing 'Apply' clears 'Audition', so when you play back, you only hear the result once.
+
+Each filter has the following unique controls:
+
+Quad Filter has Kind, Frequency, and "Quality" (Q). Some filters also have Gain.
+
+Simple Reverb has Dry and Wt level controls, the reverb time in Seconds, the Decay rate, and a Reverse control.
+
+Delay have a Type setting, Delay and Feedback, Cutoff, Offset and a Dry level.
+
+Oscillator has a wave Type, the wave Frequency, Gain, and Duration. If Duration is zero, it just fills in the selected area of the wave.
+
+Someday soon we will add more commands to Waverly.
 
