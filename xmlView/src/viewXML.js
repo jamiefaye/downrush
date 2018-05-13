@@ -8,7 +8,7 @@ require('file-loader?name=[name].[ext]!../css/edit.css');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";
 import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray} from "./JsonXMLUtils.js";
-import {convertHexTo50, fixm50to50} from "./HBHelpers.js";
+import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
 import React from 'react';
 import ReactDOM from "react-dom";
 import {Kit, Track, Sound, Song, SoundSources} from "./Classes.jsx";
