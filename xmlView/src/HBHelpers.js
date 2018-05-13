@@ -240,4 +240,4 @@ Handlebars.registerHelper('fmtscattack', function (sv) {
 });
 
 
-export {convertHexTo50, fixm50to50};
+export {convertHexTo50, fixm50to50, syncLevelTab};
