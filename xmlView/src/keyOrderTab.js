@@ -372,5 +372,9 @@ function genOrderTab(xml) {
 	console.log(genStr);
 }
 
+// knownArrays is used to flag an element name that should always create a json
+// array for its subelements. Needed to cope with mixed element types.
+var knownArrays = new Set();
 
-export {keyOrderTab};
+knownArrays.add('instruments');
+export {keyOrderTab, knownArrays};

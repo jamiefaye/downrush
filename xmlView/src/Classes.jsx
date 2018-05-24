@@ -39,7 +39,7 @@ class Song extends DRObject {
 
 };
 
-//nameToClassTab.kit = Kit;
+nameToClassTab.kit = Kit;
 nameToClassTab.sound = Sound;
 //nameToClassTab.song = Song;
 nameToClassTab.osc1 = Osc;

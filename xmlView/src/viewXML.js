@@ -7,6 +7,7 @@ require('file-loader?name=[name].[ext]!../viewXML.htm');
 require('file-loader?name=[name].[ext]!../css/edit.css');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";
+import {showArranger} from "./Arranger.jsx";
 import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray} from "./JsonXMLUtils.js";
 import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
 import React from 'react';
@@ -466,10 +467,14 @@ function viewSound(e, songJ) {
 			// We have a kit track,, 
 			let kitroot = trackD.kit;
 			if (trackD['soundSources']) {
-				kitroot = trackD;
+				kitroot = trackD.soundSources.sound;
+			} else {
+				kitroot = findKitList(trackD, songJ);
 			}
 
-			formatKit(kitroot, trackD.kitParams, where[0]);
+			if(kitroot) {
+				formatKit(kitroot, trackD.kitParams, where[0]);
+			}
 		} else if(trackType === 'midi') {
 			formatMidi(where, trackD);
 		}
@@ -544,9 +549,33 @@ function plotKit13(track, reftrack, obj) {
 	obj.append(parentDiv);
 }
 
+function findInstrument(track, list) {
+	let pSlot = track.instrumentPresetSlot;
+	let pSubSlot = track.instrumentPresetSubSlot;
+	let items = forceArray(list);
+	if (items) {
+		for(let k of items) {
+			if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
+		}
+	}
+}
 
+function findKitList(track, song) {
+	let kitList;
+	if (track.kit) {
+		kitList = forceArray(track.kit.soundSources.sound);
+	} else {
+		let kitI = findInstrument(track, song.instruments);
+		if(!kitI) {
+			console.log("Missing kit instrument");
+			return;
+		}
+		kitList = forceArray(kitI.soundSources.sound);
+	}
+	return kitList;
+}
 
-function plotKit14(track, reftrack, obj) {
+function plotKit14(track, reftrack, song, obj) {
 	let kitItemH = 8;
 	let trackW = Number(track.trackLength);
 // first walk the track and find min and max y positions
@@ -563,7 +592,8 @@ function plotKit14(track, reftrack, obj) {
 		}
 	}
 	let totH = ((ymax - ymin) + 1) * kitItemH;
-	let kitList = forceArray(reftrack.kit.soundSources.sound);
+	let kitList = findKitList(reftrack, song);
+
 	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
@@ -652,7 +682,7 @@ function plotTrack13(track, obj) {
 }
 
 
-function plotTrack14(track, obj) {
+function plotTrack14(track, song, obj) {
 // first walk the track and find min and max y positions
 	let trackW = Number(track.trackLength);
 	let ymin =  1000000;
@@ -831,10 +861,10 @@ function plotParamLevel(prefix, track, trackW, elem)
 	}
 }
 
-function plotNoteLevelParams(noteRowA, track, trackW, elem)
+function plotNoteLevelParams(noteRowA, track, trackW, song, elem)
 {
 	if (!noteRowA) return;
-	let kitList = forceArray(track.kit.soundSources.sound);
+	let kitList = findKitList(track, song);
 	noteRowA = forceArray(noteRowA);
 	for (var i = 0; i < noteRowA.length; ++i) {
 		let aRow = noteRowA[i];
@@ -857,7 +887,7 @@ function plotKnobLevelParams(knobs, track, trackW, elem)
 	}
 }
 
-function plotParams(track, refTrack, elem) {
+function plotParams(track, refTrack, song, elem) {
 	let trackType = trackKind(track);
 	let trackW = Number(track.trackLength);
 	if (track.sound) plotParamLevel("sound.", track.sound, trackW, elem);
@@ -867,11 +897,11 @@ function plotParams(track, refTrack, elem) {
 	if (track.kitParams) {
 		plotParamLevel("kit.", track.kitParams, trackW, elem);
 		if (track.noteRows) {
-			plotNoteLevelParams(track.noteRows.noteRow, refTrack, trackW, elem);
+			plotNoteLevelParams(track.noteRows.noteRow, refTrack, trackW, song, elem);
 		}
 	}
 	if (trackType == 'midi') {
-		plotKnobLevelParams(forceArray(track.modKnobs.modKnob), track, trackW, elem);
+		plotKnobLevelParams(forceArray(track.modKnobs.modKnob), track, trackW, song, elem);
 	}
 }
 
@@ -1108,6 +1138,8 @@ function scaleString(jsong) {
 	return str + "Chromatic";
 }
 
+
+
 function formatSong(jdoc, obj) {
 	let jsong = jdoc.jsonDocument.song;
 	let newNoteFormat = jdoc.newNoteFormat;
@@ -1123,6 +1155,11 @@ function formatSong(jdoc, obj) {
 	}
 	obj.append(", Key = " + scaleString(jsong));
 	obj.append($("<p class='tinygap'>"));
+	
+	showArranger(jsong, obj);
+
+	obj.append($("<p class='tinygap'>"));
+
 	let sectionTab = forceArray(jsong.sections.section);
 
 	if(jsong.tracks) {
@@ -1141,18 +1178,18 @@ function formatSong(jdoc, obj) {
 			if(tKind === 'kit') {
 				
 				if(newNoteFormat) {
-					plotKit14(track, refTrack, obj);
+					plotKit14(track, refTrack, jsong, obj);
 				} else {
 					plotKit13(track, refTrack, obj);
 				}
 			} else {
 				if(newNoteFormat) {
-					plotTrack14(track, obj);
+					plotTrack14(track, jsong, obj);
 				} else {
 					plotTrack13(track, obj);
 				}
 			}
-			plotParams(track, refTrack, obj);
+			plotParams(track, refTrack, jsong, obj);
 		}
 		activateNoteTips();
 	  }
@@ -1204,8 +1241,17 @@ class DelugeDoc {
 		this.firmwareVersionFound='';
 	}
 
+	// Also look for the  earliestCompatibleFirmware element.
+	let earliestHits = /<earliestCompatibleFirmware>.*<.earliestCompatibleFirmware>/i.exec(text);
+	if (earliestHits && earliestHits.length > 0) {
+		this.earliestCompatibleFirmware = earliestHits[0];
+	} else {
+		this.earliestCompatibleFirmware='';
+	}
+
 	this.newNoteFormat = !(this.firmwareVersionFound.indexOf('1.2') >= 0 || this.firmwareVersionFound.indexOf('1.3') >= 0);
 	var fixedText = text.replace(/<firmwareVersion>.*<.firmwareVersion>/i,"");
+	fixedText = fixedText.replace(/<earliestCompatibleFirmware>.*<.earliestCompatibleFirmware>/i,"");
 	var asDOM = getXmlDOMFromString(fixedText);
 	// Uncomment following to generate ordering table based on a real-world example.
 	// enOrderTab(asDOM);
@@ -1242,7 +1288,8 @@ class DelugeDoc {
 		formatSound(obj, json.sound, json.sound.defaultParams, json.sound.soundParams);
 	} else if(json['kit']) {
 		let wherePut = $(this.idFor('jtab'))[0];
-		formatKit(json.kit, json.kitParams, wherePut);
+		let kitList = json.kit.soundSources.sound;
+		formatKit(kitList, json.kitParams, wherePut);
 	} else {
 		jsonToTable(json, obj);
 	}
@@ -1306,6 +1353,9 @@ class DelugeDoc {
 	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
 	if (this.firmwareVersionFound) {
 		headerStr += this.firmwareVersionFound + "\n";
+	}
+	if (this.earliestCompatibleFirmware) {
+		headerStr += this.earliestCompatibleFirmware + "\n";
 	}
 	let jsonDoc =  this.jsonDocument
 	let toMake;
@@ -1507,4 +1557,4 @@ function setEditText(fname, text)
 	});
 }
 
-export {formatSound, sample_path_prefix};
+export {formatSound, sample_path_prefix, findKitList};

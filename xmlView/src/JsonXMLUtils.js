@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {keyOrderTab} from "./keyOrderTab.js";
+import {keyOrderTab, knownArrays} from "./keyOrderTab.js";
 import {isObservableArray} from 'mobx';
 
 /*******************************************************************************
@@ -24,6 +24,7 @@ function isArrayLike(val) {
     return false;
 }
 
+
 /**
 * Converts passed XML string into a DOM element.
 * @param 		{String}			xmlStr
@@ -42,6 +43,7 @@ function getXmlDOMFromString(xmlStr) {
 	}
 	throw new Error( 'No XML parser available' );
 }
+
 
 // Changes XML Dom elements to JSON
 // Modified to ignore text elements
@@ -63,6 +65,10 @@ function xmlToJson(xml, fill) {
 	obj = xml.nodeValue;
   }
 
+	let makeArray = knownArrays.has(xml.nodeName);
+	if (makeArray) {
+		obj = [];
+	}
   // do children
   // If just one text node inside
   if (xml.hasChildNodes() && xml.childNodes.length === 1 && xml.childNodes[0].nodeType === 3) {
@@ -77,7 +83,9 @@ function xmlToJson(xml, fill) {
 		if (classToMake) {
 			childToFill = new classToMake();
 		}
-	if (typeof (obj[nodeName]) === 'undefined') {
+	if (makeArray) {
+		obj.push(xmlToJson(item, childToFill));
+	} else if (typeof (obj[nodeName]) === 'undefined') {
 		obj[nodeName] = xmlToJson(item, childToFill);
 	  } else {
 		if (typeof (obj[nodeName].push) === 'undefined') {
