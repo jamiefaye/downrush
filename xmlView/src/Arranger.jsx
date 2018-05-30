@@ -114,8 +114,6 @@ class Instrument extends React.Component {
 		ndiv.text(trkLab);
 		ndiv.css({left: x + 'px', bottom: ypos + 'px', width: w + 'px', "background-color": colorString});
 		parentDiv.append(ndiv);
-		
-
 	}
 	let highW = highTime * scaling + xPlotOffset;
 	parentDiv.css({width: highW + 'px'});
