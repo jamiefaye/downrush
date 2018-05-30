@@ -122,6 +122,9 @@ class Instrument extends React.Component {
 
 class Arranger extends React.Component {
   render() {
+	if (!this.props.instruments) {
+		return (<div ref={el => this.el = el}> </div>);
+	}
 	let nInstruments = this.props.instruments.length;
 	return (<div ref={el => this.el = el}>
 	{this.props.instruments.slice(0).reverse().map((inst, ix) =>{
