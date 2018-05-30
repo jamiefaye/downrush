@@ -56,7 +56,7 @@ class PushButton extends React.Component {
   }
 
   handleClick(e) {
-		this.buttonEl.blur();
+	//	this.buttonEl.blur();
 		this.props.onPush(e);
   }
 

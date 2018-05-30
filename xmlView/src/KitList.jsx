@@ -1,11 +1,10 @@
-import createClass from "create-react-class";
 import React from 'react';
 import ReactDOM from "react-dom";
 import Dropdown from 'react-dropdown';
 import {WaveView} from './WaveView.jsx';
 import {openFileBrowser} from './FileBrowser.js';
 import {forceArray} from "./JsonXMLUtils.js";
-import {formatSound, sample_path_prefix} from "./viewXML.js";
+import {formatSound, sample_path_prefix, findKitList} from "./viewXML.js";
 import {observer} from 'mobx-react';
 import {observable} from 'mobx';
 import {empty_sound_template} from './templates.js';
@@ -375,7 +374,6 @@ const SortableKitList = SortableContainer(KitList);
 class KitView {
   constructor(context) {
 		this.context = context;
-		this.soundSources = context.soundSources;
 		this.jqElem = context.jqElem;
 		this.kitList = context.kitList;
 		context.onSortEnd = this.onSortEnd.bind(this);
@@ -397,14 +395,13 @@ class KitView {
   }
 };
 
-function formatKit(json, kitParams, where) {
-	let kitList = json.soundSources.sound; // forceArray(json.soundSources.sound);
+function formatKit(kitList, kitParams, where) {
+//	let kitList = json.soundSources.sound; // forceArray(json.soundSources.sound);
 	let context = {};
 	context.kitList = kitList;
 	context.sample_path_prefix = sample_path_prefix;
 	context.useDragHandle = true;
 	context.jqElem =  where;
-	context.soundSources = json.soundSources;
 	let kitView = new KitView(context);
 	kitView.render();
 }

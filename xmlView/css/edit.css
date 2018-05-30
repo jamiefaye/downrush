@@ -104,6 +104,7 @@ div.parmlab {
 	top:  0px;
 	left: 2px;
 }
+
 div.trkitnote {
 	position: absolute;
 	height: 8px;
@@ -120,6 +121,26 @@ div.trnsn {
 div.trnkn {
 	position: absolute;
 	height: 8px;
+//	background-color:#202020;
+}
+
+
+idv.arrlab {
+	position: absolute;
+	font-size: 7pt;
+}
+
+div.arrgrid {
+	position: relative;
+	// border: solid 1px;
+	background-color:#E8E8E0;
+	height: 18px;
+}
+
+div.arritem {
+	position: absolute;
+	height: 16px;
+	color: white;
 //	background-color:#202020;
 }
 
