@@ -141,7 +141,12 @@ div.arritem {
 	position: absolute;
 	height: 16px;
 	color: white;
-//	background-color:#202020;
+}
+
+div.arritembow {
+	position: absolute;
+	height: 16px;
+	color: black;
 }
 
 

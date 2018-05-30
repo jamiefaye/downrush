@@ -916,7 +916,7 @@ function plotParams(track, refTrack, song, elem) {
 			plotNoteLevelParams(track.noteRows.noteRow, refTrack, trackW, song, elem);
 		}
 	}
-	if (trackType == 'midi') {
+	if (trackType == 'midi' && track.modKnobs) {
 		plotKnobLevelParams(forceArray(track.modKnobs.modKnob), track, trackW, song, elem);
 	}
 }
