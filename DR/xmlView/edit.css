@@ -133,13 +133,14 @@ idv.arrlab {
 div.arrgrid {
 	position: relative;
 	// border: solid 1px;
-	background-color:#F8FFFF;
-	height: 16px;
+	background-color:#E8E8E0;
+	height: 18px;
 }
 
 div.arritem {
 	position: absolute;
-	height: 8px;
+	height: 16px;
+	color: white;
 //	background-color:#202020;
 }
 
