@@ -78,9 +78,12 @@ function genColorTab(colors)
 	for(var y = 0; y < 8; ++y) {
 		let colRow = $('<tr/>');
 		for(var x = 0; x <18; ++x) {
-			let td = $("<td class='coltab'/>");
+
 			let off = (7 - y) * 108 + x * 6;
 			let hex = colors.substr(off, 6);
+			let hex2 = hex.substr(0,2) + " " + hex.substr(2,2) + " " + hex.substr(4,2);
+			//console.log(hex2);
+			let td = $("<td class='coltab' data-hex='" + hex2 + "'/>");
 			// if (hex !== '000000') console.log("(" + x + ", " + y + " = 0x" + hex);
 			td.css("background-color", '#' + gamma_correct(hex));
 			colRow.append(td);
@@ -90,7 +93,20 @@ function genColorTab(colors)
 	return colTab;
 }
 
-
+function enableColorPops() {
+		tippy('.coltab', {
+		arrow: true,
+		html: '#npoptemp',
+		onShow(pop) {
+			const content = this.querySelector('.tippy-content');
+			let colorInfo = pop.reference.getAttribute('style');
+			let colhex = pop.reference.getAttribute('data-hex');
+			let colstyle = colorInfo.substring(17);
+			content.innerHTML = colhex + " " + colorInfo.substring(17);
+		//	content.innerHTML = noteInfo;
+		},
+	});
+}
 // Used to cope with y addresses of -32768
 function rowYfilter(row) {
 	if (row.drumIndex) return Number(row.drumIndex);
@@ -914,6 +930,8 @@ var trackKindNames = {"kit": "Kit",
 					"unknown": "?",
 					};
 
+
+
 function trackHeader(track, kind, inx, repeatTab, obj) {
 	let section = Number(track.section);
 	let patchStr = "";
@@ -1145,6 +1163,7 @@ function formatSong(jdoc, obj) {
 	let newNoteFormat = jdoc.newNoteFormat;
 	let ctab = genColorTab(jsong.preview);
 	obj.append(ctab);
+	enableColorPops();
 	obj.append($("<p class='tinygap'>"));
 	obj.append("Tempo = " + convertTempo(jsong) + " bpm");
 	let swing = Number(jsong.swingAmount);
@@ -1557,4 +1576,4 @@ function setEditText(fname, text)
 	});
 }
 
-export {formatSound, sample_path_prefix, findKitList};
+export {formatSound, gamma_correct, sample_path_prefix, findKitList, trackKind};
