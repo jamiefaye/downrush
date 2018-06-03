@@ -13,6 +13,7 @@ import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
 import React from 'react';
 import ReactDOM from "react-dom";
 import {Kit, Track, Sound, Song, SoundSources} from "./Classes.jsx";
+import FileSaver from 'file-saver';
 
 import {
 local_exec_head,
@@ -1371,8 +1372,8 @@ class DelugeDoc {
 	});
   }
 
- save(toName) {
-	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
+ genDocXMLString() {
+ 	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
 	if (this.firmwareVersionFound) {
 		headerStr += this.firmwareVersionFound + "\n";
 	}
@@ -1386,6 +1387,11 @@ class DelugeDoc {
 	   else if (jsonDoc['kit']) toMake = 'kit';
 	if (!toMake) return;
  	let saveText = headerStr + jsonToXMLString(toMake, this.jsonDocument[toMake]);
+ 	return saveText;
+ }
+
+ save(toName) {
+ 	let saveText = this.genDocXMLString();
  	this.fname = toName;
 	this.saveFile(toName, saveText);
 }
@@ -1495,6 +1501,21 @@ function openLocal(evt)
 	reader.readAsText(f);
 }
 
+
+function downloader(evt) {
+	if(!focusDoc) return;
+	let saveXML = focusDoc.genDocXMLString();
+	var blob = new Blob([saveXML], {type: "text/plain;charset=utf-8"});
+	let saveName;
+	if (local_exec) {
+		saveName = focusDoc.fname.name 
+	} else {
+		saveName = focusDoc.fname.split('/').pop();
+	}
+	console.log(saveName);
+	FileSaver.saveAs(blob, saveName);
+}
+
 //---------- When reading page -------------
 function onLoad()
 {
@@ -1524,6 +1545,7 @@ function onLoad()
 			} else sample_path_prefix = '';
 		}
 	}
+	$('#downloadbut').click((e)=>{downloader(e)});
 	setupGUI();
 }
 window.onload = onLoad;
