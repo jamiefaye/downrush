@@ -4,10 +4,6 @@ import Handlebars from './js/handlebars.min.js';
 var local_exec_head = Handlebars.compile(`			<table class='nobord'><tr>
 				<td><input id='opener' name="file" type="file" accept=".xml,.XML" /></td>
 				<td><input id='downloadbut' type="button" value="Download" style="width:55pt" ></td>
-				<!--
-				<td><input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"></td>
-				<td><textarea id="status" rows="2"  class="statusbox" readonly></textarea></td>
-				-->
 			</tr>
 			</table>`);
 
