@@ -44,6 +44,7 @@ var local_exec = document.URL.indexOf('file:') == 0;
 var sample_path_prefix = '/';
 var xPlotOffset = 32;
 var jQuery = $;
+var COLOR_POPUP = false;
 
 var gIdCounter = 0;
 var focusDoc;
@@ -1163,7 +1164,9 @@ function formatSong(jdoc, obj) {
 	let newNoteFormat = jdoc.newNoteFormat;
 	let ctab = genColorTab(jsong.preview);
 	obj.append(ctab);
-	enableColorPops();
+	if (COLOR_POPUP) {
+		enableColorPops();
+	}
 	obj.append($("<p class='tinygap'>"));
 	obj.append("Tempo = " + convertTempo(jsong) + " bpm");
 	let swing = Number(jsong.swingAmount);
