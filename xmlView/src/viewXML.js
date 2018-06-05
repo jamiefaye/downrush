@@ -1533,7 +1533,7 @@ function onLoad()
 	} else {
 		$('#filegroup').remove();
 		$('#filegroupplace').append(local_exec_head());
-		$('#jtab').append (local_exec_info());
+		$('#jtab').append (local_exec_info()); // ** JFF jtab??
 		$('#opener').on('change', openLocal);
 		if (custom_sample_path) {
 			sample_path_prefix = custom_sample_path;
