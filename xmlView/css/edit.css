@@ -453,6 +453,11 @@ height: 28px;
 min-height: 28px;
 }
 
+#hiddenfileopener
+{
+    display:none;
+}
+
 .unselectable {
     -webkit-touch-callout: none;
     -webkit-user-select: none;

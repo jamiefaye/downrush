@@ -1544,6 +1544,7 @@ function onLoad()
 				sample_path_prefix = '../';
 			} else sample_path_prefix = '';
 		}
+		console.log(sample_path_prefix);
 	}
 	$('#downloadbut').click((e)=>{downloader(e)});
 	setupGUI();
@@ -1601,4 +1602,4 @@ function setEditText(fname, text)
 	});
 }
 
-export {formatSound, gamma_correct, sample_path_prefix, findKitList, trackKind};
+export {formatSound, gamma_correct, sample_path_prefix, local_exec, findKitList, trackKind};
