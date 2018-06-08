@@ -14,6 +14,7 @@ import {WedgeIndicator, IconPushButton, Icon2PushButton, PushButton, CopyToClipB
 import {SortableContainer, SortableElement, SortableHandle, arrayMove} from 'react-sortable-hoc';
 import TextInput from 'react-autocomplete-input';
 import {SoundTab} from './SoundTab.jsx';
+import $ from 'jquery';
 
 function fmtTime(tv) {
 	if(tv === undefined) return tv;
@@ -140,10 +141,15 @@ class EditButtons extends React.Component {
 @observer class SampleEntry extends React.Component {
   constructor(props) {
 	super();
+	
+	let opend = false;
+	if (props.osc && props.osc.zone) {
+		opend = Number(props.osc.zone.endMilliseconds) === -1
+	}
 	// We use an endMilliseconds == -1 as a trigger flag to cause the WaveView to update the selection immediately
 	// with actual valid data. It also serves as indicator to open the WaveView initially.
 	this.state = {
-		opened: Number(props.osc.zone.endMilliseconds) === -1,
+		opened: opend,
 		pushed: false,
 		showTab: false,
 	};
@@ -188,30 +194,38 @@ class EditButtons extends React.Component {
   }
 
   render() {
-   const defaultOption = loopModeTab[this.props.osc.loopMode];
-   let openEditing = this.props.editing && this.state.opened;
+	const defaultOption = loopModeTab[this.props.osc.loopMode];
+	let openEditing = this.props.editing && this.state.opened;
+	let osc = this.props.osc;
+	let hasSample = osc.fileName && !$.isEmptyObject(osc.fileName);
+	let startTS = "";
+	let endTS = "";
+	if (hasSample) {
+		startTS = fmtTime(this.props.osc.zone.startMilliseconds);
+		endTS = fmtTime(this.props.osc.zone.endMilliseconds);
+	}
    return (<React.Fragment>
 		<tr className="kitentry unselectable" key='sinfo'>
 		  {this.props.editing ? (<EditButtons checker={this.props.checker}/>) : null}
 		  <td className="kit_open" kititem={this.props.index}><WedgeIndicator opened={this.state.opened} toggler={e=>{this.setState((prevState, props) =>{
 		  	return  {opened: !prevState.opened}})}}/></td>
-		  {openEditing ? (<td><div className='autocompletediv'><TextInput options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} 
+		  {openEditing && !this.props.osc2 ? (<td><div className='autocompletediv'><TextInput options={KIT_SOUND_NAMES} onChange={(item)=>{this.onNameSelect(item)}} 
 			rows='1' cols='10' offsetX={120}
 			trigger='' defaultValue={this.props.name}/></div></td>)
-			 :  <td>{this.props.name}</td>}
+			 : this.props.osc2 ? <td> </td> : <td>{this.props.name}</td>}
 		  {openEditing ? (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)
 		  					  : (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)}
-	  	  <td className="startms">{fmtTime(this.props.osc.zone.startMilliseconds)}</td>
-		  <td className="endms">{fmtTime(this.props.osc.zone.endMilliseconds)}</td>
+	  	  <td className="startms">{startTS}</td>
+		  <td className="endms">{endTS}</td>
 		   {openEditing ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
 							: (<td className="loopMode">{defaultOption}</td>)}
-		  <td><PlayerControl pushed={this.state.pushed} command={(e)=>{this.command('play', e)}}/></td>
+		  {hasSample ? (<td><PlayerControl pushed={this.state.pushed} command={(e)=>{this.command('play', e)}}/></td>) : (<td> </td>)}
 		</tr>
-		<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} editing={openEditing}
+		{hasSample ? (<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} editing={openEditing}
 		 toggleTab={this.toggleTab} showTab={this.state.showTab}
 			osc={this.props.osc} filename={this.props.osc.fileName} selectionUpdate={this.selectionUpdate.bind(this)}
-		 />
-		 {this.state.showTab && this.state.opened ? (<tr><td colSpan={openEditing ? 9 : 7}><SoundTab sound={this.props.kito}/></td></tr>) : null}
+		 />) : null}
+		 {this.state.opened && (this.state.showTab || !hasSample)  ? (<tr><td colSpan={openEditing ? 9 : 7}><SoundTab sound={this.props.kito}/></td></tr>) : null}
    </React.Fragment>)
   }
 };
@@ -230,9 +244,13 @@ class EditButtons extends React.Component {
   }
  
   render() {
+	let o2 = this.props.osc2;
+	let hasB = o2.fileName && !$.isEmptyObject(o2.fileName);
 	return (<tbody>
-	<SampleEntry className='kitentry' ref={el => this.kitref = el} kito={this.props.kito} checker={this.checker}
+	<SampleEntry className='kitentry' ref={el => this.kitref = el} kito={this.props.kito} checker={this.checker} osc2={false}
 		editing={this.props.editing} index={this.props.index} name={this.props.name} key='osc1' osc={this.props.osc1} />
+		{hasB ? (<SampleEntry className='kitentry' ref={el => this.kitref = el} kito={this.props.kito} checker={this.checker} osc2={true}
+			editing={this.props.editing} index={this.props.index} name={this.props.name} key='osc2' osc={this.props.osc2} />) : null}
 	</tbody>)
   }
 };
