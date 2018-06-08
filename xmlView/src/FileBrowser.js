@@ -1,10 +1,18 @@
 import $ from 'jquery';
 import Handlebars from './js/handlebars.min.js';
 import {FileWidget, makeDateTime} from './FileWidget.js';
+import {local_exec, sample_path_prefix} from './viewXML.js';
 import {open_frame, save_frame, dir_template} from './fileWidgetTemplates.js';
 require('file-loader?name=[name].[ext]!../css/filewidget.css');
 
 Handlebars.registerHelper('formatDT', makeDateTime);
+
+
+/*
+var fileopencb;
+
+$('#hiddenfileopener').click((e)=>{fileopencb()});
+*/
 
 function setDisable(item, state)
 {
@@ -33,7 +41,7 @@ class FileBrowser {
 		fileSelected: (...args) => {me.fileSelect(...args)},
 		dirCallback: (...args) => {me.dirSelect(...args)},
 	});
-	
+
 	let openPlace = '/';
 	if (initialDir) {
 		let splits = initialDir.split('/');
@@ -44,7 +52,7 @@ class FileBrowser {
 	}
 	this.dirPath = openPlace;
 	this.browser.start(openPlace);
-	$('#cancelbut').click(e=>{me.cancel(e)});	
+	$('#cancelbut').click(e=>{me.cancel(e)});
 }
 
   cancel(e) {
@@ -165,14 +173,37 @@ class OpenFileBrowser extends FileBrowser {
  }
 
   fullPathFor(name) {
-  	if (this.dirPath === '/') return '/' + name;
+	if (this.dirPath === '/') return '/' + name;
 	return this.dirPath + '/' + name;
   }
 
 };
 
+function addWaves(evt) {
+	var files = evt.target.files;
+	var f = files[0];
+	if (f === undefined) return;
+}
+
 function openFileBrowser (params) {
-	let fileBrowser = new OpenFileBrowser(params);
+	if (!local_exec) {
+		let fileBrowser = new OpenFileBrowser(params);
+	} else {
+		$('#hiddenfileopener').on('click', (e)=>{
+
+			$('#hiddenfileopener').off('click');
+			$('#hiddenfileopener').off('change');
+			$('#hiddenfileopener').on('change', (evt)=>{
+				var files = evt.target.files;
+				var f = files[0];
+				console.log(f);
+				var path = (window.URL || window.webkitURL).createObjectURL(f);
+    			console.log('path', path);
+			});
+		});
+
+		$("#hiddenfileopener").click();
+	}
 }
 
 class SaveFileBrowser extends FileBrowser {

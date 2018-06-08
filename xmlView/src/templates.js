@@ -1,21 +1,16 @@
 // Handlebars tamplates
 import Handlebars from './js/handlebars.min.js';
 
-var local_exec_head = Handlebars.compile(`			<table class='nobord'><tr>
+var local_exec_head = Handlebars.compile(`<table class='nobord'><tr>
 				<td><input id='opener' name="file" type="file" accept=".xml,.XML" /></td>
-				<!--
-				<td><input type="button" value="Open" style="width:55pt" onclick="btn_open()" ></td>
-				<td><input type="button" value="Save(F1)" style="width:55pt" onclick="btn_save()"></td>
-				<td><textarea id="status" rows="2"  class="statusbox" readonly></textarea></td>
-				-->
+				<td><input id='downloadbut' type="button" value="Download" style="width:55pt" ></td>
 			</tr>
 			</table>`);
 
 var local_exec_info = Handlebars.compile(`
-You are running the local version of viewXML. Since this is not running on a FlashAir card inserted into a Synthstrom Deluge, 
-you will not be able to save any edits you make.<p>
+<div>You are running the local version of viewXML.
 To view the contents of a SONG, SYNTH, or KIT file, press the 'Choose File' button at the top of this page and you will get a 'file open' dialog you can use to select the file you want to view. 
-`);
+</div>`);
 var track_copy_template = Handlebars.compile(`<button class='clipbtn'trackno='{{trackIndex}}'><img src='img/copy-to-clipboard.png'/></button>`);
 Handlebars.registerPartial("getcopytoclip", track_copy_template);
 

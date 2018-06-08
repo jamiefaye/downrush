@@ -1,7 +1,8 @@
 // Handlebars tamplates
 var Handlebars = require('./js/handlebars.min.js');
 var local_exec_head = Handlebars.compile(`			<table class='nobord'><tr>
-				<td><input ID='opener' name="file" type="file" accept=".wav,.WAV" /></td>
+				<td><input id='opener' name="file" type="file" accept=".wav,.WAV" /></td>
+				<td><input id='downloadbut' type="button" value="Download" style="width:55pt" ></td>
 			</tr>
 			</table>`);
 

@@ -14,6 +14,7 @@ import SimpleReverbFilter from './SimplereverbFilter.js';
 import DelayFilter from './DelayFilter.js';
 import OscFilter from './OscFilter.js';
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
+import FileSaver from 'file-saver';
 
 "use strict";
 
@@ -575,6 +576,7 @@ function record()
 	var files = evt.target.files;
 	var f = files[0];
 	if (f === undefined) return;
+	this.fname = f;
 	var reader = new FileReader();
 	if(!me.wave) {
 		me.wave = new Wave(me.idFor('waveform'));
@@ -589,10 +591,29 @@ function record()
 	reader.readAsBinaryString(f);
  }
 
+ genWAV() {
+ 	let aBuf = this.wave.backend.buffer;
+	let saveData = audioBufferToWav(aBuf);
+	return saveData;
+ }
 
 }; // ** End of class
 
 //.value
+
+function downloader(evt) {
+	if(!focusWaveView) return;
+	let saveWAV = focusWaveView.genWAV();
+	var blob = new Blob([saveWAV], {type: "audio/wav"});
+	let saveName;
+	if (local_exec) {
+		saveName = focusWaveView.fname.name 
+	} else {
+		saveName = focusWaveView.fname.split('/').pop();
+	}
+	console.log(saveName);
+	FileSaver.saveAs(blob, saveName);
+}
 
 //---------- When reading page -------------
 function onLoad()
@@ -615,6 +636,7 @@ function onLoad()
 		$(homeDoc.idFor('jtab')).append (local_exec_info());
 		$('#opener').on('change', (e)=>{homeDoc.openLocal(e)});
 	}
+	$('#downloadbut').click((e)=>{downloader(e)});
 	homeDoc.bindGui();
 }
 

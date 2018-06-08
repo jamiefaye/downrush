@@ -59,8 +59,13 @@ class Instrument extends React.Component {
 	let ypos = 2;
 
 	let parentDiv = $("<div class='arrgrid'/>");
-	
-	let trackTab = forceArray(this.props.song.tracks.track);
+	let song = this.props.song;
+	let trackTab = forceArray(song.tracks.track);
+	let arrangeOnlyTab = [];
+	if (song.arrangementOnlyTracks) {
+		arrangeOnlyTab = forceArray(song.arrangementOnlyTracks.track);
+	}
+
 	let maxTrack = trackTab.length;
 		
 	let firstTimeThru = false;
@@ -69,12 +74,12 @@ class Instrument extends React.Component {
 
 	for (var nx = 2; nx < instString.length; nx += 24) {
 		let start = parseInt(instString.substring(nx, nx + 8), 16);
-
 		let len = parseInt(instString.substring(nx + 8, nx + 16), 16);
 		let trk = parseInt(instString.substring(nx + 16, nx + 24), 16);
 		let endT = start + len;
 		if (endT > highTime) highTime = endT;
 		let trkColor = 0xFFFFFF;
+		let itemClass = 'arritem';
 		let trkLab = '';
 		if (trk < maxTrack) {
 			let track = trackTab[trk];
@@ -93,6 +98,10 @@ class Instrument extends React.Component {
 				}
 				firstTimeThru = true;	
 			}
+		} else {
+			itemClass = 'arritembow';
+			trkLab = (arrangeOnlyTab.length - trk & 0x7FFFFFFF) + 'a';
+			
 		}
 
 		let colorString = '#' + gamma_correct(trkColor.toString(16));
@@ -101,12 +110,10 @@ class Instrument extends React.Component {
 		if (w > 2) w--;
 
 		//console.log(trk + " " + start + " " + len);
-		let ndiv = $("<div class='arritem'/>");
+		let ndiv = $("<div class='" + itemClass + "'/>");
 		ndiv.text(trkLab);
 		ndiv.css({left: x + 'px', bottom: ypos + 'px', width: w + 'px', "background-color": colorString});
 		parentDiv.append(ndiv);
-		
-
 	}
 	let highW = highTime * scaling + xPlotOffset;
 	parentDiv.css({width: highW + 'px'});
