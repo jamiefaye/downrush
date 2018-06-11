@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {keyOrderTab, knownArrays} from "./keyOrderTab.js";
+import {keyOrderTab, heteroArrays} from "./keyOrderTab.js";
 import {isObservableArray} from 'mobx';
 
 /*******************************************************************************
@@ -12,6 +12,12 @@ import {isObservableArray} from 'mobx';
 // Table of classes to create for given JSON object property names
 
 var nameToClassTab = {};
+var classToNameTab = {};
+
+function registerClass(name, clas) {
+	nameToClassTab[name] = clas;
+	classToNameTab[clas] = name;
+}
 
 var doNotSerialize = new Set();
 doNotSerialize.add('uniqueId');
@@ -65,7 +71,7 @@ function xmlToJson(xml, fill) {
 	obj = xml.nodeValue;
   }
 
-	let makeArray = knownArrays.has(xml.nodeName);
+	let makeArray = heteroArrays.has(xml.nodeName);
 	if (makeArray) {
 		obj = [];
 	}
@@ -131,6 +137,8 @@ function isObject(val) {
 
 
 function jsonToXML(kv, j, d) {
+
+	console.log(kv);
 	if(!isObject(j)) {
 		return gentabs(d) + "<" + kv + ">" + j + "</" + kv + ">\n";
 	}
@@ -181,25 +189,45 @@ function jsonToXML(kv, j, d) {
 		}
 	}
 
-	for(var i = 0; i < keyOrder.length; ++i) {
-		let kv = keyOrder[i];
-		let v = j[kv];
+	for(let i = 0; i < keyOrder.length; ++i) {
+		let kvo = keyOrder[i];
+		let v = j[kvo];
 		if (v === undefined) {
 			continue;
 		}
-		if (isArrayLike(v)) {
-			for(var i = 0; i < v.length; ++i) {
-				insides += jsonToXML(kv, v[i], d + 1);
+
+		if (kvo === 'instruments') {
+			console.log('meow');
+		}
+
+		// a heteroArray is a special case. Instead of <tracks><track></track>…</tracks> we have
+		// <instruments><sound></sound><kit></kit></instruments>. Put another way, a heteroArray
+		// has more than one type of element in it.
+		if (heteroArrays.has(kvo)) {
+			insides += gentabs(d) + "<" + kvo + ">\n";
+			for(let n = 0; n < v.length; ++n) {
+				let ao = v[n];
+				let hkv = classToNameTab[ao.constructor];
+				if (!hkv) {
+					console.log("**** Missing hetero array class " + ao.constructor.name);
+					continue;
 				}
+				insides += jsonToXML(hkv, ao, d + 1);
+			}
+			insides +=  gentabs(d + 1) + "</" + kvo + ">\n";
+		} else if (isArrayLike(v)) {
+			for(var k = 0; k < v.length; ++k) {
+				insides += jsonToXML(kvo, v[k], d + 1);
+			}
 		} else if (v.constructor == Object) {
-			insides += jsonToXML(kv, v, d + 1);
+			insides += jsonToXML(kvo, v, d + 1);
 		} else {
 				// Simple k/v pair
 			if(typeof v === "string") v = v.trim();
-			insides += jsonToXML(kv, v, d);
+			insides += jsonToXML(kvo, v, d);
 		}
 	}
-	let str = gentabs(d - 1) + "<" + kv + atStr;
+	let str = gentabs(d) + "<" + kv + atStr;
 	
 	if (insides.length > 0) {
 		str += '>\n' + insides + gentabs(d - 1) + '</' + kv + '>\n';
@@ -331,4 +359,4 @@ function forceArray(obj) {
 }
 
 
-export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, nameToClassTab};
+export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, nameToClassTab, registerClass};

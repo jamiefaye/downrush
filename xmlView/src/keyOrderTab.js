@@ -14,6 +14,9 @@
 "xScroll",
 "xZoom",
 "yScrollSongView",
+"yScrollArrangementView",
+"xScrollArrangementView",
+"xZoomArrangementView",
 "timePerTimerTick",
 "timerTickFraction",
 "rootNote",
@@ -30,6 +33,7 @@
 "modFXCurrentParam",
 "currentFilterType",
 "songParams",
+"instruments",
 "sections",
 "tracks",
 ],
@@ -89,6 +93,8 @@
 "yScroll",
 "yScrollKeyboard",
 "status",
+"isPlaying",
+"isSoloing",
 "playEnabledAtStart",
 "trackLength",
 "colourOffset",
@@ -124,6 +130,7 @@
 "drumIndex",
 "soundParams",
 "notes",
+"noteData",
 ],
 "notes": ["note",
 ],
@@ -372,9 +379,9 @@ function genOrderTab(xml) {
 	console.log(genStr);
 }
 
-// knownArrays is used to flag an element name that should always create a json
+// heteroArrays is used to flag an element name that should always create a json
 // array for its subelements. Needed to cope with mixed element types.
-var knownArrays = new Set();
+var heteroArrays = new Set();
 
-knownArrays.add('instruments');
-export {keyOrderTab, knownArrays};
+heteroArrays.add('instruments');
+export {keyOrderTab, heteroArrays};
