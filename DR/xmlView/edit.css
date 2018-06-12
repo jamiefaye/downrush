@@ -141,7 +141,12 @@ div.arritem {
 	position: absolute;
 	height: 16px;
 	color: white;
-//	background-color:#202020;
+}
+
+div.arritembow {
+	position: absolute;
+	height: 16px;
+	color: black;
 }
 
 
@@ -446,6 +451,11 @@ div.paramrun {
 vertical-align: top;
 height: 28px;
 min-height: 28px;
+}
+
+#hiddenfileopener
+{
+    display:none;
 }
 
 .unselectable {

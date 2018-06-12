@@ -4,7 +4,7 @@ import Dropdown from 'react-dropdown';
 import {WaveView} from './WaveView.jsx';
 import {openFileBrowser} from './FileBrowser.js';
 import {forceArray} from "./JsonXMLUtils.js";
-import {formatSound, sample_path_prefix, findKitList} from "./viewXML.js";
+import {formatSound, sample_path_prefix, local_exec, findKitList} from "./viewXML.js";
 import {observer} from 'mobx-react';
 import {observable} from 'mobx';
 import {empty_sound_template} from './templates.js';
@@ -198,6 +198,10 @@ class EditButtons extends React.Component {
 	let openEditing = this.props.editing && this.state.opened;
 	let osc = this.props.osc;
 	let hasSample = osc.fileName && !$.isEmptyObject(osc.fileName);
+	let showPlayButton = hasSample && !local_exec;
+	let showAudioControl = hasSample && local_exec;
+	let showWaveView = showPlayButton;
+	let soundGridOnly = !hasSample || showAudioControl;
 	let startTS = "";
 	let endTS = "";
 	if (hasSample) {
@@ -219,13 +223,15 @@ class EditButtons extends React.Component {
 		  <td className="endms">{endTS}</td>
 		   {openEditing ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
 							: (<td className="loopMode">{defaultOption}</td>)}
-		  {hasSample ? (<td><PlayerControl pushed={this.state.pushed} command={(e)=>{this.command('play', e)}}/></td>) : (<td> </td>)}
+		  {showPlayButton ? (<td><PlayerControl pushed={this.state.pushed} command={(e)=>{this.command('play', e)}}/></td>) : 
+			showAudioControl ? (<td><audio controls preload='none'><source src={sample_path_prefix + this.props.osc.fileName} type='audio/wav'/></audio></td>)
+							 :(<td> </td>)}
 		</tr>
-		{hasSample ? (<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} editing={openEditing}
+		{showWaveView ? (<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} editing={openEditing}
 		 toggleTab={this.toggleTab} showTab={this.state.showTab}
 			osc={this.props.osc} filename={this.props.osc.fileName} selectionUpdate={this.selectionUpdate.bind(this)}
 		 />) : null}
-		 {this.state.opened && (this.state.showTab || !hasSample)  ? (<tr><td colSpan={openEditing ? 9 : 7}><SoundTab sound={this.props.kito}/></td></tr>) : null}
+		 {this.state.opened && (this.state.showTab || soundGridOnly)  ? (<tr><td colSpan={openEditing ? 9 : 7}><SoundTab sound={this.props.kito}/></td></tr>) : null}
    </React.Fragment>)
   }
 };
