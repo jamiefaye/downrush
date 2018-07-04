@@ -644,12 +644,11 @@ case 2:
 	}
 	this.polling_active = true;
 	let that = this;
-	var url="/command.cgi?op=121&TIME="+(Date.now());
-
+	var url="/command.cgi?op=102";
 	$.get(url).done(function(data, textStatus, jqXHR){
 		that.polling_active = false;
-		if(this.last_update_time < Number(data)) {
-			that.last_update_time = Number(data);
+		let hasUpd = Number(data);
+		if(hasUpd) {
 			that.getFileList(that.last_dirpath);
 			$("#reloadtime").html("<font color=red>"+(new Date()).toLocaleString())+"</font>";
 		}else{

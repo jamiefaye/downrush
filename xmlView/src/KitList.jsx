@@ -248,8 +248,24 @@ class EditButtons extends React.Component {
   checker(which, state) {
 	this.props.informCheck(this, which, state);
   }
- 
+
+  renderMidi() {
+	let span = this.props.editing ? 6 : 4;
+	let chanNum = Number(this.props.channel) + 1;
+	let noteVal = this.props.note;
+	return (<tbody>
+	<tr className="kitentry unselectable" key='sinfo'>
+	{this.props.editing ? (<EditButtons checker={this.props.checker}/>) : null}	
+	<td> </td>
+	<td> </td>
+	{noteVal === undefined ? (<td>CV Gate: {chanNum}</td>) : (<td>Midi channel: {chanNum} note: {this.props.note}</td>)}
+	<td colSpan={span}> </td>
+	</tr>
+	</tbody>);
+  }
+
   render() {
+	if (this.props.channel) return this.renderMidi();
 	let o2 = this.props.osc2;
 	let hasB = o2.fileName && !$.isEmptyObject(o2.fileName);
 	return (<tbody>
