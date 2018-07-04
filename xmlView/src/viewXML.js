@@ -2,7 +2,7 @@
 import $ from'jquery';
 import Clipboard from "./js/clipboard.min.js";
 import tippy from "./js/tippy.all.min.js";
-import {patchNames, kitNames} from "./js/delugepatches.js";
+import {patchNames, kitNames, newSynthPatchNames} from "./js/delugepatches.js";
 require('file-loader?name=[name].[ext]!../viewXML.htm');
 require('file-loader?name=[name].[ext]!../css/edit.css');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
@@ -12,7 +12,7 @@ import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass
 import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
 import React from 'react';
 import ReactDOM from "react-dom";
-import {Kit, Track, Sound, Song, SoundSources} from "./Classes.jsx";
+import {Kit, Track, Sound, Song} from "./Classes.jsx";
 import FileSaver from 'file-saver';
 
 import {
@@ -527,7 +527,7 @@ function plotKit13(track, reftrack, obj) {
 	if (!reftrack.kit.soundSources) {
 		let meow = 2;
 	}
-	let kitList = forceArray(reftrack.kit.soundSources.sound);
+	let kitList = forceArray(reftrack.kit.soundSources);
 	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
@@ -581,14 +581,14 @@ function findInstrument(track, list) {
 function findKitList(track, song) {
 	let kitList;
 	if (track.kit) {
-		kitList = forceArray(track.kit.soundSources.sound);
+		kitList = forceArray(track.kit.soundSources);
 	} else {
 		let kitI = findInstrument(track, song.instruments);
 		if(!kitI) {
 			console.log("Missing kit instrument");
 			return;
 		}
-		kitList = forceArray(kitI.soundSources.sound);
+		kitList = forceArray(kitI.soundSources);
 	}
 	return kitList;
 }
@@ -623,6 +623,14 @@ function plotKit14(track, reftrack, song, obj) {
 		if (row.drumIndex) {
 			let rowInfo = kitList[row.drumIndex];
 			labName = rowInfo.name;
+			if (rowInfo.channel) {
+				let chanNum = Number(rowInfo.channel);
+				if (rowInfo.note) { // Midi
+					labName = (chanNum + 1) + "." + rowInfo.note;
+				} else { // CV
+					labName = "Gate " + chanNum;
+				}
+			}
 			if (labName != undefined) {
 				let labdiv = $("<div class='kitlab'/>");
 				labdiv.text(labName);
@@ -933,11 +941,10 @@ var trackKindNames = {"kit": "Kit",
 					};
 
 
+function patchInfo(track, newSynthNames) {
 
-function trackHeader(track, kind, inx, repeatTab, obj) {
-	let section = Number(track.section);
 	let patchStr = "";
-
+	let kind = trackKind(track);
 	let patch = Number(track.instrumentPresetSlot);
 
 	if (kind === 'kit' || kind === 'sound') {
@@ -963,29 +970,38 @@ function trackHeader(track, kind, inx, repeatTab, obj) {
 		patchStr = Number(track.midiChannel) + 1;
 		patchName = '';
 	} else if (kind === 'sound') {
-		patchName = patchNames[patch];
+		patchName = newSynthNames ? newSynthPatchNames[patch] : patchNames[patch];
 	} else if (kind === 'cv') {
 		patchStr = Number(track.cvChannel) + 1;
 		patchName = '';
 	}
 
+	return {
+		len:			track.trackLength,
+		patch: 			patchStr,
+		patchName:		patchName,
+		kindName: 		trackKindNames[kind],
+		info:			info,
+	};
+}
+
+function trackHeader(track, newSynthNames, inx, repeatTab, obj) {
+	let context = patchInfo(track, newSynthNames);
+	let section = Number(track.section);
+
 	let repeats = Number(repeatTab[section].numRepeats);
 	if (repeats === 0) repeats = '&#x221e;';
 	 else if (repeats === -1) repeats = 'Share';
-	let context = {
-		len:			track.trackLength,
-		patch: 			patchStr,
+	
+	let addedContext = {...context,
 		colourOffset: 	track.colourOffset,
-		patchName:		patchName,
-		kindName: 		trackKindNames[kind],
 		section: 		section,
 		repeats:		repeats,
-		info:			info,
 		trackNum:		inx + 1,
 		trackIndex:		inx,
 	}
-	let trtab = track_head_template(context);
 
+	let trtab = track_head_template(addedContext);
 	obj.append(trtab);
 }
 
@@ -1179,7 +1195,7 @@ function formatSong(jdoc, obj) {
 	obj.append(", Key = " + scaleString(jsong));
 	obj.append($("<p class='tinygap'>"));
 	
-	showArranger(jsong, obj);
+	showArranger(jsong, jdoc.newSynthNames, obj);
 
 	obj.append($("<p class='tinygap'>"));
 
@@ -1197,7 +1213,7 @@ function formatSong(jdoc, obj) {
 				let fromID = Number(track.instrument.referToTrackId);
 				refTrack = trax[fromID];
 			}
-			trackHeader(track, tKind, i, sectionTab, obj);
+			trackHeader(track, jdoc.newSynthNames, i, sectionTab, obj);
 			if(tKind === 'kit') {
 				
 				if(newNoteFormat) {
@@ -1273,15 +1289,31 @@ class DelugeDoc {
 	}
 
 	this.newNoteFormat = !(this.firmwareVersionFound.indexOf('1.2') >= 0 || this.firmwareVersionFound.indexOf('1.3') >= 0);
-	var fixedText = text.replace(/<firmwareVersion>.*<.firmwareVersion>/i,"");
-	fixedText = fixedText.replace(/<earliestCompatibleFirmware>.*<.earliestCompatibleFirmware>/i,"");
+	this.newSynthNames = !!this.earliestCompatibleFirmware;
+	// get rid of invalid XML elements using string search, so as to work-around
+	// Leonard's issue:
+	let seek = "</earliestCompatibleFirmware>\n";
+	let sx = text.indexOf(seek);
+	if (sx < 0) {
+		seek = "</firmwareVersion>\n";
+		sx = text.indexOf(seek);
+	}
+	let fixedText;
+	if (sx >= 0) {
+		fixedText = text.substring(sx + seek.length);
+	} else {
+		fixedText = text;
+	}
+
+
+//	let fixedText0 = text.replace(/<firmwareVersion>.*<.firmwareVersion>/i,"");
+//	let fixedText = fixedText0.replace(/<earliestCompatibleFirmware>.*<.earliestCompatibleFirmware>/i,"");
 	var asDOM = getXmlDOMFromString(fixedText);
 	// Uncomment following to generate ordering table based on a real-world example.
 	// enOrderTab(asDOM);
 	var asJSON = xmlToJson(asDOM);
 	if (newKitFlag) {
-		asJSON.kit.soundSources = new SoundSources();
-		asJSON.kit.soundSources.sound = [];
+		asJSON.kit.soundSources = [];
 	}
 	this.jsonDocument = asJSON;
 	let jtabid = this.idFor('jtab');
@@ -1311,7 +1343,7 @@ class DelugeDoc {
 		formatSound(obj, json.sound, json.sound.defaultParams, json.sound.soundParams);
 	} else if(json['kit']) {
 		let wherePut = $(this.idFor('jtab'))[0];
-		let kitList = json.kit.soundSources.sound;
+		let kitList = json.kit.soundSources;
 		formatKit(kitList, json.kitParams, wherePut);
 	} else {
 		jsonToTable(json, obj);
@@ -1602,4 +1634,4 @@ function setEditText(fname, text)
 	});
 }
 
-export {formatSound, gamma_correct, sample_path_prefix, local_exec, findKitList, trackKind};
+export {formatSound, gamma_correct, sample_path_prefix, local_exec, findKitList, patchInfo};

@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import $ from'jquery';
-import {gamma_correct, trackKind} from './viewXML.js';
+import {gamma_correct, patchInfo} from './viewXML.js';
 import {forceArray} from "./JsonXMLUtils.js";
-import {patchNames, kitNames} from "./js/delugepatches.js";
+import {patchNames, kitNames, newSynthPatchNames} from "./js/delugepatches.js";
 
 var chanHeight = 16;
 var scaling = 0.2;
@@ -13,38 +13,13 @@ var groupColorTab = [0x005AA5, 0xB0004F, 0xb04F00, 0x00C738, 0xFA0005, 0x679800,
  0x0000FF, 0xEA1500, 0x3300CC, 0x25DA00, 0x00F609, 0x6D0092];
 
 
-function patchLabel(track) {
-	let kind = trackKind(track);
-	let patchStr = "";
-	let patch = Number(track.instrumentPresetSlot);
-
-	if (kind === 'kit' || kind === 'sound') {
-		patchStr = patch;
-		let subpatch = Number(track.instrumentPresetSubSlot);
-		if (subpatch >= 0) {
-			patchStr += ' ';
-			patchStr += String.fromCharCode(subpatch + 65); // 0 = a, 1 = b, …
-		}
+function patchLabel(track, newSynthNames) {
+	let context = patchInfo(track,newSynthNames);
+	if (!context.patchName) { 
+		return context.patch;
 	}
-
-	var patchName;
-	if (kind === 'kit') {
-		patchName = kitNames[patch];
-	} else if (kind === 'midi') {
-		patchStr = Number(track.midiChannel) + 1;
-		patchName = '';
-	} else if (kind === 'sound') {
-		patchName = patchNames[patch];
-	} else if (kind === 'cv') {
-		patchStr = Number(track.cvChannel) + 1;
-		patchName = '';
-	}
-	if (patchName) patchName += ' ';
-		else patchName = '';
-	patchName += patchStr;
-	return patchName;
+	return context.patchName + " " + context.patch;
 }
-
 
 // 00000000	Start
 // 000000C0	Length
@@ -88,7 +63,7 @@ class Instrument extends React.Component {
 				let sect = track.section;
 				trkColor = groupColorTab[sect % groupColorTab.length];
 				if (!firstTimeThru) {
-					let labName = patchLabel(track);
+					let labName = patchLabel(track, this.props.newSynthNames);
 					if (labName != undefined) {
 						let labdiv = $("<div class='arrlab'/>");
 						labdiv.text(labName);
@@ -133,20 +108,22 @@ class Arranger extends React.Component {
 		return (<div ref={el => this.el = el}> </div>);
 	}
 	let nInstruments = this.props.instruments.length;
+	let newSynthNames = this.props.newSynthNames;
 	return (<div ref={el => this.el = el}>
 	{this.props.instruments.slice(0).reverse().map((inst, ix) =>{
-		return <Instrument index={ix} maxIndex = {nInstruments} song={this.props.song} inst={inst} key={inst.uniqueId} keyValue={inst.uniqueId}/>
+		return <Instrument index={ix} maxIndex = {nInstruments} song={this.props.song} inst={inst} key={inst.uniqueId} keyValue={inst.uniqueId} newSynthNames={newSynthNames}/>
 	})}
 	 </div>);
   }
 }
 
-function showArranger(song, where) {
+function showArranger(song, newSynthNames, where) {
 //	let arrangement = json.soundSources.sound; // forceArray(json.soundSources.sound);
 	let context = {};
 	context.jqElem =  where;
 	context.song = song;
 	context.instruments = song.instruments;
+	context.newSynthNames = newSynthNames;
 	let arranger = React.createElement(Arranger, context);
 	let rep = $("<div> </div>");
 	where.append(rep);

@@ -146,8 +146,6 @@
 "soundSources",
 "selectedDrumIndex",
 ],
-"soundSources": ["sound",
-],
 "sound": ["name",
 "osc1",
 "osc2",
@@ -320,6 +318,9 @@
 "retrigPhase",
 "toModulator1",
 ],
+"midiOutput": ["channel",
+"note",
+],
 };
 
 var genDict;
@@ -384,4 +385,5 @@ function genOrderTab(xml) {
 var heteroArrays = new Set();
 
 heteroArrays.add('instruments');
+heteroArrays.add('soundSources');
 export {keyOrderTab, heteroArrays};

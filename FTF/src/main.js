@@ -511,13 +511,17 @@ function polling() {
 	if(polling_active) {
 		return;
 	}
+	console.log("Polling in main.js");
 	polling_active = true;
 	var url="/command.cgi?op=121&TIME="+(Date.now());
 
 	$.get(url).done(function(data, textStatus, jqXHR){
 		polling_active = false;
-		if(last_update_time < Number(data)) {
-			last_update_time = Number(data);
+		let updTime = Number(data);
+		console.log("updTime = " + updTime + " lut = " + last_update_time);
+		if(last_update_time < updTime) {
+			last_update_time = updTime;
+			console.log("Refreshing at: " + updTime);
 			getFileList(last_dirpath);
 			$("#reloadtime").html("<font color=red>"+(new Date()).toLocaleString())+"</font>";
 		}else{

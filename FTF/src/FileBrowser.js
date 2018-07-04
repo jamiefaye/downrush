@@ -56,6 +56,7 @@ export default class FileBrowser {
 	constructor() {
 		this.currentPath = '/';
 		this.last_dirpath = "/";
+		this.last_update_time = -1;
 		this.polling_active = false;
 		this.wlansd;
 		this.sortOrder = 1;
@@ -80,13 +81,13 @@ export default class FileBrowser {
 	let that = this;
 	switch (fieldNum) {
 case 0: 
-	this.sortFunction = function(a, b) {
+	that.sortFunction = function(a, b) {
 			if (!a["fname"]) return 0;
 			return a["fname"].localeCompare(b["fname"]) * that.sortOrder;
 		};
 		break;
 case 1:
-	this.sortFunction = function(a, b) {
+	that.sortFunction = function(a, b) {
 		if( a["fdate"] == b["fdate"] ) {
 			return Math.sign(a["ftime"] - b["ftime"]) * that.sortOrder;
 	} 	else {
@@ -95,14 +96,14 @@ case 1:
 	};
 	break;
 case 2:
-	this.sortFunction = function(a, b) {
+	that.sortFunction = function(a, b) {
 		return Math.sign(a["fsize"] - b["fsize"]) * that.sortOrder;
 	};
 	break;
 	}  // End of switch
-	let recheckSet = new Set(this.getCheckedList());
-	this.wlansd.sort(this.sortFunction);
-	this.showFileList(this.currentPath, recheckSet);
+	let recheckSet = new Set(that.getCheckedList());
+	that.wlansd.sort(that.sortFunction);
+	that.showFileList(that.currentPath, recheckSet);
 }
 
 // Show file list
@@ -534,12 +535,11 @@ case 2:
 	}
 	this.polling_active = true;
 	let that = this;
-	var url="/command.cgi?op=121&TIME="+(Date.now());
-
+	var url="/command.cgi?op=102";
 	$.get(url).done(function(data, textStatus, jqXHR){
 		that.polling_active = false;
-		if(this.last_update_time < Number(data)) {
-			that.last_update_time = Number(data);
+		let hasUpd = Number(data);
+		if(hasUpd) {
 			that.getFileList(that.last_dirpath);
 			$("#reloadtime").html("<font color=red>"+(new Date()).toLocaleString())+"</font>";
 		}else{

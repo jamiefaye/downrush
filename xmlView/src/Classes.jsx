@@ -22,12 +22,8 @@ class Sound extends DRObject {
 	@observable name;
 };
 
-class SoundSources extends DRObject {
-	@observable.shallow sound;
-};
-
 class Kit extends DRObject {
-
+	@observable.shallow soundSources;
 };
 
 class Track extends DRObject {
@@ -39,11 +35,15 @@ class Song extends DRObject {
 
 };
 
+class MidiOutput extends DRObject {
+
+};
+
 registerClass('kit', Kit);
 registerClass('sound', Sound);
-registerClass('kit', Song);
+// registerClass('kit', Song);
 registerClass('osc1', Osc);
 registerClass('osc2', Osc);
-registerClass('soundSources', SoundSources);
+registerClass('midiOutput', MidiOutput);
 
-export {Kit, Track, Sound, Song, SoundSources};
+export {Kit, Track, Sound, Song};
