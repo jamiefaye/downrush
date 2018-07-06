@@ -60,8 +60,12 @@ export default class FileBrowser {
 		this.polling_active = false;
 		this.wlansd;
 		this.sortOrder = 1;
-		this.fieldNum = -1;
-
+		this.fieldNum = 0;
+		let that = this;
+		this.sortFunction = function(a, b) {
+			if (!a["fname"]) return 0;
+			return a["fname"].localeCompare(b["fname"]) * that.sortOrder;
+		};
 }
 
   toggleChecks (e) {
