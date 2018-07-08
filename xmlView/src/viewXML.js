@@ -1192,6 +1192,7 @@ function formatSong(jdoc, obj) {
 		let sync = Number(jsong.swingInterval);
 		obj.append(", Swing = " + swing + "% on " + syncLevelTab[sync]);
 	}
+	
 	obj.append(", Key = " + scaleString(jsong));
 	obj.append($("<p class='tinygap'>"));
 	
