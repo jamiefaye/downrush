@@ -1289,26 +1289,29 @@ class DelugeDoc {
 		this.earliestCompatibleFirmware='';
 	}
 
+//	let str = this.firmwareVersionFound + "\n" + this.earliestCompatibleFirmware + "\n";
+//	alert(str);
+
 	this.newNoteFormat = !(this.firmwareVersionFound.indexOf('1.2') >= 0 || this.firmwareVersionFound.indexOf('1.3') >= 0);
 	this.newSynthNames = !!this.earliestCompatibleFirmware;
-	// get rid of invalid XML elements using string search, so as to work-around
-	// Leonard's issue:
-	let seek = "</earliestCompatibleFirmware>\n";
-	let sx = text.indexOf(seek);
-	if (sx < 0) {
-		seek = "</firmwareVersion>\n";
-		sx = text.indexOf(seek);
+	
+	// Skip past the illegal elements at the front of the file
+	// We stop when we see a <k or a <s
+	let inx = 0;
+	let eofx = text.length - 1;
+	while (inx < eofx) {
+		if (text[inx] === '<') {
+			let c = text[inx + 1];
+			if (c === 's' || c === 'k') break;
+		}
+		inx++;
 	}
-	let fixedText;
-	if (sx >= 0) {
-		fixedText = text.substring(sx + seek.length);
-	} else {
-		fixedText = text;
-	}
+	let fixedText = '<?xml version="1.0" encoding="UTF-8"?>\n' + text.substring(inx);
+
+//	let firstFixed = fixedText.substring(0, 160);
+//	alert (firstFixed);
 
 
-//	let fixedText0 = text.replace(/<firmwareVersion>.*<.firmwareVersion>/i,"");
-//	let fixedText = fixedText0.replace(/<earliestCompatibleFirmware>.*<.earliestCompatibleFirmware>/i,"");
 	var asDOM = getXmlDOMFromString(fixedText);
 	// Uncomment following to generate ordering table based on a real-world example.
 	// enOrderTab(asDOM);
