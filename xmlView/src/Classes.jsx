@@ -23,7 +23,7 @@ class Sound extends DRObject {
 };
 
 class Kit extends DRObject {
-	@observable.shallow soundSources;
+	@observable soundSources;
 };
 
 class Track extends DRObject {
