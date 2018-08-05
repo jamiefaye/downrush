@@ -1311,7 +1311,6 @@ class DelugeDoc {
 //	let firstFixed = fixedText.substring(0, 160);
 //	alert (firstFixed);
 
-
 	var asDOM = getXmlDOMFromString(fixedText);
 	// Uncomment following to generate ordering table based on a real-world example.
 	// enOrderTab(asDOM);
