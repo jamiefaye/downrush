@@ -275,7 +275,7 @@ class EditButtons extends React.Component {
   render() {
 	if (this.props.channel) return this.renderMidi();
 	let o2 = this.props.osc2;
-	let hasB = o2.fileName && !$.isEmptyObject(o2.fileName);
+	let hasB = o2 && o2.fileName && !$.isEmptyObject(o2.fileName);
 	return (<tbody>
 	<SampleEntry className='kitentry' ref={el => this.kitref = el} kito={this.props.kito} checker={this.checker} osc2={false}
 		editing={this.props.editing} index={this.props.index} name={this.props.name} key='osc1' osc={this.props.osc1} />
