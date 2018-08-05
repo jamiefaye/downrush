@@ -23,6 +23,12 @@ function fmtTime(tv) {
 	return v;
 }
 
+function forceString(val) {
+	if (val === undefined) return "";
+	if (typeof val === 'string' || val instanceof String) return val;
+	return "";
+}
+
 var loopModeTab = ["Cut", "Once", "Loop", "Stretch"];
 
 var KIT_SOUND_NAMES = ["KICK",
@@ -193,6 +199,8 @@ class EditButtons extends React.Component {
   	this.setState({showTab: !this.state.showTab});
   }
 
+
+
   render() {
 	const defaultOption = loopModeTab[this.props.osc.loopMode];
 	let openEditing = this.props.editing && this.state.opened;
@@ -217,8 +225,8 @@ class EditButtons extends React.Component {
 			rows='1' cols='10' offsetX={120}
 			trigger='' defaultValue={this.props.name}/></div></td>)
 			 : this.props.osc2 ? <td> </td> : <td>{this.props.name}</td>}
-		  {openEditing ? (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)
-		  					  : (<td style={{textAlign: 'left'}}>{this.props.osc.fileName}</td>)}
+		  {openEditing ? (<td style={{textAlign: 'left'}}>{forceString(this.props.osc.fileName)}</td>)
+		  					  : (<td style={{textAlign: 'left'}}>{forceString(this.props.osc.fileName)}</td>)}
 	  	  <td className="startms">{startTS}</td>
 		  <td className="endms">{endTS}</td>
 		   {openEditing ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
