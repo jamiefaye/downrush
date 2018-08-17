@@ -8,7 +8,7 @@ require('file-loader?name=[name].[ext]!../css/edit.css');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";
 import {showArranger} from "./Arranger.jsx";
-import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray} from "./JsonXMLUtils.js";
+import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike} from "./JsonXMLUtils.js";
 import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
 import React from 'react';
 import ReactDOM from "react-dom";
@@ -1106,21 +1106,20 @@ function convertTempo(jsong)
 }
 
 function scanSamples(json, sampMap) {
-	for (var k in json) {
+	for (let k in json) {
 		if(json.hasOwnProperty(k)) {
-			// Have we found something?
 			let v = json[k];
 			if (k === 'fileName' && typeof v === "string") {
 				sampMap.add(v);
 			} else
-			if (v.constructor === Array) {
+			if (isArrayLike(v)) {
 				for(var ix = 0; ix < v.length; ++ix) {
 					let aobj = v[ix];
-					if (aobj.constructor == Array || aobj.constructor == Object) {
+					if (isArrayLike(aobj) || aobj instanceof Object) {
 						scanSamples(v[ix], sampMap);
 					}
 				}
-			} else if(v.constructor === Object) {
+			} else if(v instanceof Object) {
 				scanSamples(v, sampMap);
 			}
 		}
@@ -1140,13 +1139,13 @@ function sampleReport(json, showAll, obj) {
 	obj.append(sample_list_template({sample_path_prefix: sample_path_prefix, sampList: sampList, showDrums: showAll}));
 }
 
-function genSampleReport(track,jdoc)
+function genSampleReport(jsong,jdoc)
 {
 	let isChecked = $(".showdrums", jdoc).is(':checked');
 	$('.samprepplace table', jdoc).remove();
-	sampleReport(track, isChecked, $('.samprepplace', jdoc));
-	$('#showdrums').on('click', function () {
-		genSampleReport(track);
+	sampleReport(jsong, isChecked, $('.samprepplace', jdoc));
+	$('.showdrums').on('click', function () {
+		genSampleReport(jsong, jdoc);
 	});
 }
 
@@ -1237,7 +1236,7 @@ function formatSong(jdoc, obj) {
 	trackPasteField(obj, jdoc);
 	songTail(jsong, obj);
 	obj.append($("<div class='samprepplace'></div>"));
-	genSampleReport(jsong, jdoc);
+	genSampleReport(jsong, obj);
 
 	// Populate copy to clip buttons.
 	//let clippers = $('.clipbtn', jdoc.docTopElement);
