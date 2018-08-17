@@ -57,7 +57,7 @@ var sample_list_template = Handlebars.compile(`<p class='tinygap'>
 </tr>
 {{#each sampList}}
 <tr><td>{{this}}</td>
-<td><audio controls class='smallplayer' preload='none' style='background-color: blue'><source src='{{../sample_path_prefix}}{{this}}' type='audio/wav'></audio></td>
+<td><audio controls class='smallplayer' preload='none' ><source src='{{../sample_path_prefix}}{{this}}' type='audio/wav'></audio></td>
 </tr>
 {{/each}}
 </table>
