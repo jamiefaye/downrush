@@ -237,7 +237,8 @@ case 2:
 	}
 	let that = this;
 	let file = zonkList.shift();
-	let url = "/upload.cgi?DEL=" + file;
+	let fileEnc = encodeURIComponent(file);
+	let url = "/upload.cgi?DEL=" + fileEnc;
 	// Capture closure.
 	let zonkFunc = function (status) {
 		if (!status) {// Pass failure back up the stack.
@@ -280,7 +281,9 @@ case 2:
 
   deleteFiles()
 {
-	var boxList = this.getCheckedList(this.currentPath + '/');
+	let boxPath = this.currentPath;
+	if (boxPath !== '/') boxPath += '/';
+	var boxList = this.getCheckedList(boxPath);
 	var alertList = boxList.join('\n');
 	var result = confirm( "Delete "+ alertList + "?" );
 	let that = this;
@@ -307,7 +310,9 @@ case 2:
 }
 
   renameFile() {
-	let boxList = this.getCheckedList(this.currentPath + '/');
+  	let boxPath = this.currentPath;
+	if (boxPath !== '/') boxPath += '/';
+	let boxList = this.getCheckedList(boxPath);
 	if (boxList.length === 0) {
 		alert("Please select a file to rename or move using the checkbox");
 		return;
@@ -492,7 +497,7 @@ case 2:
 
 	$('#uploadbut').click(e=>{that.upload()});
 	$('#newdirbut').click(e=>{that.NewDirectory()});
-	$('#deletebit').click(e=>{that.deleteFiles()});
+	$('#deletebut').click(e=>{that.deleteFiles()});
 	$('#renamebut').click(e=>{that.renameFile()});
 	$('#reloadbut').click(e=>{that.reload_list()});
 

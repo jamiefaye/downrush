@@ -6,12 +6,14 @@
 		<title>Downrush XML Viewer</title>
 <!-- https://stackoverflow.com/questions/951791/javascript-global-error-handling -->
 <script type="text/javascript">
+
  window.onerror = function(msg, url, line, col, error) {
    var extra = !col ? '' : '\ncolumn: ' + col;
    extra += !error ? '' : '\nerror: ' + error;
    alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
    return true;
 };
+
 </script>
 <div id="npoptemp" style="display: none;"></div>
 <link rel="stylesheet" href="edit.css">
