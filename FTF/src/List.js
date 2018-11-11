@@ -137,7 +137,7 @@ let fileManagerHTML =`<html>
 			<br>Drag and drop files and folders to upload here.<br><div id="statind"></div>
 			</div>
 			<input id='newdirbut' type="button" value="New Directory">
-			<input id='deletebit' type="button" value="Remove Checked Files">
+			<input id='deletebut' type="button" value="Remove Checked Files">
 			<input id='renamebut' type="button" value="Rename Checked File">
 			<hr>
 			<div class = 'nobord'>

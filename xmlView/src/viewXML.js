@@ -894,7 +894,9 @@ function plotNoteLevelParams(noteRowA, track, trackW, song, elem)
 	noteRowA = forceArray(noteRowA);
 	for (var i = 0; i < noteRowA.length; ++i) {
 		let aRow = noteRowA[i];
-		let prefix = kitList[aRow.drumIndex].name + '.';
+		let aDrum = kitList[aRow.drumIndex];
+		
+		let prefix = aDrum ? kitList[aRow.drumIndex].name + '.' : '.';
 		plotParamLevel(prefix, aRow.soundParams, trackW, elem);
 	}
 }
