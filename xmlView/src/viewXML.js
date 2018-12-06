@@ -567,13 +567,15 @@ function plotKit13(track, reftrack, obj) {
 	obj.append(parentDiv);
 }
 
-function findInstrument(track, list) {
+function findKitInstrument(track, list) {
 	let pSlot = track.instrumentPresetSlot;
 	let pSubSlot = track.instrumentPresetSubSlot;
 	let items = forceArray(list);
 	if (items) {
 		for(let k of items) {
-			if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
+			if (k instanceof Kit) {
+				if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
+			}
 		}
 	}
 }
@@ -583,7 +585,7 @@ function findKitList(track, song) {
 	if (track.kit) {
 		kitList = forceArray(track.kit.soundSources);
 	} else {
-		let kitI = findInstrument(track, song.instruments);
+		let kitI = findKitInstrument(track, song.instruments);
 		if(!kitI) {
 			console.log("Missing kit instrument");
 			return;
