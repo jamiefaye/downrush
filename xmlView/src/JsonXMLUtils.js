@@ -30,6 +30,11 @@ function isArrayLike(val) {
     return false;
 }
 
+function isObject(val) {
+    if (val === null) { return false;}
+    return ( (typeof val === 'function') || (typeof val === 'object') );
+}
+
 
 /**
 * Converts passed XML string into a DOM element.
@@ -358,5 +363,26 @@ function forceArray(obj) {
 	return aObj;
 }
 
+function zonkDNS(json) {
+ for (var k in json) {
+ 	if(json.hasOwnProperty(k)) {
+ 		if (doNotSerialize.has(k)) {
+ 			delete json[k];
+ 		} else {
+ 			let v = json[k];
+ 			if (isArrayLike(v)) {
+ 				for(var ix = 0; ix < v.length; ++ix) {
+ 					let aobj = v[ix];
+ 					if (isArrayLike(aobj) || isObject(aobj)) {
+ 						zonkDNS(aobj);
+ 					}
+ 				}
+ 			} else if (isObject(v)) {
+ 				zonkDNS(v);
+ 			}
+ 		} 
+ 	}
+ }
+}
 
-export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, nameToClassTab, registerClass};
+export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, nameToClassTab, registerClass, zonkDNS};
