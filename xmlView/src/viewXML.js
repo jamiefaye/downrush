@@ -8,7 +8,7 @@ require('file-loader?name=[name].[ext]!../css/edit.css');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";
 import {showArranger} from "./Arranger.jsx";
-import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike} from "./JsonXMLUtils.js";
+import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, zonkDNS} from "./JsonXMLUtils.js";
 import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
 import React from 'react';
 import ReactDOM from "react-dom";
@@ -567,13 +567,15 @@ function plotKit13(track, reftrack, obj) {
 	obj.append(parentDiv);
 }
 
-function findInstrument(track, list) {
+function findKitInstrument(track, list) {
 	let pSlot = track.instrumentPresetSlot;
 	let pSubSlot = track.instrumentPresetSubSlot;
 	let items = forceArray(list);
 	if (items) {
 		for(let k of items) {
-			if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
+			if (k instanceof Kit) {
+				if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
+			}
 		}
 	}
 }
@@ -583,7 +585,7 @@ function findKitList(track, song) {
 	if (track.kit) {
 		kitList = forceArray(track.kit.soundSources);
 	} else {
-		let kitI = findInstrument(track, song.instruments);
+		let kitI = findKitInstrument(track, song.instruments);
 		if(!kitI) {
 			console.log("Missing kit instrument");
 			return;
@@ -1015,10 +1017,10 @@ function getTrackText(trackNum, songJ)
 	let trackIX = trackA.length - trackNum - 1;
 	let trackJ = trackA[trackIX];
 	// Dereference referToTrackId if needed.
-	var trackD;
+	let	trackD = {...trackJ}; // working copy
 	if (trackJ.instrument && trackJ.instrument.referToTrackId !== undefined) {
 		let fromID = Number(trackJ.instrument.referToTrackId);
-		trackD = {...trackJ}; // working copy
+
 		delete trackD.instrument; // zonk reference
 		let sourceT = trackA[fromID];
 		// patch in data from source (depending on what type).
@@ -1030,10 +1032,21 @@ function getTrackText(trackNum, songJ)
 		} else {
 			alert("Dangling reference to trackID: " + fromID + " kind: " + kind);
 		}
-	} else {
-		trackD = trackJ;
 	}
-	// let asText = jsonToXMLString("track", trackD);
+	// If we are a kit track, and we don't have a kit element, see if the song-level 
+	// instruments element is available. If so, borrow from that.
+	let tkind = trackKind(trackD);
+	if (tkind === 'kit') {
+		if (!trackD["kit"]) {
+			let kitI = findKitInstrument(trackD, songJ.instruments);
+			if(!kitI) {
+				console.log("Missing kit instrument");
+			} else {
+				trackD['kit'] = {...kitI};
+			}
+		}
+	}
+	zonkDNS(trackD);
 	let trackWrap = {"track": trackD};
 	let asText = JSON.stringify(trackWrap, null, 1);
 	return asText;
