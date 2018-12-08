@@ -641,19 +641,20 @@ function plotKit14(track, reftrack, song, obj) {
 			}
 		}
 		if (y < 0) continue;
-		
-		for (var nx = 2; nx < noteData.length; nx += 20) {
-			let notehex = noteData.substring(nx, nx + 20);
-			let x = parseInt(notehex.substring(0, 8), 16);
-			let dur =  parseInt(notehex.substring(8, 16), 16);
-			let vel = parseInt(notehex.substring(16, 18), 16);
-			let cond = parseInt(notehex.substring(18, 20), 16);
-			let noteInfo = notehex + labName;
-			x += xPlotOffset;
-			if (dur > 1) dur--;
-			let ndiv = $("<div class='trnkn npop' data-note='" + noteInfo + "'/>");
-			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
-			parentDiv.append(ndiv);
+		if (noteData) {
+			for (var nx = 2; nx < noteData.length; nx += 20) {
+				let notehex = noteData.substring(nx, nx + 20);
+				let x = parseInt(notehex.substring(0, 8), 16);
+				let dur =  parseInt(notehex.substring(8, 16), 16);
+				let vel = parseInt(notehex.substring(16, 18), 16);
+				let cond = parseInt(notehex.substring(18, 20), 16);
+				let noteInfo = notehex + labName;
+				x += xPlotOffset;
+				if (dur > 1) dur--;
+				let ndiv = $("<div class='trnkn npop' data-note='" + noteInfo + "'/>");
+				ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
+				parentDiv.append(ndiv);
+			}
 		}
 	}
 	obj.append(parentDiv);
