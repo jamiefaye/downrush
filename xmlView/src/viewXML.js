@@ -8,7 +8,7 @@ require('file-loader?name=[name].[ext]!../css/edit.css');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";
 import {showArranger} from "./Arranger.jsx";
-import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, zonkDNS} from "./JsonXMLUtils.js";
+import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
 import React from 'react';
 import ReactDOM from "react-dom";
@@ -1049,7 +1049,7 @@ function getTrackText(trackNum, songJ)
 	}
 	zonkDNS(trackD);
 	let trackWrap = {"track": trackD};
-	let asText = JSON.stringify(trackWrap, null, 1);
+	let asText = JSON.stringify(trackWrap, classReplacer, 1);
 	return asText;
 }
 
