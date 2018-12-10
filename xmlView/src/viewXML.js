@@ -8,7 +8,7 @@ require('file-loader?name=[name].[ext]!../css/edit.css');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";
 import {showArranger} from "./Arranger.jsx";
-import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, zonkDNS} from "./JsonXMLUtils.js";
+import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
 import React from 'react';
 import ReactDOM from "react-dom";
@@ -537,9 +537,6 @@ function plotKit13(track, reftrack, obj) {
 		let labName = '';
 		if (row.drumIndex) {
 			let rowInfo = kitList[row.drumIndex];
-			if (!rowInfo) {
-				let cat = 2;
-			}
 			labName = rowInfo.name;
 			if (labName != undefined) {
 				let labdiv = $("<div class='kitlab'/>");
@@ -641,19 +638,20 @@ function plotKit14(track, reftrack, song, obj) {
 			}
 		}
 		if (y < 0) continue;
-		
-		for (var nx = 2; nx < noteData.length; nx += 20) {
-			let notehex = noteData.substring(nx, nx + 20);
-			let x = parseInt(notehex.substring(0, 8), 16);
-			let dur =  parseInt(notehex.substring(8, 16), 16);
-			let vel = parseInt(notehex.substring(16, 18), 16);
-			let cond = parseInt(notehex.substring(18, 20), 16);
-			let noteInfo = notehex + labName;
-			x += xPlotOffset;
-			if (dur > 1) dur--;
-			let ndiv = $("<div class='trnkn npop' data-note='" + noteInfo + "'/>");
-			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
-			parentDiv.append(ndiv);
+		if (noteData) {
+			for (var nx = 2; nx < noteData.length; nx += 20) {
+				let notehex = noteData.substring(nx, nx + 20);
+				let x = parseInt(notehex.substring(0, 8), 16);
+				let dur =  parseInt(notehex.substring(8, 16), 16);
+				let vel = parseInt(notehex.substring(16, 18), 16);
+				let cond = parseInt(notehex.substring(18, 20), 16);
+				let noteInfo = notehex + labName;
+				x += xPlotOffset;
+				if (dur > 1) dur--;
+				let ndiv = $("<div class='trnkn npop' data-note='" + noteInfo + "'/>");
+				ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
+				parentDiv.append(ndiv);
+			}
 		}
 	}
 	obj.append(parentDiv);
@@ -1048,7 +1046,7 @@ function getTrackText(trackNum, songJ)
 	}
 	zonkDNS(trackD);
 	let trackWrap = {"track": trackD};
-	let asText = JSON.stringify(trackWrap, null, 1);
+	let asText = JSON.stringify(trackWrap, classReplacer, 1);
 	return asText;
 }
 

@@ -99,27 +99,23 @@ If you really in trouble, you can find a tool for reinitializing a FlashAir card
 
 http://www.toshiba-personalstorage.net/ww/support/download/flashair/w04/config02.htm
 
-Jamie's CONFIG file is set up to run in station mode on a local WiFi network. Here is what is in it:
+Here are the full contents of the CONFIG file as recommended:
 
 ```
+[Vendor]
+
 CIPATH=/DCIM/100__TSB/FA000001.JPG
-APPMODE=5
-APPSSID=CALICO KATIE_EXT
+APPMODE=4
 APPNETWORKKEY=********
-APPNAME=synth2
-VERSION=F15DBW3BW4.00.02
-CID=02544d535731364754d108467b011601
+VERSION=F15DBW3BW4.00.00
+CID=02544d535731364754d0f21e7a011601
 PRODUCT=FlashAir
 VENDOR=TOSHIBA
-MASTERCODE=***********
 UPLOAD=1
-LOCK=1
 WEBDAV=2
-IFMODE=1
-DNSMODE=0
-TELNET=1
-REDIRECT=0
-APPINFO=0000000000000000
+APPAUTOTIME=0
+LOCK=1
+
 ```
 ## Credits
 

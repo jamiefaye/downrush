@@ -20,8 +20,11 @@ function registerClass(name, clas) {
 }
 
 var doNotSerialize = new Set();
-doNotSerialize.add('uniqueId');
+var doNotSerializeJson = new Set();
 
+doNotSerialize.add('uniqueId');
+doNotSerializeJson.add('uniqueId');
+doNotSerialize.add('_class');
 
 function isArrayLike(val) {
     if (val === null) { return false;}
@@ -112,23 +115,6 @@ function xmlToJson(xml, fill) {
 }
 
 
-function reviveClass(k, v) {
-	if (doNotSerialize.has(k)) return undefined;
-	let classToMake = nameToClassTab[k];
-	if (classToMake) {
-		if (isArrayLike(v)) {
-			for(var i = 0; i < v.length; ++i) {
-				v[i] = new classToMake(v[i]);
-			}
-			return v;
-		} else {
-			let nv = new classToMake(v);
-			return nv;
-		}
-	}
-	return v;
-}
-
 function gentabs(d) {
 	var str = "";
 	for(var i = 0; i< d; ++i) str += '\t';
@@ -140,10 +126,25 @@ function isObject(val) {
     return ( (typeof val === 'function') || (typeof val === 'object') );
 }
 
+function reviveClass(k, v) {
+	if (doNotSerializeJson.has(k)) return undefined;
+	if (k === 'kit') {
+		let cat = 7;
+	}
+	if (!isObject(v)) return v;
+	let kName = v._class;
+	if (!kName) return v;
+	let classToMake = nameToClassTab[kName];
+	if (!classToMake) {
+		console.log("class name not in class tab: " + kName);
+		return v;
+	}
+	delete v._class;
+	return new classToMake(v);
+}
 
 function jsonToXML(kv, j, d) {
-
-	console.log(kv);
+//	console.log(kv);
 	if(!isObject(j)) {
 		return gentabs(d) + "<" + kv + ">" + j + "</" + kv + ">\n";
 	}
@@ -161,7 +162,7 @@ function jsonToXML(kv, j, d) {
 		}
 	}
 	let insides = "";
-	
+
 	let keyOrder = [];
 	let keyTab = keyOrderTab[kv];
 
@@ -363,6 +364,12 @@ function forceArray(obj) {
 	return aObj;
 }
 
+function classReplacer(key, value) {
+	let hkv = classToNameTab[value.constructor];
+	if (!hkv) return value;
+	return {...{_class: hkv}, ...value};
+}
+
 function zonkDNS(json) {
  for (var k in json) {
  	if(json.hasOwnProperty(k)) {
@@ -385,4 +392,4 @@ function zonkDNS(json) {
  }
 }
 
-export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, nameToClassTab, registerClass, zonkDNS};
+export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, nameToClassTab, registerClass, classReplacer, zonkDNS};
