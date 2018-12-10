@@ -537,9 +537,6 @@ function plotKit13(track, reftrack, obj) {
 		let labName = '';
 		if (row.drumIndex) {
 			let rowInfo = kitList[row.drumIndex];
-			if (!rowInfo) {
-				let cat = 2;
-			}
 			labName = rowInfo.name;
 			if (labName != undefined) {
 				let labdiv = $("<div class='kitlab'/>");
@@ -624,9 +621,6 @@ function plotKit14(track, reftrack, song, obj) {
 
 		if (row.drumIndex) {
 			let rowInfo = kitList[row.drumIndex];
-			if (!rowInfo) {
-				let cat = 1;
-			}
 			labName = rowInfo.name;
 			if (rowInfo.channel) {
 				let chanNum = Number(rowInfo.channel);
