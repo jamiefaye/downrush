@@ -128,14 +128,18 @@ function isObject(val) {
 
 function reviveClass(k, v) {
 	if (doNotSerializeJson.has(k)) return undefined;
+	if (k === 'kit') {
+		let cat = 7;
+	}
 	if (!isObject(v)) return v;
-	let kName = v.class;
+	let kName = v._class;
 	if (!kName) return v;
 	let classToMake = nameToClassTab[kName];
 	if (!classToMake) {
 		console.log("class name not in class tab: " + kName);
 		return v;
 	}
+	delete v._class;
 	return new classToMake(v);
 }
 
@@ -158,7 +162,7 @@ function jsonToXML(kv, j, d) {
 		}
 	}
 	let insides = "";
-	
+
 	let keyOrder = [];
 	let keyTab = keyOrderTab[kv];
 
