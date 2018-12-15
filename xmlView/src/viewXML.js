@@ -12,7 +12,7 @@ import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass
 import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
 import React from 'react';
 import ReactDOM from "react-dom";
-import {Kit, Track, Sound, Song} from "./Classes.jsx";
+import {Kit, Track, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 import FileSaver from 'file-saver';
 
 import {
@@ -290,6 +290,7 @@ function newToOldNotes(track) {
 
 function pasteTrackText(text, songDoc) {
 	if (!songDoc.jsonDocument) return;
+	let song = songDoc.jsonDocument.song;
 	let pastedJSON = JSON.parse(text, reviveClass);
 
 	if (!pastedJSON || !pastedJSON.track) {
@@ -310,8 +311,8 @@ function pasteTrackText(text, songDoc) {
 	}
 
 	// Place the new track at the beginning of the track array
-	let trackA = forceArray(songDoc.jsonDocument.song.tracks.track);
-	songDoc.jsonDocument.song.tracks.track = trackA; // If we forced an array, we want that permanent.
+	let trackA = forceArray(song.tracks.track);
+	song.tracks.track = trackA; // If we forced an array, we want that permanent.
 	// The beginning of the track array shows up at the screen bottom.
 	trackA.unshift(pastedJSON.track);
 
@@ -323,26 +324,61 @@ function pasteTrackText(text, songDoc) {
 			aTrack.instrument.referToTrackId = bumpedRef;
 		}
 	}
-
-	// Now we try and element duplicate sound or kit elements
-	// Since our new item was inserted at the front of the list, we search the remmaining tracks
-	// for those that are equal to our element. We then replace their sound or kit with a referToTrackId of 0
 	let track0 = trackA[0];
-	let trackType;
-	if (track0['sound']) trackType = 'sound';
-	else if (track0['kit']) trackType = 'kit';
-	if (trackType !== undefined) {
-		for(var i = 1; i < trackA.length; ++i) {
-			let aTrack = trackA[i];
-			if (jsonequals(track0[trackType], aTrack[trackType])) {
-				delete aTrack[trackType];
-				aTrack.instrument = {"referToTrackId": 0};
-				// Since the track we just put a referToTrackId into may have
-				// been the target of another reference, check for that case and fix that too.
-				for (var j = 1; j < trackA.length; ++j) {
-					let bTrack = trackA[j];
-					if (bTrack.instrument && Number(bTrack.instrument.referToTrackId) === i) {
-						bTrack.instrument.referToTrackId = 0;
+	if (songDoc.version2x) {
+		song.instruments = forceArray(song.instruments);
+		// Check if we need to add the sound, kit, midiChannel, or cvChannel to the instruments list.
+		let tKind = trackKind(track0);
+		if (tKind === 'kit') {
+			let ko = findKitInstrument(track0, song.instruments);
+			if (!ko) {
+				song.instruments.push(track0.kit);
+				delete track0.kit;
+			}
+		} else if (tKind === 'sound') {
+			let so = findSoundInstrument(track0, song.instruments);
+			if (!so) {
+				song.instruments.push(track0.sound);
+				delete track0.sound;
+			}
+		} else if (tKind === 'midi') {
+			let mi = findMidiInstrument(track0, song.instruments);
+			if (!mi) {
+				let mo = new MidiChannel();
+				mo.channel = track0.midiChannel;
+				mo.suffix = -1;
+				song.instruments.push(mo);
+			}
+		} else if (tKind === 'cv') {
+			let ci = findCVInstrument(track0, song.instruments);
+			if (!ci) {
+				let co = new CVChannel();
+				co.channel = track0.cvChannel;
+				song.instruments.push(co);
+			}
+		}
+	} else {
+		// If we are editing pre 2.x songs:
+		// Now we try and element duplicate sound or kit elements
+		// Since our new item was inserted at the front of the list, we search the remmaining tracks
+		// for those that are equal to our element. We then replace their sound or kit with a referToTrackId of 0
+
+		let trackType;
+		if (track0['sound']) trackType = 'sound';
+		else if (track0['kit']) trackType = 'kit';
+		if (trackType !== undefined) {
+			for(var i = 1; i < trackA.length; ++i) {
+				let aTrack = trackA[i];
+				if (jsonequals(track0[trackType], aTrack[trackType])) {
+					delete aTrack[trackType];
+					aTrack.instrument = {"referToTrackId": 0};
+					// Since the track we just put a referToTrackId into may have
+					// been the target of another reference, check for that case and fix that too.
+					for (var j = 1; j < trackA.length; ++j) {
+						let bTrack = trackA[j];
+						if (bTrack.instrument && Number(bTrack.instrument.referToTrackId) === i) {
+							bTrack.instrument.referToTrackId = 0;
+						}
 					}
 				}
 			}
@@ -575,7 +611,49 @@ function findKitInstrument(track, list) {
 			}
 		}
 	}
+	return undefined;
 }
+
+function findSoundInstrument(track, list) {
+	let pSlot = track.instrumentPresetSlot;
+	let pSubSlot = track.instrumentPresetSubSlot;
+	let items = forceArray(list);
+	if (items) {
+		for(let k of items) {
+			if (k instanceof Sound) {
+				if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
+			}
+		}
+	}
+	return undefined;
+}
+
+function findCVInstrument(track, list) {
+	let pChan = track.cvChannel;
+	let items = forceArray(list);
+	if (items) {
+		for(let k of items) {
+			if (k instanceof CVChannel) {
+				if (k.channel === pChan) return k;
+			}
+		}
+	}
+	return undefined;
+}
+
+function findMidiInstrument(track, list) {
+	let pChan = track.midiChannel;
+	let items = forceArray(list);
+	if (items) {
+		for(let k of items) {
+			if (k instanceof MidiChannel) {
+				if (k.channel === pChan) return k;
+			}
+		}
+	}
+	return undefined;
+}
+
 
 function findKitList(track, song) {
 	let kitList;
@@ -1018,7 +1096,6 @@ function getTrackText(trackNum, songJ)
 	let	trackD = {...trackJ}; // working copy
 	if (trackJ.instrument && trackJ.instrument.referToTrackId !== undefined) {
 		let fromID = Number(trackJ.instrument.referToTrackId);
-
 		delete trackD.instrument; // zonk reference
 		let sourceT = trackA[fromID];
 		// patch in data from source (depending on what type).
@@ -1040,7 +1117,16 @@ function getTrackText(trackNum, songJ)
 			if(!kitI) {
 				console.log("Missing kit instrument");
 			} else {
-				trackD['kit'] = {...kitI};
+				trackD['kit'] = new Kit(kitI);
+			}
+		}
+	} else if (tkind === 'sound') {
+		if (!trackD["sound"]) {
+			let soundI = findSoundInstrument(trackD, songJ.instruments);
+			if(!soundI) {
+				console.log("Missing sound instrument");
+			} else {
+				trackD['sound'] = new Sound(soundI);
 			}
 		}
 	}
@@ -1305,6 +1391,7 @@ class DelugeDoc {
 //	alert(str);
 
 	this.newNoteFormat = !(this.firmwareVersionFound.indexOf('1.2') >= 0 || this.firmwareVersionFound.indexOf('1.3') >= 0);
+	this.version2x = this.firmwareVersionFound.indexOf('>2.') >= 0;
 	this.newSynthNames = !!this.earliestCompatibleFirmware;
 	
 	// Skip past the illegal elements at the front of the file

@@ -128,9 +128,6 @@ function isObject(val) {
 
 function reviveClass(k, v) {
 	if (doNotSerializeJson.has(k)) return undefined;
-	if (k === 'kit') {
-		let cat = 7;
-	}
 	if (!isObject(v)) return v;
 	let kName = v._class;
 	if (!kName) return v;
@@ -365,9 +362,13 @@ function forceArray(obj) {
 }
 
 function classReplacer(key, value) {
+	if (value === undefined) {
+		return value;
+	}
 	let hkv = classToNameTab[value.constructor];
 	if (!hkv) return value;
-	return {...{_class: hkv}, ...value};
+	value._class = hkv;
+	return value;
 }
 
 function zonkDNS(json) {
