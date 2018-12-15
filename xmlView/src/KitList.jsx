@@ -5,8 +5,8 @@ import {WaveView} from './WaveView.jsx';
 import {openFileBrowser} from './FileBrowser.js';
 import {forceArray} from "./JsonXMLUtils.js";
 import {formatSound, sample_path_prefix, local_exec, findKitList} from "./viewXML.js";
-import {observer} from 'mobx-react';
-import {observable} from 'mobx';
+//import {observer} from 'mobx-react';
+//import {observable} from 'mobx';
 import {empty_sound_template} from './templates.js';
 import {getXmlDOMFromString, xmlToJson, reviveClass} from './JsonXMLUtils.js';
 import shortid from 'shortid';
@@ -144,7 +144,7 @@ class EditButtons extends React.Component {
   }
 };
 
-@observer class SampleEntry extends React.Component {
+class SampleEntry extends React.Component {
   constructor(props) {
 	super();
 	
@@ -245,7 +245,7 @@ class EditButtons extends React.Component {
 };
 
 
-@observer class KitEntry extends React.Component {
+class KitEntry extends React.Component {
 
 	constructor(props) {
 		super(props);
@@ -287,7 +287,7 @@ class EditButtons extends React.Component {
 
 const SortableKitEntry = SortableElement(KitEntry);
 
-@observer class KitList extends React.Component {
+class KitList extends React.Component {
   constructor(props) {
   	super(props);
 
