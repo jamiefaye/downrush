@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import {keyOrderTab, heteroArrays} from "./keyOrderTab.js";
-//import {isObservableArray} from 'mobx';
 
 /*******************************************************************************
 
