@@ -30,6 +30,14 @@ class Track extends DRObject {
 
 };
 
+class CVChannel extends DRObject {
+
+};
+
+class MidiChannel extends DRObject {
+
+};
+
 
 class Song extends DRObject {
 
@@ -45,5 +53,7 @@ registerClass('sound', Sound);
 registerClass('osc1', Osc);
 registerClass('osc2', Osc);
 registerClass('midiOutput', MidiOutput);
+registerClass('cvChannel', CVChannel);
+registerClass('midiChannel', MidiChannel);
 
-export {Kit, Track, Sound, Song};
+export {Kit, Track, Sound, Song, MidiChannel, CVChannel};
