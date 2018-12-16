@@ -1,7 +1,7 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import knob from'./js/jquery.knob.js';
 import {FilterBase} from './Filters.js';
-import {osc_template} from'./templates.js';
+import osc_template from'./templates/osc_template.handlebars';
 import Dropdown from './Dropdown.js';
 
 export default class OscFilter extends FilterBase {

@@ -1,5 +1,5 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import {filter_frame_template} from'./templates.js';
+import filter_frame_template from'./templates/filter_frame_template.handlebars';
 import {OfflineContext} from './AudioCtx.js';
 
 var createOfflineContext  = function (buffer) {

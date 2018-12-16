@@ -1,7 +1,7 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import knob from'./js/jquery.knob.js';
 import {FilterBase} from './Filters.js';
-import {quadfilter_template} from'./templates.js';
+import quadfilter_template from'./templates/quadfilter_template.handlebars';
 import Dropdown from './Dropdown.js';
 
 export default class BiQuadFilter extends FilterBase {

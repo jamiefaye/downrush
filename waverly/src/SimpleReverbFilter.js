@@ -1,7 +1,7 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import knob from'./js/jquery.knob.js';
 import {FilterBase} from './Filters.js';
-import {reverb_template} from'./templates.js';
+import reverb_template from'./templates/reverb_template.handlebars';
 
 export default class SimpleReverbFilter extends FilterBase {
   constructor() {

@@ -1,10 +1,9 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import Handlebars from './js/handlebars.min.js';
 import {FileWidget, makeDateTime} from './FileWidget.js';
-import {open_frame, save_frame, dir_template} from './fileWidgetTemplates.js';
+import open_frame from "./fileWidgetTemplates/open_frame.handlebars";
+import save_frame from "./fileWidgetTemplates/save_frame.handlebars";
+import dir_template from "./fileWidgetTemplates/dir_template.handlebars";
 require('file-loader?name=[name].[ext]!../css/filewidget.css');
-
-Handlebars.registerHelper('formatDT', makeDateTime);
 
 function setDisable(item, state)
 {

@@ -2,7 +2,12 @@ import $ from'./js/jquery-3.2.1.min.js';
 import Wave from './Wave.js';
 require('file-loader?name=[name].[ext]!../viewWAV.htm');
 require('file-loader?name=[name].[ext]!../css/edit.css');
-import {filegroup_template, sfx_dropdn_template, local_exec_head, local_exec_info} from'./templates.js';
+
+import filegroup_template from "./templates/filegroup_template.handlebars";
+import sfx_dropdn_template from "./templates/sfx_dropdn_template.handlebars";
+import local_exec_head from "./templates/local_exec_head.handlebars";
+import local_exec_info from "./templates/local_exec_info.handlebars";
+
 import UndoStack from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import {audioBufferToWav} from './audioBufferToWav.js';

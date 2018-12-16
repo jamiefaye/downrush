@@ -9,5 +9,10 @@ module.exports = {
     filename: 'waverly.js',
 //    path: path.resolve(__dirname, './')
     path: "/Volumes/NO NAME/DR/waverly"
-  }
+  },
+    module: {
+      rules: [
+      { test: /\.handlebars$/, loader: 'handlebars-loader' }
+    ]
+  },
 };
