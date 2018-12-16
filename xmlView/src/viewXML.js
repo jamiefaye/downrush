@@ -7,7 +7,7 @@ require('file-loader?name=[name].[ext]!../viewXML.htm');
 require('file-loader?name=[name].[ext]!../css/edit.css');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";
-import {showArranger} from "./Arranger.jsx";
+import {showArranger, bumpTracks} from "./Arranger.jsx";
 import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
 import React from 'react';
@@ -324,6 +324,7 @@ function pasteTrackText(text, songDoc) {
 			aTrack.instrument.referToTrackId = bumpedRef;
 		}
 	}
+	
 	let track0 = trackA[0];
 	if (songDoc.version2x) {
 		song.instruments = forceArray(song.instruments);
@@ -332,30 +333,36 @@ function pasteTrackText(text, songDoc) {
 		if (tKind === 'kit') {
 			let ko = findKitInstrument(track0, song.instruments);
 			if (!ko) {
-				song.instruments.push(track0.kit);
-				delete track0.kit;
+				track0.kit.trackInstances = '0x';
+				song.instruments.unshift(track0.kit);
 			}
+			delete track0.kit;
 		} else if (tKind === 'sound') {
 			let so = findSoundInstrument(track0, song.instruments);
 			if (!so) {
-				song.instruments.push(track0.sound);
-				delete track0.sound;
+				track0.sound.trackInstances = '0x';
+				song.instruments.unshift(track0.sound);
 			}
+			delete track0.sound;
 		} else if (tKind === 'midi') {
 			let mi = findMidiInstrument(track0, song.instruments);
 			if (!mi) {
 				let mo = new MidiChannel();
 				mo.channel = track0.midiChannel;
 				mo.suffix = -1;
-				song.instruments.push(mo);
+				song.instruments.unshift(mo);
 			}
 		} else if (tKind === 'cv') {
 			let ci = findCVInstrument(track0, song.instruments);
 			if (!ci) {
 				let co = new CVChannel();
 				co.channel = track0.cvChannel;
-				song.instruments.push(co);
+				song.instruments.unshift(co);
 			}
+		}
+		// Iterate thru the song-level instruments element if it exists, fixing the track numbers.
+		for (let inst in song.instruments) {
+			bumpTracks(song.instruments[inst]);
 		}
 	} else {
 		// If we are editing pre 2.x songs:
@@ -1117,7 +1124,10 @@ function getTrackText(trackNum, songJ)
 			if(!kitI) {
 				console.log("Missing kit instrument");
 			} else {
-				trackD['kit'] = new Kit(kitI);
+				let kd = new Kit(kitI);
+				delete kd.trackInstances;
+				trackD['kit'] = kd;
+				
 			}
 		}
 	} else if (tkind === 'sound') {
@@ -1126,7 +1136,9 @@ function getTrackText(trackNum, songJ)
 			if(!soundI) {
 				console.log("Missing sound instrument");
 			} else {
-				trackD['sound'] = new Sound(soundI);
+				let sd = new Sound(soundI);
+				delete sd.trackInstances;
+				trackD['sound'] = sd;
 			}
 		}
 	}
