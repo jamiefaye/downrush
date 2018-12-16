@@ -7,7 +7,7 @@ module.exports = function (sv) {
 	if (sv === undefined) return undefined;
 
 	var	minX = 0;
-	var	maxX= tab.length - 1;
+	var	maxX= sidechain_attack.length - 1;
 	var	curX;
 	var	curItem;
  
