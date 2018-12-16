@@ -9,28 +9,32 @@ import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";
 import {showArranger, bumpTracks} from "./Arranger.jsx";
 import {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
-import {convertHexTo50, fixm50to50, syncLevelTab} from "./HBHelpers.js";
+
+import convertHexTo50 from "./templates/convertHexTo50.js";
+import fixm50to50 from "./templates/fixm50to50.js";
+import fmtsync from "./templates/fmtsync.js";
+
 import React from 'react';
 import ReactDOM from "react-dom";
 import {Kit, Track, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 import FileSaver from 'file-saver';
 
-import {
-local_exec_head,
-local_exec_info,
-note_tip_template,
-song_template,
-track_head_template,
-sample_list_template,
-param_plot_template,
-paster_template,
-midiKnobTemplate,
-modKnobTemplate,
-midiModKnobTemplate,
-sample_name_prefix,
-empty_kit_template,
-sound_template
-} from "./templates.js";
+
+import local_exec_head from "./templates/local_exec_head.handlebars";
+import local_exec_info from "./templates/local_exec_info.handlebars";
+import note_tip_template from "./templates/note_tip_template.handlebars";
+import song_template from "./templates/song_template.handlebars";
+import track_head_template from "./templates/track_head_template.handlebars";
+import sample_list_template from "./templates/sample_list_template.handlebars";
+import param_plot_template from "./templates/param_plot_template.handlebars";
+import paster_template from "./templates/paster_template.handlebars";
+import midiKnobTemplate from "./templates/midiKnobTemplate.handlebars";
+import modKnobTemplate from "./templates/modKnobTemplate.handlebars";
+import midiModKnobTemplate from "./templates/midiModKnobTemplate.handlebars";
+import sample_name_prefix from "./templates/sample_name_prefix.handlebars";
+import empty_kit_template from "./templates/empty_kit_template.handlebars";
+import sound_template from "./templates/sound_template.handlebars";
+
 
 "use strict";
 
@@ -1300,7 +1304,7 @@ function formatSong(jdoc, obj) {
 	if(swing !== 0) {
 		swing += 50;
 		let sync = Number(jsong.swingInterval);
-		obj.append(", Swing = " + swing + "% on " + syncLevelTab[sync]);
+		obj.append(", Swing = " + swing + "% on " + fmtsync[sync]);
 	}
 	
 	obj.append(", Key = " + scaleString(jsong));

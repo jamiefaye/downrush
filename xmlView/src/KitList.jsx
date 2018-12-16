@@ -5,7 +5,7 @@ import {WaveView} from './WaveView.jsx';
 import {openFileBrowser} from './FileBrowser.js';
 import {forceArray} from "./JsonXMLUtils.js";
 import {formatSound, sample_path_prefix, local_exec, findKitList} from "./viewXML.js";
-import {empty_sound_template} from './templates.js';
+import empty_sound_template from './templates/empty_sound_template.handlebars';
 import {getXmlDOMFromString, xmlToJson, reviveClass} from './JsonXMLUtils.js';
 import shortid from 'shortid';
 import {WedgeIndicator, IconPushButton, Icon2PushButton, PushButton, CopyToClipButton, PasteTarget} from './GUIstuff.jsx';
