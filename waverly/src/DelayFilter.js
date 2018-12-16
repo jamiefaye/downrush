@@ -1,7 +1,7 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import knob from'./js/jquery.knob.js';
 import {FilterBase} from './Filters.js';
-import {delay_template} from'./templates.js';
+import delay_template from'./templates/delay_template.handlebars';
 import Dropdown from './Dropdown.js';
 
 
