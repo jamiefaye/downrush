@@ -1,11 +1,15 @@
 import $ from 'jquery';
 import Handlebars from './js/handlebars.min.js';
-import {FileWidget, makeDateTime} from './FileWidget.js';
+import {FileWidget} from './FileWidget.js';
 import {local_exec, sample_path_prefix} from './viewXML.js';
-import {open_frame, save_frame, dir_template} from './fileWidgetTemplates.js';
+import open_frame from "./fileWidgetTemplates/open_frame.handlebars";
+import save_frame from "./fileWidgetTemplates/save_frame.handlebars";
+import dir_template from "./fileWidgetTemplates/dir_template.handlebars";
+
+//import {open_frame, save_frame, dir_template} from './fileWidgetTemplates.js';
 require('file-loader?name=[name].[ext]!../css/filewidget.css');
 
-Handlebars.registerHelper('formatDT', makeDateTime);
+// Handlebars.registerHelper('formatDT', makeDateTime);
 
 
 /*
