@@ -16,7 +16,8 @@ module.exports = {
         use: {
           loader: "babel-loader"
         }
-      }
+      },
+      { test: /\.handlebars$/, loader: 'handlebars-loader' }
     ]
   },
 };
