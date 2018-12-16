@@ -210,7 +210,8 @@ function formatModKnobs(knobs, title, obj)
 			context[kName] = aKnob.controlsParam;
 		}
 	}
-	obj.append(modKnobTemplate(context));
+	let knobd = modKnobTemplate(context);
+	obj.append(knobd);
 }
 
 function formatModKnobsMidi(knobs, obj)
