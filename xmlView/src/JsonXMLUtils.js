@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import {keyOrderTab, heteroArrays} from "./keyOrderTab.js";
-import {isObservableArray} from 'mobx';
 
 /*******************************************************************************
 
@@ -29,7 +28,7 @@ doNotSerialize.add('_class');
 function isArrayLike(val) {
     if (val === null) { return false;}
     if (Array.isArray(val)) return true;
-    if (isObservableArray(val)) return true;
+//    if (isObservableArray(val)) return true;
     return false;
 }
 

@@ -1,5 +1,4 @@
 import {jsonequals, xmlToJson, reviveClass, forceArray, nameToClassTab, registerClass} from "./JsonXMLUtils.js";
-import { observer, observable} from 'mobx';
 import shortid from 'shortid';
 
 class DRObject {
@@ -12,18 +11,16 @@ class DRObject {
 };
 
 class Osc extends DRObject {
-	@observable fileName;
-	@observable zone;
-	@observable loopMode;
+
 };
 
 
 class Sound extends DRObject {
-	@observable name;
+
 };
 
 class Kit extends DRObject {
-	@observable soundSources;
+
 };
 
 class Track extends DRObject {

@@ -5,8 +5,6 @@ import {WaveView} from './WaveView.jsx';
 import {openFileBrowser} from './FileBrowser.js';
 import {forceArray} from "./JsonXMLUtils.js";
 import {formatSound, sample_path_prefix, local_exec, findKitList} from "./viewXML.js";
-import {observer} from 'mobx-react';
-import {observable} from 'mobx';
 import {empty_sound_template} from './templates.js';
 import {getXmlDOMFromString, xmlToJson, reviveClass} from './JsonXMLUtils.js';
 import shortid from 'shortid';
@@ -117,7 +115,6 @@ class Checkbox extends React.Component {
 			this.setState({checked: newState});
 			this.props.checker(this, newState);
 		}}></input>);
-	
 	}
 }
 
@@ -133,7 +130,6 @@ class PlayerControl extends React.Component {
 
 const DragHandle = SortableHandle(() => <span>::</span>); // This can be any component you want ↕
 
-
 class EditButtons extends React.Component {
   render() {
 	return (<React.Fragment>
@@ -144,7 +140,7 @@ class EditButtons extends React.Component {
   }
 };
 
-@observer class SampleEntry extends React.Component {
+class SampleEntry extends React.Component {
   constructor(props) {
 	super();
 	
@@ -160,12 +156,14 @@ class EditButtons extends React.Component {
 		showTab: false,
 	};
 	this.toggleTab = this.toggleTab.bind(this);
+
   }
 
   selectionUpdate(b, e) {
 	if (this.props.editing) {
 		let newZone = {startMilliseconds: Math.round(b * 1000) , endMilliseconds: Math.round(e * 1000)};
 		this.props.osc.zone = newZone;
+		this.forceUpdate();
 	}
   }
 
@@ -181,6 +179,7 @@ class EditButtons extends React.Component {
   onNameSelect(name) {
 	console.log("Name select: " + name);
 	this.props.kito.name = name;
+	this.forceUpdate();
   }
 
   command(name, val) {
@@ -245,7 +244,7 @@ class EditButtons extends React.Component {
 };
 
 
-@observer class KitEntry extends React.Component {
+class KitEntry extends React.Component {
 
 	constructor(props) {
 		super(props);
@@ -287,7 +286,7 @@ class EditButtons extends React.Component {
 
 const SortableKitEntry = SortableElement(KitEntry);
 
-@observer class KitList extends React.Component {
+class KitList extends React.Component {
   constructor(props) {
   	super(props);
 
@@ -332,7 +331,7 @@ const SortableKitEntry = SortableElement(KitEntry);
 	let newDrumX = getXmlDOMFromString(filledSoundT);
 	let newSound = xmlToJson(newDrumX).sound;
 	this.props.kitList.push(newSound);
-	// this.forceUpdate();
+	this.forceUpdate();
   }
 
   render() {
@@ -374,7 +373,7 @@ const SortableKitEntry = SortableElement(KitEntry);
   	let pastedIn = JSON.parse(text, reviveClass);
   	if (!pastedIn.sound) return;
   	this.props.kitList.push(...pastedIn.sound);
-  	
+  	this.forceUpdate();
 	console.log(text);
   }
 
@@ -395,8 +394,10 @@ const SortableKitEntry = SortableElement(KitEntry);
 			let name = nameList[0];
 			toChange.osc1.fileName = name.startsWith('/') ? name.substring(1) : name;
 			toChange.osc1.zone.endMilliseconds = -1;	// trigger recalc of zone.
+			me.forceUpdate();
 		}
 	});
+
   }
 
   deleteSel() {
@@ -406,6 +407,7 @@ const SortableKitEntry = SortableElement(KitEntry);
 			this.props.kitList.splice(ix, 1);
 		}
 	}
+	this.forceUpdate();
   }
 
   copySel() {
@@ -434,6 +436,7 @@ class KitView {
 		let movee = this.kitList[oldIndex];
 		this.kitList.splice(oldIndex, 1);
 		this.kitList.splice(newIndex, 0, movee);
+		this.render();
 	}
   }
 

@@ -76,7 +76,6 @@ class Instrument extends React.Component {
 		} else {
 			itemClass = 'arritembow';
 			trkLab = (arrangeOnlyTab.length - trk & 0x7FFFFFFF) + 'a';
-			
 		}
 
 		let colorString = '#' + gamma_correct(trkColor.toString(16));
@@ -130,5 +129,17 @@ function showArranger(song, newSynthNames, where) {
 	ReactDOM.render(arranger, rep[0]);
 }
 
+function bumpTracks(instrumentEntry) {
+	let instString = instrumentEntry.trackInstances;
+	if (!instString) return;
+	for (var nx = 2; nx < instString.length; nx += 24) {
+		let trk = parseInt(instString.substring(nx + 16, nx + 24), 16);
+		trk+= 0x100000001; // Includes hack to gen leading zeros.
+		let bumphex = trk.toString(16).substring(1);
+		instString = instString.substring(0, nx + 16) + bumphex + instString.substring(nx + 24);
+	}
+	instrumentEntry.trackInstances = instString;
+}
 
-export {showArranger, groupColorTab};
+
+export {showArranger, groupColorTab, bumpTracks};
