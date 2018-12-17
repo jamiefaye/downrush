@@ -31,7 +31,7 @@ import paster_template from "./templates/paster_template.handlebars";
 import midiKnobTemplate from "./templates/midiKnobTemplate.handlebars";
 import modKnobTemplate from "./templates/modKnobTemplate.handlebars";
 import midiModKnobTemplate from "./templates/midiModKnobTemplate.handlebars";
-import sample_name_prefix from "./templates/sample_name_prefix.handlebars";
+import sample_range_prefix from "./templates/sample_range_prefix.handlebars";
 import empty_kit_template from "./templates/empty_kit_template.handlebars";
 import sound_template from "./templates/sound_template.handlebars";
 
@@ -469,14 +469,13 @@ function formatSound(obj)
 		
 		jQuery.extend(true, context, destMap);
 	}
-	context.sample_path_prefix = sample_path_prefix;
-	if ( (context.osc1 && context.osc1.fileName) || (context.osc2 && context.osc2.fileName) ) {
+	if ( (context.osc1 && context.osc1.fileName) || (context.osc2 && context.osc2.fileName || (context.osc1 && context.osc1.sampleRanges)) ) {
 		let subContext = jQuery.extend(true, {}, context);
 		// If Osc2 does not have a sample defined for it, strike osc2 from the context
-		if (!context.osc2 || !context.osc2.fileName || $.isEmptyObject(context.osc2.fileName)) {
+		if (!context.osc2 || !context.osc2.sampleRanges && (!context.osc2.fileName || $.isEmptyObject(context.osc2.fileName))) {
 			delete subContext.osc2;
 		}
-		context.stprefix = sample_name_prefix(subContext);
+		context.stprefix = sample_range_prefix(subContext);
 	}
 	obj.append(sound_template(context));
 }
@@ -527,7 +526,8 @@ function viewSound(e, songJ) {
 			return;
 		}
 		if (trackType === 'sound') {
-		formatSound(where, trackD.sound, trackD.soundParams);
+		let soundD = findSoundData(trackD, songJ);
+		formatSound(where, soundD, trackD.soundParams);
 	  } else if (trackType === 'kit') {
 			// We have a kit track,, 
 			let kitroot = trackD.kit;
@@ -679,6 +679,19 @@ function findKitList(track, song) {
 		kitList = forceArray(kitI.soundSources);
 	}
 	return kitList;
+}
+
+function findSoundData(track, song) {
+	let soundData;
+	if (track.sound) {
+		soundData = track.sound;
+	} else {
+		soundData = findSoundInstrument(track, song.instruments);
+		if(!soundData) {
+			console.log("Missing sound data");
+		}
+	}
+	return soundData;
 }
 
 function plotKit14(track, reftrack, song, obj) {
@@ -1251,7 +1264,7 @@ function sampleReport(json, showAll, obj) {
 		});
 	}
 	sampList.sort();
-	obj.append(sample_list_template({sample_path_prefix: sample_path_prefix, sampList: sampList, showDrums: showAll}));
+	obj.append(sample_list_template({sampList: sampList, showDrums: showAll}));
 }
 
 function genSampleReport(jsong,jdoc)
@@ -1752,4 +1765,8 @@ function setEditText(fname, text)
 	});
 }
 
-export {formatSound, gamma_correct, sample_path_prefix, local_exec, findKitList, patchInfo};
+function getPathPrefix() {
+	return sample_path_prefix;
+}
+
+export {formatSound, gamma_correct, sample_path_prefix, local_exec, findKitList, patchInfo, getPathPrefix, yToNoteName};
