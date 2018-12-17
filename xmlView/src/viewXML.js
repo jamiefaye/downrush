@@ -337,14 +337,14 @@ function pasteTrackText(text, songDoc) {
 		if (tKind === 'kit') {
 			let ko = findKitInstrument(track0, song.instruments);
 			if (!ko) {
-				track0.kit.trackInstances = '0x';
+				delete track0.kit.trackInstances;
 				song.instruments.unshift(track0.kit);
 			}
 			delete track0.kit;
 		} else if (tKind === 'sound') {
 			let so = findSoundInstrument(track0, song.instruments);
 			if (!so) {
-				track0.sound.trackInstances = '0x';
+				delete track0.sound.trackInstances;
 				song.instruments.unshift(track0.sound);
 			}
 			delete track0.sound;
