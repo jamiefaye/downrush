@@ -135,7 +135,7 @@ function bumpTracks(instrumentEntry) {
 	for (var nx = 2; nx < instString.length; nx += 24) {
 		let trk = parseInt(instString.substring(nx + 16, nx + 24), 16);
 		trk+= 0x100000001; // Includes hack to gen leading zeros.
-		let bumphex = trk.toString(16).substring(1);
+		let bumphex = trk.toString(16).substring(1).toUpperCase();
 		instString = instString.substring(0, nx + 16) + bumphex + instString.substring(nx + 24);
 	}
 	instrumentEntry.trackInstances = instString;

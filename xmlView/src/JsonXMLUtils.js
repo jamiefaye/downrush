@@ -214,6 +214,9 @@ function jsonToXML(kv, j, d) {
 					console.log("**** Missing hetero array class " + ao.constructor.name);
 					continue;
 				}
+				if (hkv === 'midiChannel') {
+					let cat = 3;
+				}
 				insides += jsonToXML(hkv, ao, d + 1);
 			}
 			insides +=  gentabs(d + 1) + "</" + kvo + ">\n";
