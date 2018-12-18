@@ -47,7 +47,7 @@ function isObject(val) {
  */
 function getXmlDOMFromString(xmlStr) {
 	if (window.ActiveXObject && window.GetObject) {
-		var dom = new ActiveXObject('Microsoft.XMLDOM');
+		let dom = new ActiveXObject('Microsoft.XMLDOM');
 		dom.loadXML(xmlStr);
 		return dom;
 	}
@@ -116,7 +116,7 @@ function xmlToJson(xml, fill) {
 
 function gentabs(d) {
 	var str = "";
-	for(var i = 0; i< d; ++i) str += '\t';
+	for(let i = 0; i< d; ++i) str += '\t';
 	return str;
 }
 
@@ -147,7 +147,7 @@ function jsonToXML(kv, j, d) {
 	let atList = j["@attributes"];
 	let atStr = "";
 	if (atList) {
-		for (var ak in atList) {
+		for (let ak in atList) {
 			if(atList.hasOwnProperty(ak)) {
 				atStr += ' ';
 				atStr += ak;
@@ -164,12 +164,12 @@ function jsonToXML(kv, j, d) {
 
 	if (keyTab) {
 		let keySet = new Set();
-		for(var ek in j) { 
+		for(let ek in j) { 
 			if(!doNotSerialize.has(ek) && j.hasOwnProperty(ek) && ek != "@attributes") {
 				keySet.add(ek);
 			}
 		}
-		for (var ktx = 0; ktx < keyTab.length; ++ktx) {
+		for (let ktx = 0; ktx < keyTab.length; ++ktx) {
 			let nkv = keyTab[ktx];
 			if (!doNotSerialize.has(nkv) && j.hasOwnProperty(nkv)) {
 				keyOrder.push(nkv);
@@ -184,7 +184,7 @@ function jsonToXML(kv, j, d) {
 			}
 		}
 	} else { // No keytab entry, do it the old-fashioned way.
-		for(var ek in j) { 
+		for(let ek in j) { 
 			if(!doNotSerialize.has(ek) && j.hasOwnProperty(ek) && ek != "@attributes") {
 				keyOrder.push(ek);
 			}
@@ -221,7 +221,7 @@ function jsonToXML(kv, j, d) {
 			}
 			insides +=  gentabs(d + 1) + "</" + kvo + ">\n";
 		} else if (isArrayLike(v)) {
-			for(var k = 0; k < v.length; ++k) {
+			for(let k = 0; k < v.length; ++k) {
 				insides += jsonToXML(kvo, v[k], d + 1);
 			}
 		} else if (v.constructor == Object) {
@@ -267,7 +267,7 @@ function jsonequals(x, y) {
 		return false;
 	}
 
-	for ( var p in x ) {
+	for (let p in x ) {
 		// Inherited properties were tested using x.constructor === y.constructor
 		if (!doNotSerialize.has(p) && x.hasOwnProperty( p ) ) {
 			// Allows comparing x[ p ] and y[ p ] when set to undefined
@@ -292,7 +292,7 @@ function jsonequals(x, y) {
 		}
 	}
 
-	for ( p in y ) {
+	for (let p in y ) {
 		// allows x[ p ] to be set to undefined
 		if (!doNotSerialize.has(p) && y.hasOwnProperty( p ) && ! x.hasOwnProperty( p ) ) {
 			return false;
@@ -309,7 +309,7 @@ function sizeLimitScalar(v)
 }
 
 function jsonToTable(json, obj, formatters) {
-	for (var k in json) {
+	for (let k in json) {
 		if(json.hasOwnProperty(k)) {
 			let tr = $('<tr/>');
 			if(formatters && formatters[k]) {
@@ -324,7 +324,7 @@ function jsonToTable(json, obj, formatters) {
 			if (v.constructor === Array) {
 				let intTab = $('<table/>'); // subtable for array elements
 				intTab.append($("<th class='arhead' colspan='3'/>").html(k + ':'));
-				for(var ix = 0; ix < v.length; ++ix) {
+				for(let ix = 0; ix < v.length; ++ix) {
 					let tra = $('<tr/>');
 					tra.append($("<td class='arindex'/>").html(ix)); // show array index
 					let aobj = v[ix];
@@ -374,14 +374,14 @@ function classReplacer(key, value) {
 }
 
 function zonkDNS(json) {
- for (var k in json) {
+ for (let k in json) {
  	if(json.hasOwnProperty(k)) {
  		if (doNotSerialize.has(k)) {
  			delete json[k];
  		} else {
  			let v = json[k];
  			if (isArrayLike(v)) {
- 				for(var ix = 0; ix < v.length; ++ix) {
+ 				for(let ix = 0; ix < v.length; ++ix) {
  					let aobj = v[ix];
  					if (isArrayLike(aobj) || isObject(aobj)) {
  						zonkDNS(aobj);

@@ -16,7 +16,7 @@ import fmtsync from "./templates/fmtsync.js";
 
 import React from 'react';
 import ReactDOM from "react-dom";
-import {Kit, Track, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
+import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 import FileSaver from 'file-saver';
 
 

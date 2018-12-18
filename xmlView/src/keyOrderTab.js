@@ -328,6 +328,13 @@
 "midiOutput": ["channel",
 "note",
 ],
+"midiChannel": [
+"channel",
+"suffix",
+],
+"cvChannel": [
+"channel",
+],
 };
 
 var genDict;

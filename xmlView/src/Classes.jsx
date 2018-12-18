@@ -1,4 +1,4 @@
-import {jsonequals, xmlToJson, reviveClass, forceArray, nameToClassTab, registerClass} from "./JsonXMLUtils.js";
+import {registerClass} from "./JsonXMLUtils.js";
 import shortid from 'shortid';
 
 class DRObject {
@@ -20,10 +20,6 @@ class Sound extends DRObject {
 };
 
 class Kit extends DRObject {
-
-};
-
-class Track extends DRObject {
 
 };
 
@@ -53,4 +49,4 @@ registerClass('midiOutput', MidiOutput);
 registerClass('cvChannel', CVChannel);
 registerClass('midiChannel', MidiChannel);
 
-export {Kit, Track, Sound, Song, MidiChannel, CVChannel};
+export {Kit, Sound, Song, MidiChannel, CVChannel};
