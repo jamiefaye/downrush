@@ -447,7 +447,7 @@ class KitView {
 };
 
 function formatKit(kitList, kitParams, where) {
-//	let kitList = json.soundSources.sound; // forceArray(json.soundSources.sound);
+	if (!kitList) return;
 	let context = {};
 	context.kitList = kitList;
 	context.sample_path_prefix = sample_path_prefix;

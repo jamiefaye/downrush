@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import {keyOrderTab, heteroArrays} from "./keyOrderTab.js";
+import {DRObject, nameToClassTab} from "./Classes.jsx";
 
 /*******************************************************************************
 
@@ -10,13 +11,7 @@ import {keyOrderTab, heteroArrays} from "./keyOrderTab.js";
 
 // Table of classes to create for given JSON object property names
 
-var nameToClassTab = {};
-var classToNameTab = {};
 
-function registerClass(name, clas) {
-	nameToClassTab[name] = clas;
-	classToNameTab[clas] = name;
-}
 
 var doNotSerialize = new Set();
 var doNotSerializeJson = new Set();
@@ -209,14 +204,10 @@ function jsonToXML(kv, j, d) {
 			insides += gentabs(d) + "<" + kvo + ">\n";
 			for(let n = 0; n < v.length; ++n) {
 				let ao = v[n];
-				let hkv = classToNameTab[ao.constructor];
-				if (!hkv) {
-					console.log("**** Missing hetero array class " + ao.constructor.name);
+				if (!(ao instanceof DRObject)) {
 					continue;
 				}
-				if (hkv === 'midiChannel') {
-					let cat = 3;
-				}
+				let hkv = ao.xmlName();
 				insides += jsonToXML(hkv, ao, d + 1);
 			}
 			insides +=  gentabs(d + 1) + "</" + kvo + ">\n";
@@ -367,9 +358,10 @@ function classReplacer(key, value) {
 	if (value === undefined) {
 		return value;
 	}
-	let hkv = classToNameTab[value.constructor];
-	if (!hkv) return value;
-	value._class = hkv;
+	let meow = DRObject;
+	if (!(value instanceof DRObject)) return value;
+	let cname = value.xmlName();
+	value._class = cname;
 	return value;
 }
 
@@ -395,4 +387,4 @@ function zonkDNS(json) {
  }
 }
 
-export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, nameToClassTab, registerClass, classReplacer, zonkDNS};
+export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, nameToClassTab, classReplacer, zonkDNS};

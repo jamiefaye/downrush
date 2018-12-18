@@ -576,36 +576,38 @@ function plotKit13(track, reftrack, obj) {
 	}
 	let kitList = forceArray(reftrack.kit.soundSources);
 	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		var noteList = forceArray(row.notes.note);
-		let y = rowYfilter(row);
-		let ypos = (y- ymin) * kitItemH;
-		let labName = '';
-		if (row.drumIndex) {
-			let rowInfo = kitList[row.drumIndex];
-			labName = rowInfo.name;
-			if (labName != undefined) {
-				let labdiv = $("<div class='kitlab'/>");
-				labdiv.text(labName);
-				labdiv.css({left: 0, bottom: (ypos - 2) + 'px'});
-				parentDiv.append(labdiv);
+	if (kitList) {
+		for (var rx = 0; rx < rowList.length; ++rx) {
+			let row = rowList[rx];
+			var noteList = forceArray(row.notes.note);
+			let y = rowYfilter(row);
+			let ypos = (y- ymin) * kitItemH;
+			let labName = '';
+			if (row.drumIndex) {
+				let rowInfo = kitList[row.drumIndex];
+				labName = rowInfo.name;
+				if (labName != undefined) {
+					let labdiv = $("<div class='kitlab'/>");
+					labdiv.text(labName);
+					labdiv.css({left: 0, bottom: (ypos - 2) + 'px'});
+					parentDiv.append(labdiv);
+				}
 			}
-		}
-		if (y < 0) continue;
-		for (var nx = 0; nx < noteList.length; ++nx) {
-			let n = noteList[nx];
-			let x = Number(n.pos);
-			let dx = x + xPlotOffset;
-			let dur = n.length;
-			if (dur > 1) dur--;
-			let vel = n.velocity;
+			if (y < 0) continue;
+			for (var nx = 0; nx < noteList.length; ++nx) {
+				let n = noteList[nx];
+				let x = Number(n.pos);
+				let dx = x + xPlotOffset;
+				let dur = n.length;
+				if (dur > 1) dur--;
+				let vel = n.velocity;
 
-			let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
-			let ndiv = $("<div class='trkitnote npop' data-note='" + noteInfo + "'/>");
+				let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
+				let ndiv = $("<div class='trkitnote npop' data-note='" + noteInfo + "'/>");
 
-			ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
-			parentDiv.append(ndiv);
+				ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
+				parentDiv.append(ndiv);
+			}
 		}
 	}
 	obj.append(parentDiv);
@@ -714,45 +716,47 @@ function plotKit14(track, reftrack, song, obj) {
 	let kitList = findKitList(reftrack, song);
 
 	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		var noteData = row.noteData;
-		let labName = '';
-		let y = rowYfilter(row);
-		let ypos = (y- ymin) * kitItemH;
-
-		if (row.drumIndex) {
-			let rowInfo = kitList[row.drumIndex];
-			labName = rowInfo.name;
-			if (rowInfo.channel) {
-				let chanNum = Number(rowInfo.channel);
-				if (rowInfo.note) { // Midi
-					labName = (chanNum + 1) + "." + rowInfo.note;
-				} else { // CV
-					labName = "Gate " + chanNum;
+	if (kitList) {
+		for (var rx = 0; rx < rowList.length; ++rx) {
+			let row = rowList[rx];
+			var noteData = row.noteData;
+			let labName = '';
+			let y = rowYfilter(row);
+			let ypos = (y- ymin) * kitItemH;
+	
+			if (row.drumIndex) {
+				let rowInfo = kitList[row.drumIndex];
+				labName = rowInfo.name;
+				if (rowInfo.channel) {
+					let chanNum = Number(rowInfo.channel);
+					if (rowInfo.note) { // Midi
+						labName = (chanNum + 1) + "." + rowInfo.note;
+					} else { // CV
+						labName = "Gate " + chanNum;
+					}
+				}
+				if (labName != undefined) {
+					let labdiv = $("<div class='kitlab'/>");
+					labdiv.text(labName);
+					labdiv.css({left: 0, bottom: (ypos - 2) + 'px'});
+					parentDiv.append(labdiv);
 				}
 			}
-			if (labName != undefined) {
-				let labdiv = $("<div class='kitlab'/>");
-				labdiv.text(labName);
-				labdiv.css({left: 0, bottom: (ypos - 2) + 'px'});
-				parentDiv.append(labdiv);
-			}
-		}
-		if (y < 0) continue;
-		if (noteData) {
-			for (var nx = 2; nx < noteData.length; nx += 20) {
-				let notehex = noteData.substring(nx, nx + 20);
-				let x = parseInt(notehex.substring(0, 8), 16);
-				let dur =  parseInt(notehex.substring(8, 16), 16);
-				let vel = parseInt(notehex.substring(16, 18), 16);
-				let cond = parseInt(notehex.substring(18, 20), 16);
-				let noteInfo = notehex + labName;
-				x += xPlotOffset;
-				if (dur > 1) dur--;
-				let ndiv = $("<div class='trnkn npop' data-note='" + noteInfo + "'/>");
-				ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
-				parentDiv.append(ndiv);
+			if (y < 0) continue;
+			if (noteData) {
+				for (var nx = 2; nx < noteData.length; nx += 20) {
+					let notehex = noteData.substring(nx, nx + 20);
+					let x = parseInt(notehex.substring(0, 8), 16);
+					let dur =  parseInt(notehex.substring(8, 16), 16);
+					let vel = parseInt(notehex.substring(16, 18), 16);
+					let cond = parseInt(notehex.substring(18, 20), 16);
+					let noteInfo = notehex + labName;
+					x += xPlotOffset;
+					if (dur > 1) dur--;
+					let ndiv = $("<div class='trnkn npop' data-note='" + noteInfo + "'/>");
+					ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
+					parentDiv.append(ndiv);
+				}
 			}
 		}
 	}
@@ -993,6 +997,7 @@ function plotNoteLevelParams(noteRowA, track, trackW, song, elem)
 {
 	if (!noteRowA) return;
 	let kitList = findKitList(track, song);
+	if (!kitList) return;
 	noteRowA = forceArray(noteRowA);
 	for (var i = 0; i < noteRowA.length; ++i) {
 		let aRow = noteRowA[i];
