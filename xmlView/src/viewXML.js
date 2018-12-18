@@ -703,6 +703,7 @@ function plotKit14(track, reftrack, song, obj) {
 	let ymin =  1000000;
 	let ymax = -1000000;
 	let rowList = forceArray(track.noteRows.noteRow);
+	if (rowList.length === 0) return;
 	let parentDiv = $("<div class='kitgrid'/>");
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
@@ -820,6 +821,7 @@ function plotTrack14(track, song, obj) {
 	let ymin =  1000000;
 	let ymax = -1000000;
 	let rowList = forceArray(track.noteRows.noteRow);
+	if (rowList.length === 0) return;
 	let parentDiv = $("<div class='trgrid'/>");
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
@@ -930,6 +932,7 @@ function activateNoteTips()
 
 function usesNewNotekFormat(track) {
 	let rowList = forceArray(track.noteRows.noteRow);
+	if (rowList.length === 0) return true;
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
 		if (row.noteData) return true;
