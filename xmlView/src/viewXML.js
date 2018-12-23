@@ -18,7 +18,7 @@ import React from 'react';
 import ReactDOM from "react-dom";
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 import FileSaver from 'file-saver';
-
+import {stepNextFile} from "./StepNextFile.js";
 
 import local_exec_head from "./templates/local_exec_head.handlebars";
 import local_exec_info from "./templates/local_exec_info.handlebars";
@@ -1631,7 +1631,6 @@ class DelugeDoc {
  *******************************************************************************
 */
 
-
 function setupGUI()
 {
 	$('.savebut').click(e=>{saveAs(e)});
@@ -1649,6 +1648,13 @@ function setupGUI()
 		});
 	});
 	
+	$('.upbut').click(e=>{
+		stepNextFile(focusDoc.fname, -1, loadFile);
+	});
+	
+	$('.downbut').click(e=>{
+		stepNextFile(focusDoc.fname, 1, loadFile);
+	});
 	$('.nkitbut').click(e=>{newKitDoc()});
 }
 
