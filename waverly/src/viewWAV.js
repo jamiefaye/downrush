@@ -20,6 +20,7 @@ import DelayFilter from './DelayFilter.js';
 import OscFilter from './OscFilter.js';
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import FileSaver from 'file-saver';
+import {stepNextFile} from "./StepNextFile.js";
 
 "use strict";
 
@@ -119,6 +120,13 @@ function registerGlobalHandlers() {
 			}
 			
 		});
+	});
+	$('.upbut').click(e=>{
+		stepNextFile(focusWaveView.fname, -1, openFile);
+	});
+	
+	$('.downbut').click(e=>{
+		stepNextFile(focusWaveView.fname, 1, openFile);
 	});
 }
 
