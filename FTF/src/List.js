@@ -145,6 +145,7 @@ let fileManagerHTML =`<html>
 			<td><div id="reloadtime"></div></td>
 			<td><a id='reloadbut' href="javascript:void(0)">[Reload]</a></td>
 			<td><input type="checkbox" id="FullFileList" value="0">Show Hiddens</input></td>
+			<td><a id='wifi0' href="/DR/FTF/wifioff.lua">Wifi Off</a>
 		</tr></table></div>
 </body>
 </html>`;
