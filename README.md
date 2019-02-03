@@ -66,17 +66,19 @@ If you are updating downrush from a previous version and things seem strange, yo
 
 If you build Downrush from source, or want to change the configuration yourself, you can.
 
+<b>Note that whatever editor you use to modify the CONFIG file has to write the file back out using Windows-style line-endings. Some editors notice what the line-endings are and preserve them, others do not. Deluge users have wasted an enormous amount of time flailing away with their CONFIG files until this limitation was discovered.</b>
+
+
 It is possible to configure the FlashAir card to act like any other device on your home network.
+
+
 Be aware that the WiFi range is only a few meters. It is relatively easy to make a mistake editing CONFIG that breaks the WiFi functionality. You need to know how to use a text editing program that works with raw text.
 
 First you need to unhide the SD_WLAN directory and the SD_WLAN/CONFIG file as described above.
 
-You can open the CONFIG file using vi, nano, or TextEdit. On Windows, use NotePad.
+You can open the CONFIG file using an editor program. On Windows, use NotePad.
 
-Here is an example using nano:
-```
-nano /Volumes/NO\ NAME/SD_WLAN/CONFIG
-```
+
 Make sure that these three lines are present in the file, these enable the uploading features and avoid timeouts:
 ```
 UPLOAD=1

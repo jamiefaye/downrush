@@ -50,8 +50,8 @@ export default class Wave {
 
 	let initParams = {
 		container:		this.rootDivId,
-		waveColor:		'violet',
-		progressColor:	'purple',
+		waveColor:		'blue',
+		progressColor:	'darkblue',
 		splitChannels:	true,
 		interact:		false,
 		fillParent:		false,

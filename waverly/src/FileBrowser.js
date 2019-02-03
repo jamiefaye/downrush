@@ -5,6 +5,8 @@ import save_frame from "./fileWidgetTemplates/save_frame.handlebars";
 import dir_template from "./fileWidgetTemplates/dir_template.handlebars";
 require('file-loader?name=[name].[ext]!../css/filewidget.css');
 
+var browserActiveFlag = false;
+
 function setDisable(item, state)
 {
 	item.prop("disabled", state);
@@ -43,7 +45,7 @@ class FileBrowser {
 	}
 	this.browser.start(openPlace);
 
-
+	browserActiveFlag = true;
 	$('#cancelbut').click(e=>{me.cancel(e)});	
 
 }
@@ -52,6 +54,7 @@ class FileBrowser {
 	let widg = $('#filewidget');
 	widg.css('display', 'none');
 	$('#popupspot').empty();
+	browserActiveFlag = false;
   }
 
 
@@ -166,9 +169,16 @@ class SaveFileBrowser extends FileBrowser {
 };
 
 function saveFileBrowser (params) {
+
 	let fileBrowser = new SaveFileBrowser(params);
 }
 
-export {FileBrowser, openFileBrowser, saveFileBrowser};
+function fileBrowserActive() {
+	
+	return browserActiveFlag;
+}
+
+
+export {FileBrowser, openFileBrowser, saveFileBrowser, fileBrowserActive};
 
 

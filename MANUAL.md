@@ -156,5 +156,31 @@ Delay have a Type setting, Delay and Feedback, Cutoff, Offset and a Dry level.
 
 Oscillator has a wave Type, the wave Frequency, Gain, and Duration. If Duration is zero, it just fills in the selected area of the wave.
 
-Someday soon we will add more commands to Waverly.
 
+Waverly recently added some keyboard shortcuts:
+<pre>
+z       Undo
+Z       Redo
+x,X     Cut
+c,C     Copy
+v,V     Paste
+b,B     Delete
+a,A     Select All
+p       Play/Pause
+P       Play Selected
+i,I     Zoom to Selection
+-, _    Zoom Out 1/2X
+=, +    Zoom In 2X
+t,T     Trim sample to zero crossings
+r,R     Rewind
+        this.wave.surfer.seekTo(0);
+k,K     Crop to selection.
+o,O     Open wave file.
+s       Save as wave file.
+S       Save-over wave file without prompting.
+u,U     Open earlier file in list.
+d,D     Open later file in list.
+</pre>
+Note that command-copy and command-paste use the browser's clipboard feature
+rather than the internal copy/paste functionality. Command copy and paste work well
+for copying from one window to another.

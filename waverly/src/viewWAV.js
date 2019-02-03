@@ -18,7 +18,7 @@ import BiQuadFilter from './BiquadFilter.js';
 import SimpleReverbFilter from './SimplereverbFilter.js';
 import DelayFilter from './DelayFilter.js';
 import OscFilter from './OscFilter.js';
-import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
+import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser.js';
 import FileSaver from 'file-saver';
 import {stepNextFile} from "./StepNextFile.js";
 
@@ -98,6 +98,24 @@ function applyFunction (buffer, f)
 	return buffer;
 }
 
+function openWaveFile(e) {
+	let initial;
+	if (focusWaveView) initial = focusWaveView.fname;
+	if (!initial) initial = '/';
+	openFileBrowser({
+		initialPath:  initial,
+		opener: function(name) {
+			openFile(name);
+		}
+
+	});
+}
+
+function stepNextAsync(dir) {
+	setTimeout(e=>{
+		stepNextFile(focusWaveView.fname, dir, openFile);
+	}, 0);
+}
 
 function registerGlobalHandlers() {
 	console.log('register global handlers');
@@ -109,18 +127,7 @@ function registerGlobalHandlers() {
 	$(window).on('undo', e=>{focusWaveView.doUndo(e)});
 	$(window).on('redo', e=>{focusWaveView.doRedo(e)});
 	$('.savebut').click(e=>{focusWaveView.saveAs(e)});
-	$('.openbutn').click(e=>{
-		let initial;
-		if (focusWaveView) initial = focusWaveView.fname;
-		if (!initial) initial = '/';
-		openFileBrowser({
-			initialPath:  initial,
-			opener: function(name) {
-				openFile(name);
-			}
-			
-		});
-	});
+	$('.openbutn').click(e=>{openWaveFile(e)});
 	$('.upbut').click(e=>{
 		stepNextFile(focusWaveView.fname, -1, openFile);
 	});
@@ -128,6 +135,11 @@ function registerGlobalHandlers() {
 	$('.downbut').click(e=>{
 		stepNextFile(focusWaveView.fname, 1, openFile);
 	});
+	
+	$(document).keypress(function(e){
+		focusWaveView.handleKeyPress(e);
+	});
+
 }
 
 
@@ -390,6 +402,74 @@ class WaveViewer {
 }
 
 
+// At present, our keypress handling is crude. Most keypresses come thru here, even if the focus
+// is in other places. We filter-out file browser keypresses, and avoid other problems
+// by not using number keys as shortcuts, which stays out of the way of the filter dials.
+  handleKeyPress(e)
+{
+	if (fileBrowserActive()) return; // Mask keys intended for file browser.
+
+	let ch = e.key;
+	let chlow = ch.toLowerCase();
+
+	if (ch === 'z') {
+		this.doUndo(e);
+	} else if (ch === 'Z') {
+		this.doRedo(e);
+	} else if (chlow === 'x') {
+		this.cutToClip(e);
+	} else if (chlow === 'c') {
+		this.copyToClip(e);
+	} else if (chlow === 'v') {
+		this.pasteFromClip(e);
+	} else if (chlow === 'b') {
+		this.deleteSelected(e);
+	} else if (chlow === 'a') {
+		this.selAll(e);
+	} else if (chlow === 'i') {
+		this.zoomsel(e);
+	} else if (ch === 'p') {
+		this.wave.surfer.playPause(e);
+	} else if (ch=== 'P') {
+		this.doPlaySel(e);
+	} else if (ch === '-' || ch === '_') {
+		this.zoom(0.5);
+	} else if (ch === '=' || ch === '+') {
+		this.zoom(2.0);
+	} else if (chlow === 't') {
+		this.trimtozero();
+	} else if (chlow === 'r') {
+		this.wave.surfer.seekTo(0);
+	} else if (chlow === 'k') {
+		this.cropToSel(e);
+	} else if (chlow === 'o') {
+		openWaveFile(e);
+	} else if (ch === 's') {
+		if (focusWaveView) {
+			focusWaveView.saveAs(e);
+		}
+	} else if (ch === 'S') {
+		if (focusWaveView) {
+			focusWaveView.saveFast();
+		}
+	} else if (chlow === 'u') {
+		stepNextAsync(-1);
+	} else if (chlow === 'd') {
+		stepNextAsync(1);
+	}
+//	console.log("*** Key down: " + e.keyCode);
+}
+
+/*
+
+	$('.upbut').click(e=>{
+		stepNextFile(focusWaveView.fname, -1, openFile);
+	});
+	
+	$('.downbut').click(e=>{
+		stepNextFile(focusWaveView.fname, 1, openFile);
+	});
+*/
   bindGui() {
 	let me = this;
 	let id = this.idFor('butnrow');
@@ -405,8 +485,6 @@ class WaveViewer {
 	*/
 	// Remove highlighting after button pushes:
 	//$('.butn').mouseup(e=>{e.target.blur()});
-
-
 
 	$('.plsybut', baseEl).click(e=>{me.wave.surfer.playPause(e)});
 	$('.rewbut', baseEl).click( e=>{me.wave.surfer.seekTo(0)});
@@ -594,6 +672,13 @@ function record()
 		}
 	});
 }
+
+  saveFast(){
+	let aBuf = this.wave.backend.buffer;
+	let saveData = audioBufferToWav(aBuf);
+	this.saveFile(this.fname, saveData);
+}
+
 
   openLocal(evt)
  {
