@@ -371,6 +371,25 @@ class WaveViewer {
 	this.wave.surfer.zoom(newPx);
 }
 
+  zoomsel() {
+	let {start, end, duration} = this.wave.getSelection(false);
+	let buffer = this.wave.backend.buffer;
+	let {sampleRate} = buffer;
+	let vw =  this.wave.surfer.drawer.getWidth();
+	let dTs = end - start;
+	let newPx;
+	if (dTs > 0) {
+		newPx = vw / dTs;
+	} else {
+		newPx = vw / duration * 0.9;
+	}
+//	this.wave.surfer.zoom(newPx);
+//	this.wave.seekTo( (start - (dTs / 2)) / duration);
+	
+	this.wave.reframe(newPx, (start + end) / 2 / duration);
+}
+
+
   bindGui() {
 	let me = this;
 	let id = this.idFor('butnrow');
@@ -405,6 +424,7 @@ class WaveViewer {
 	$('.fadeoutbut', baseEl).click(e=>{me.fadeOut(e)});
 	$('.selallbut', baseEl).click(e=>{me.selAll(e)});
 	$('.zoominbut', baseEl).click(e=>{me.zoom(2.0)});
+	$('.zoomselbut', baseEl).click(e=>{me.zoomsel()});
 	$('.zoomoutbut', baseEl).click(e=>{me.zoom(0.5)});
 	$('.trimbut', baseEl).click(e=>{me.trimtozero(e)});
 	$('.cropbut', baseEl).click(e=>{me.cropToSel(e)});

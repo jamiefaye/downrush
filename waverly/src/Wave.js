@@ -159,6 +159,16 @@ export default class Wave {
   	this.surfer.seekTo(pos);
   	
   }
+  
+  
+  reframe(newZoom, newSeek)
+  {
+  	this.seekTo(newSeek);
+	// wrapper.scrollLeft = maxScroll * newStartTs / this.surfer.getDuration();
+	this.surfer.zoom(newZoom);
+//	this.redrawWave();
+  }
+
   setupWaveTracker() {
 	var region;
 	var dragActive;
