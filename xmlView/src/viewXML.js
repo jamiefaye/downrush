@@ -1427,7 +1427,7 @@ class DelugeDoc {
 //	let str = this.firmwareVersionFound + "\n" + this.earliestCompatibleFirmware + "\n";
 //	alert(str);
 
-	this.newNoteFormat = !(this.firmwareVersionFound.indexOf('1.2') >= 0 || this.firmwareVersionFound.indexOf('1.3') >= 0);
+	this.newNoteFormat = !(this.firmwareVersionFound.indexOf('1.2.') >= 0 || this.firmwareVersionFound.indexOf('1.3.') >= 0);
 	this.version2x = this.firmwareVersionFound.indexOf('>2.') >= 0;
 	this.newSynthNames = !!this.earliestCompatibleFirmware;
 	
