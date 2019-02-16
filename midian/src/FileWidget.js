@@ -1,18 +1,24 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import Uppie from './js/uppie.js';
 
-var INCLUDE_FTLE = false;
-
 function convertFileList(fl) {
 	for (var i = 0; i < fl.length; i++) {
 		var elements = fl[i].split(",");
 		fl[i] = new Array();
 		fl[i]["r_uri"] = elements[0];
-		fl[i]["fname"] = elements[1];
+		var f = elements[1];
+		fl[i]["fname"] = f;
 		fl[i]["fsize"] = Number(elements[2]);
 		fl[i]["attr"]  = Number(elements[3]);
 		fl[i]["fdate"] = Number(elements[4]);
 		fl[i]["ftime"] = Number(elements[5]);
+		let isDir =(Number(elements[3]) & 0x10) !== 0;
+		fl[i]["isDirectory"] = isDir;
+		if(!isDir) {
+			let fp = f.split('.');
+			let ext = fp[fp.length-1].toLowerCase();
+			fl[i]["ext"] = ext;
+		}
 	}
 }
 
@@ -21,16 +27,15 @@ function zeroPad(num, places) {
   return Array(+(zero > 0 && zero)).join("0") + num;
 }
 
-function makeDT(fdate, ftime) {
-	let seconds = (ftime & 31) * 2;
-	let minutes = (ftime >> 5) & 63;
-	let hours   = (ftime >> 11) & 31;
-	let day   = fdate & 31;
-	let month = (fdate >> 5) & 15;
-	let year  = ((fdate >> 9) & 127) + 1980;
+function makeDateTime(f) {
+	let seconds = (f.ftime & 31) * 2;
+	let minutes = (f.ftime >> 5) & 63;
+	let hours   = (f.ftime >> 11) & 31;
+	let day   = f.fdate & 31;
+	let month = (f.fdate >> 5) & 15;
+	let year  = ((f.fdate >> 9) & 127) + 1980;
 	if (year < 2000) return "";
 	return "" + month + '/' + day + '&nbsp;' + zeroPad(hours,2) + ':' + zeroPad(minutes,2);
-
 }
 
 function isDirectoryEntry(name, xlsd)
@@ -47,18 +52,16 @@ function isDirectoryEntry(name, xlsd)
 	return false;
 }
 
-var editWhiteList = ['xml', 'js', 'json', 'htm', 'html', 'css', 'lua', 'wav', 'mid'];
+var editWhiteList = ['xml', 'js', 'htm', 'html', 'css', 'lua', 'wav'];
 var editWhiteListSet = new Set(editWhiteList);
 
-export default class FileBrowser {
+class FileWidget {
 
-// Convert data format from V1 to V2.
-	constructor() {
+	constructor(params) {
 		this.currentPath = '/';
 		this.last_dirpath = "/";
-		this.last_update_time = -1;
 		this.polling_active = false;
-		this.wlansd;
+		this.filelist;
 		this.sortOrder = 1;
 		this.fieldNum = 0;
 		let that = this;
@@ -66,6 +69,11 @@ export default class FileBrowser {
 			if (!a["fname"]) return 0;
 			return a["fname"].localeCompare(b["fname"]) * that.sortOrder;
 		};
+		if (params) {
+			this.params = params;
+		} else {
+			this.params = {};
+		}
 }
 
   toggleChecks (e) {
@@ -85,13 +93,13 @@ export default class FileBrowser {
 	let that = this;
 	switch (fieldNum) {
 case 0: 
-	that.sortFunction = function(a, b) {
+	this.sortFunction = function(a, b) {
 			if (!a["fname"]) return 0;
 			return a["fname"].localeCompare(b["fname"]) * that.sortOrder;
 		};
 		break;
 case 1:
-	that.sortFunction = function(a, b) {
+	this.sortFunction = function(a, b) {
 		if( a["fdate"] == b["fdate"] ) {
 			return Math.sign(a["ftime"] - b["ftime"]) * that.sortOrder;
 	} 	else {
@@ -100,30 +108,108 @@ case 1:
 	};
 	break;
 case 2:
-	that.sortFunction = function(a, b) {
+	this.sortFunction = function(a, b) {
 		return Math.sign(a["fsize"] - b["fsize"]) * that.sortOrder;
 	};
 	break;
 	}  // End of switch
-	let recheckSet = new Set(that.getCheckedList());
-	that.wlansd.sort(that.sortFunction);
-	that.showFileList(that.currentPath, recheckSet);
+	let recheckSet = new Set(this.getCheckedList());
+	this.filelist.sort(this.sortFunction);
+	this.showFileList(this.currentPath, recheckSet);
 }
 
-// Show file list
   showFileList(path, recheckSet) {
+	if(!this.params.template) {
+		this.classicShowFileList(path, recheckSet);
+	} else {
+		this.showListUsingTemplate(path, recheckSet);
+	}
+  }
+
+
+  showListUsingTemplate(path, recheckSet)
+  {
+	let template = this.params.template;
+	let place = this.params.place;
+	let guiCallback = this.params.guiCallback;
+	let dirCallback = this.params.dirCallback;
+
+	if (!place) place = '.wrapper';
+	let context = {
+		place:		place,
+		filelist:	this.filelist,
+		path:		path,
+		recheckSet: recheckSet,
+		atRootLevel: path === '/',
+	}
+	let html = template(context);
+	$(place).empty();
+	$(place).append(html);
+
+	if (guiCallback) {
+		guiCallback(this, context);
+	} else {
+		this.bindDefaultGUI();
+	}
+	if(dirCallback) {
+		dirCallback(this, path, context);
+	}
+  }
+
+  bindDefaultGUI() {
+	this.bindListSorting();
+	this.bindDirMotion();
+	this.bindFileSelection();	
+  }
+
+  bindListSorting() {
+	let that = this;
+	$('.nameh').click(e=>{that.setSortFunction(0)});
+	$('.sizeh').click(e=>{that.setSortFunction(1)});
+	$('.dateh').click(e=>{that.setSortFunction(2)});
+  }
+
+  bindDirMotion() {
+	let that = this;
+	$('.direntry').click(e=>{
+		let fn = e.target.parentElement.outerText;
+		that.dir(fn);
+	});
+  }
+
+  bindFileSelection() {
+	let that = this;
+	let fileSelCB = this.params.fileSelected;
+
+	$('.fileentry').click(e=>{
+		let fn = e.target.parentElement.outerText;
+		let fullPath = that.fullPathFor(fn);
+		if (fileSelCB) {
+			fileSelCB(that, fullPath, e, that.params);
+		}
+	});
+  }
+
+  fullPathFor(name) {
+  	if (this.currentPath === '/') return '/' + name;
+	return this.currentPath + '/' + name;
+  }
+
+// Show file list
+  classicShowFileList(path, recheckSet) {
 	// Clear box.
 	//$("#list").html('');
 	$("#filetable tr").remove();
 	let that = this;
 	var row = $("<tr></tr>");
 	row.append($("<td></td>").append($("<input id='headcheck' type='checkbox'></input>").addClass('tab_check')));
-	row.append($("<td></td>").append($("<b>Name</b><a href='javascript:void(0)'></a>") ).addClass("table_bts").on('click',(e)=>{that.setSortFunction(0)}));
-	row.append($("<td></td>").append($("<b>Time</b><a href='javascript:void(0)'></a>")).addClass("table_bts").on('click',(e)=>{that.setSortFunction(1)}));
-	row.append($("<td></td>").append($("<b>Size</b><a href='javascript:void(0)'></a>")).addClass("table_bts").on('click',(e)=>{that.setSortFunction(2)}));
+	row.append($("<td></td>").append($("<b>Name</b><a href='javascript:void(0)'></a>") ).addClass("table_bts nameh"));
+	row.append($("<td></td>").append($("<b>Time</b><a href='javascript:void(0)'></a>")).addClass("table_bts sizeh"));
+	row.append($("<td></td>").append($("<b>Size</b><a href='javascript:void(0)'></a>")).addClass("table_bts datah"));
 	row.append($("<td></td>").append($("<div>Edit</div><a href='javascript:void(0)'></a>")).addClass("table_cmd"));
 
 	$("#filetable").append(row);
+	this.bindListSorting();
 	$("#headcheck").on('click', ()=>{that.toggleChecks()});
 	// Output a link to the parent directory if it is not the root directory.
 	if( path != "/" ) {
@@ -136,7 +222,7 @@ case 2:
 		row.append($("<td colspan='5'></td>").append($("<b> </b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
 		$("#filetable").append(row);
 	}
-	$.each(that.wlansd, function() {
+	$.each(that.filelist, function() {
 		var file = this;
 		// Skip hidden file.
 		//if ( file["attr"] & 0x02 ) {
@@ -161,22 +247,15 @@ case 2:
 			var f = file["fname"].split('.');
 			var ext = f[f.length-1].toLowerCase();
 			filesize = file["fsize"];
-			dateTime = makeDT(file["fdate"], file["ftime"]);
+			dateTime = makeDateTime(file);
 			caption = file["fname"];
 
 			filelink.addClass("file").attr('href', "javascript:void(0)");
 			filelink.on('click', (e)=>{that.opensp(file["r_uri"] + '/' + file["fname"], false)});
-			if (ext === 'lua' && INCLUDE_FTLE) {
-				caption2 = "<font color='#FF0000'>Edit Lua</font>";
-				filelink2.addClass("file").attr('href', "javascript:openedit('"+file["r_uri"] + '/' + file["fname"]+"')");
-				filelink2.on('click', (e)=>{that.openedit(file["r_uri"] + '/' + file["fname"])});
-
-			}
 			if (editWhiteListSet.has(ext)) {
 				caption2 = "<font color='#FF0000'>Edit</font>";
 				filelink2.addClass("file").attr('href', "javascript:void(0)");
 				filelink2.on('click', (e)=>{that.openedit(file["r_uri"] + '/' + file["fname"])});
-
 			}
 		}
 		// Append a file entry or directory to the end of the list.
@@ -288,7 +367,7 @@ case 2:
 	var result = confirm( "Delete "+ alertList + "?" );
 	let that = this;
 	if (result) {
-		this.deleteNext(boxList, this.wlansd, function () {
+		this.deleteNext(boxList, this.filelist, function () {
 			that.upload_after();
 		});
 	}
@@ -310,9 +389,9 @@ case 2:
 }
 
   renameFile() {
-  	let boxPath = this.currentPath;
+	let boxPath = this.currentPath;
 	if (boxPath !== '/') boxPath += '/';
-	let boxList = this.getCheckedList(boxPath);
+	var boxList = this.getCheckedList(boxPath);
 	if (boxList.length === 0) {
 		alert("Please select a file to rename or move using the checkbox");
 		return;
@@ -338,11 +417,7 @@ case 2:
 {
 	// Open editor based on file type:
 	var ext = file.split('.').pop().toLowerCase();
-	if (ext === 'lua' && INCLUDE_FTLE) {
-		window.open("/FTLE/edit.htm?"+file);
-	} else if (ext === 'wav') {
-		window.open("/DR/waverly/viewWAV.htm?"+file);
-	} else if (ext === 'mid') {
+	if (ext === 'mid') {
 		window.open("/DR/midian/midian.htm?"+file);
 	} else if (editWhiteListSet.has(ext)) {
 		window.open("/DR/edit.htm?"+file);
@@ -372,7 +447,39 @@ case 2:
 		arrPath.push("");
 	}
 	return arrPath.join("/");
-}
+  }
+
+  doesFileExist(path, callback) {
+	let parts = path.split('/');
+	let fname = parts.pop();
+	let dirPath = parts.join('/');
+	if (dirPath === '') dirPath = '/';
+	let url = "/command.cgi?op=100&DIR=" + dirPath;
+	$.get(url).done(function(data, textStatus, jqXHR){
+		// Save the current path.
+		// Split lines by new line characters.
+		let filelist = data.split(/\n/g);
+		// Ignore the first line (title) and last line (blank).
+		filelist.shift();
+		filelist.pop();
+		// Convert to V2 format.
+		convertFileList(filelist);
+		// See if the file we are curios about is there.
+		for(var i = 0; i < filelist.length;++i) {
+			let f = filelist[i];
+			if (f['fname'] === fname) {
+				callback(true, 'OK');
+				return;
+			}
+		};
+		callback(false, 'OK');
+		return;
+
+	}).fail(function(jqXHR, textStatus, errorThrown){
+		// Failure: Display error contents
+		callback(false, textStatus);
+	});
+  }
 
 // Get file list
   getFileList(nextPath) { //dir
@@ -395,15 +502,15 @@ case 2:
 	   // Save the current path.
 		that.currentPath = nextPath;
 		// Split lines by new line characters.
-		that.wlansd = data.split(/\n/g);
+		that.filelist = data.split(/\n/g);
 		// Ignore the first line (title) and last line (blank).
-		that.wlansd.shift();
-		that.wlansd.pop();
+		that.filelist.shift();
+		that.filelist.pop();
 		// Convert to V2 format.
-		convertFileList(that.wlansd);
+		convertFileList(that.filelist);
 		// Sort by date and time.
-		that.wlansd.sort(that.sortFunction);
-		
+		that.filelist.sort(that.sortFunction);
+
 		// Show
 		that.showFileList(that.currentPath, recheckSet);
 		var url = "/upload.cgi?UPDIR=" + nextPath+"&TIME="+(Date.now());
@@ -450,7 +557,7 @@ case 2:
 				break;
 			}
 		}
-		
+
 		if (!found) {
 			let dirpath = goodPart + '/' + seeking;
 			let lurl = "/DR/FTF/mkdir.lua?"+"/" + dirpath;		
@@ -472,7 +579,7 @@ case 2:
 }
 
 //Document Ready
-  start() {
+  start(where) {
 	// Configure HTTP access
 	$.ajaxSetup({
 		//cache: false,	// If you prohibit caching you can not load anyhow
@@ -480,23 +587,24 @@ case 2:
 	});
 
 	// Iniialize global variables.
-	this.currentPath = location.pathname;
+	this.currentPath = where;
 	this.last_dirpath = this.currentPath
 	$("#header").html("<a href='"+ this.currentPath+"'>"+ this.currentPath+"</a>");
 	
-	this.wlansd = new Array();
+	this.filelist = new Array();
 	// Show the root directory.
 	this.getFileList(this.makePath(''));
 	let that = this;
 
-	let uppie = new Uppie();
-	let duppy = document.querySelector('#uploader');
-	uppie(duppy, function (event, formData, files) {
+	let upitem = document.querySelector('#uploader');
+	if (upitem) {
+		let uppie = new Uppie();
+		uppie(upitem, function (event, formData, files) {
 		var flist = [];
 		for (var [key, value] of formData.entries()) { if(key === 'files[]') flist.push(value); }
 		that.uploadNext(flist);
 	});
-
+	}
 	$('#uploadbut').click(e=>{that.upload()});
 	$('#newdirbut').click(e=>{that.NewDirectory()});
 	$('#deletebut').click(e=>{that.deleteFiles()});
@@ -673,3 +781,5 @@ case 2:
 
 
 }; // End of class
+
+export {FileWidget, makeDateTime};
