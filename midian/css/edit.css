@@ -101,3 +101,39 @@ margin-left: 8px;
  text-align: center;
  line-height: 18px;
 }
+
+table {
+	border-collapse: collapse;
+	text-align: center;
+}
+
+td {
+	border: solid 1px;
+	padding: 0.5em;
+}
+
+th {
+	border: solid 1px;
+	padding: 0.5em;
+}
+
+div.midilab {
+	position: absolute;
+	font-size: 7pt;
+}
+
+div.midigrid {
+	position: relative;
+}
+
+div.midiitem {
+	position: absolute;
+	height: 4px;
+	background-color: black;
+}
+
+div.midiitembow {
+	position: absolute;
+	height: 4px;
+	color: yellow;
+}

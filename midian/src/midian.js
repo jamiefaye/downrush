@@ -172,7 +172,7 @@ function record()
   setEditData(data)
 {
 	if(!this.midiDoc) {
-		this.midiDoc = openMidiDoc(this.idFor('waveform'));
+		this.midiDoc = openMidiDoc($(this.idFor('waveform'))[0]);
 	}
 	this.midiDoc.openOnBuffer(data);
 	this.startGuiCheck();
