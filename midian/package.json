@@ -19,7 +19,6 @@
     "midi-file": "^1.1.1",
     "react": "^16.8.2",
     "react-dom": "^16.8.2",
-    "web-audio-oscillators": "^1.0.4",
     "webpack": "^4.10.2"
   },
   "devDependencies": {

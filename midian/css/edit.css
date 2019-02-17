@@ -26,6 +26,7 @@ height: 28px;
 min-height: 28px;
 }
 
+
 .butnrow {
 	
 }
@@ -109,12 +110,40 @@ table {
 
 td {
 	border: solid 1px;
-	padding: 0.5em;
+	//padding: 0.5em;
 }
 
 th {
 	border: solid 1px;
-	padding: 0.5em;
+	//padding: 0.5em;
+}
+
+td.midichan {
+	width: 28px;
+	font-size: 14px;
+	border: none;
+	padding: none;
+}
+
+td.midiinst {
+	font-size: 14px;
+	border: none;
+	padding: none;
+}
+
+table.midihead {
+  text-align: left;
+  table-layout: fixed;
+  width: 140px;
+  border: none;
+}
+
+td.midiheadr {
+	vertical-align: top;
+}
+
+table.miditrack {
+	vertical-align: top;
 }
 
 div.midilab {
@@ -124,6 +153,7 @@ div.midilab {
 
 div.midigrid {
 	position: relative;
+	background-color:#E8E8E0;
 }
 
 div.midiitem {
@@ -136,4 +166,18 @@ div.midiitembow {
 	position: absolute;
 	height: 4px;
 	color: yellow;
+}
+
+.butns {
+vertical-align: center;
+height: 18px;
+min-height: 18px;
+}
+
+td.butnstd {
+  border: none;
+}
+
+td.butnstr {
+  border: none;
 }

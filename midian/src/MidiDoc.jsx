@@ -2,10 +2,11 @@ import React from 'react';
 import ReactDOM from "react-dom";
 import $ from'./js/jquery-3.2.1.min.js';
 import Midi from "./Midi/Midi.js";
+import {WedgeIndicator, PushButton, CopyToClipButton} from './GUIstuff.jsx';
 
 var noteHeight = 4;
-var scaling = 60;
-var xPlotOffset = 0;
+var scaling = 32;
+const xPlotOffset = 0;
 
 class MidiHeader extends React.Component {
 
@@ -54,7 +55,7 @@ class MidiGrid extends React.Component {
 		let w = Math.round(n.duration * scaling);
 		if (w < 1) w = 1;
 		if (w > 2) w--;
-		let ypos = (highNote - n.midi) * noteHeight;
+		let ypos = (highNote - n.midi) * noteHeight + 2;
 		let ndiv = $("<div class='" + itemClass + "'/>");
 		// ndiv.text(trkLab);
 		ndiv.css({left: x + 'px', top: ypos + 'px', width: w + 'px'});
@@ -62,7 +63,7 @@ class MidiGrid extends React.Component {
 	}
 
 	let highW = Math.round(highTime * scaling + xPlotOffset);
-	let highH = Math.round((gh + 1) * noteHeight + 16);
+	let highH = Math.round((gh + 1) * noteHeight + 4);
 	parentDiv.css({width: highW + 'px', height: highH});
 	$(this.el).append(parentDiv);
   }
@@ -75,22 +76,32 @@ class MidiGrid extends React.Component {
 
 class MidiTrack extends React.Component {
 
-	render() {
+  render() {
 	    let track = this.props.track;
 	    let trackNum = this.props.trackNum;
+	    let song = this.props.song;
+	    let tname = track.name;
 	    let inst = track.instrument;
-		return (<React.Fragment><table>
-		<tr><th>Track</th><th>Channel</th><th>Instrument</th></tr>
+		return (<React.Fragment><table className='miditrack'><tbody><tr><td className='midiheadr'><table className='midihead'><tbody>
 		<tr>
-		<td>{trackNum}</td>
-		<td>{track.channel}</td>
-		<td>{inst ? inst.name : null}</td>
+		<td className='midichan'><b>{trackNum}</b>:{track.channel}</td>
+		<td className='midiinst'>{tname ? track.name : null}</td>
 		</tr>
-		</table>
-		<p class='tinygap'></p>
-		<MidiGrid track={track} />
+		<tr><td colspan='2' className='midiinst'>{inst ? <i>{inst.name}</i> : null}</td></tr>
+		<tr className='butnstr'><td colspan='2' className='butnstd'>
+		<CopyToClipButton title='Copy->Clip' getText={this.copySel.bind(this)} /></td></tr>
+		</tbody></table></td>
+		<td>
+		<MidiGrid track={track} /></td></tr></tbody></table>
+		<p className='tinygap'></p>
 		</React.Fragment>);
 	}
+
+  copySel() {
+	let toCopy = this.props.track;
+	let asText = JSON.stringify(toCopy, null, 1);
+	return asText;
+  }
 };
 
  class MidiDocView extends React.Component {
@@ -100,7 +111,7 @@ class MidiTrack extends React.Component {
 
 	return (<React.Fragment><MidiHeader header={midi.header} text={this.props.midiText}/>
 		{midi.tracks.map((track, ix) =>{
-			return <MidiTrack trackNum={ix + 1} track={track} key={ix}/>
+			return <MidiTrack trackNum={ix + 1} track={track} key={ix} song={midi}/>
 		})}
 		<hr/>
 		</React.Fragment>);

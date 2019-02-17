@@ -1,5 +1,4 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import Wave from './Wave.js';
 import {openMidiDoc, MidiDoc} from './MidiDoc.jsx';
 
 require('file-loader?name=[name].[ext]!../midian.htm');
@@ -8,12 +7,9 @@ require('file-loader?name=[name].[ext]!../css/edit.css');
 import filegroup_template from "./templates/filegroup_template.handlebars";
 import local_exec_head from "./templates/local_exec_head.handlebars";
 import local_exec_info from "./templates/local_exec_info.handlebars";
-
 import UndoStack from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
-import {audioBufferToWav} from './audioBufferToWav.js';
 import Dropdown from './Dropdown.js';
-
 import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser.js';
 import FileSaver from 'file-saver';
 import {stepNextFile} from "./StepNextFile.js";
