@@ -2,6 +2,8 @@ cd /Users/jamie/deluge/downrush/xmlView
 npm run build
 cd /Users/jamie/deluge/downrush/waverly
 npm run build
+cd /Users/jamie/deluge/downrush/midian
+npm run build
 cd /Users/jamie/deluge
 rm -rf distribution
 mkdir distribution

@@ -3,6 +3,7 @@ import ReactDOM from "react-dom";
 import $ from'./js/jquery-3.2.1.min.js';
 import Midi from "./Midi/Midi.js";
 import {WedgeIndicator, PushButton, CopyToClipButton} from './GUIstuff.jsx';
+import {MidiConversion} from "./MidiConversion.js";
 
 var noteHeight = 4;
 var scaling = 32;
@@ -23,8 +24,8 @@ class MidiGrid extends React.Component {
   }
 
   symbolize() {
-  	this.symbols = [];
 	let track = this.props.track;
+	let firstTime = this.props.converter.lowTime;
 	let notes = track.notes;
 	let lowTime = 100000000;
 	let highTime = -100000000;
@@ -48,10 +49,13 @@ class MidiGrid extends React.Component {
 
 	let parentDiv = $("<div class='midigrid'/>");
 	let itemClass = 'midiitem';
+	
+	console.log("Min time: " + lowTime + " " + firstTime);
 
 	for (let i = 0; i < noteCount; ++i) {
 		let n = notes[i];
-		let x = Math.round(n.time * scaling + xPlotOffset);
+		let nTime = n.time - firstTime;
+		let x = Math.round(nTime * scaling + xPlotOffset);
 		let w = Math.round(n.duration * scaling);
 		if (w < 1) w = 1;
 		if (w > 2) w--;
@@ -62,7 +66,7 @@ class MidiGrid extends React.Component {
 		parentDiv.append(ndiv);
 	}
 
-	let highW = Math.round(highTime * scaling + xPlotOffset);
+	let highW = Math.round((highTime - firstTime) * scaling + xPlotOffset);
 	let highH = Math.round((gh + 1) * noteHeight + 4);
 	parentDiv.css({width: highW + 'px', height: highH});
 	$(this.el).append(parentDiv);
@@ -87,38 +91,48 @@ class MidiTrack extends React.Component {
 		<td className='midichan'><b>{trackNum}</b>:{track.channel}</td>
 		<td className='midiinst'>{tname ? track.name : null}</td>
 		</tr>
-		<tr><td colspan='2' className='midiinst'>{inst ? <i>{inst.name}</i> : null}</td></tr>
-		<tr className='butnstr'><td colspan='2' className='butnstd'>
+		<tr><td colSpan='2' className='midiinst'>{inst ? <i>{inst.name}</i> : null}</td></tr>
+		<tr className='butnstr'><td colSpan='2' className='butnstd'>
 		<CopyToClipButton title='Copy->Clip' getText={this.copySel.bind(this)} /></td></tr>
 		</tbody></table></td>
 		<td>
-		<MidiGrid track={track} /></td></tr></tbody></table>
+		<MidiGrid track={track} converter={this.props.converter}/></td></tr></tbody></table>
 		<p className='tinygap'></p>
 		</React.Fragment>);
 	}
 
   copySel() {
 	let toCopy = this.props.track;
-	let asText = JSON.stringify(toCopy, null, 1);
+	let converter = this.props.converter;
+	let trackNum = this.props.trackNum;
+
+	let converted = converter.convertTrackToDeluge(trackNum, converter.lowTime, converter.highTime, converter.lowTicks);
+	let asText = JSON.stringify(converted, null, 1);
 	return asText;
   }
 };
 
  class MidiDocView extends React.Component {
+
   render() {
 	let midi = this.props.midi;
 	if (!midi) return null;
+	
+	this.midiConversion = new MidiConversion(midi);
+	let mc = this.midiConversion;
+	mc.calcTimeBounds();
 
 	return (<React.Fragment><MidiHeader header={midi.header} text={this.props.midiText}/>
 		{midi.tracks.map((track, ix) =>{
-			return <MidiTrack trackNum={ix + 1} track={track} key={ix} song={midi}/>
+			return <MidiTrack trackNum={ix + 1} track={track} key={ix} song={midi} converter={mc}/>
 		})}
 		<hr/>
+		<pre>{this.props.midiText}</pre>
 		</React.Fragment>);
 	}
+	
+
 }
-
-
 
  class MidiDoc {
    constructor(context) {

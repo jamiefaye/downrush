@@ -399,13 +399,13 @@ function pasteTrackText(text, songDoc) {
 }
 
 function trackKind(track) {
-	if(track['kit']) return 'kit';
-	if(track['sound']) return 'sound';
-	if(track['midiChannel']) return 'midi';
-	if(track['cvChannel']) return 'cv';
+	if(track['kit'] !== undefined) return 'kit';
+	if(track['sound'] !== undefined) return 'sound';
+	if(track['midiChannel'] !== undefined) return 'midi';
+	if(track['cvChannel'] !== undefined) return 'cv';
 	// deal with indirect refs
-	if(track['kitParams']) return 'kit';
-	if(track['soundParams']) return 'sound';
+	if(track['kitParams'] !== undefined) return 'kit';
+	if(track['soundParams'] !== undefined) return 'sound';
 	return 'unknown';
 }
 
