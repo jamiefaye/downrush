@@ -3,8 +3,7 @@ const path = require('path');
 module.exports = {
   entry: './src/SongViewLib.js',
   devtool: 'source-map',
-  watch: true,
-  watchOptions: {ignored: 'node_modules/'},
+  watch: false,
   output: {
     filename: 'SongLib.js',
     path: path.resolve(__dirname, './lib'),

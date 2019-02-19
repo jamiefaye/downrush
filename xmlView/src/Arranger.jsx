@@ -12,6 +12,10 @@ var xPlotOffset = 150;
 var groupColorTab = [0x005AA5, 0xB0004F, 0xb04F00, 0x00C738, 0xFA0005, 0x679800,
  0x0000FF, 0xEA1500, 0x3300CC, 0x25DA00, 0x00F609, 0x6D0092];
 
+function colorForGroup(sect) {
+	let trkColor = groupColorTab[sect % groupColorTab.length];
+	return '#' + gamma_correct(trkColor.toString(16));
+}
 
 function patchLabel(track, newSynthNames) {
 	let context = patchInfo(track,newSynthNames);
@@ -142,4 +146,4 @@ function bumpTracks(instrumentEntry) {
 }
 
 
-export {showArranger, groupColorTab, bumpTracks};
+export {showArranger, colorForGroup, bumpTracks};

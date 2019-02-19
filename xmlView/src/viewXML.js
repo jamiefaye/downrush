@@ -14,7 +14,7 @@ import local_exec_info from "./templates/local_exec_info.handlebars";
 
 import empty_kit_template from "./templates/empty_kit_template.handlebars";
 
-import {formatSong, formatSound, setFocusDoc, DelugeDoc} from "./SongViewLib.js";
+import {formatSong, formatSound, setFocusDoc, makeDelugeDoc} from "./SongViewLib.js";
 // import {formatSong, formatSound, setFocusDoc, DelugeDoc} from "../lib/SongLib.js";
 import {setSamplePathPrefix} from "./samplePath.js";
 
@@ -148,7 +148,7 @@ window.onload = onLoad;
 
 function newKitDoc(e) {
 	let filledKitT = empty_kit_template();
-	focusDoc = new DelugeDoc("/KITS/KIT0.XML", filledKitT, true);
+	focusDoc = makeDelugeDoc("/KITS/KIT0.XML", filledKitT, true);
 	setFocusDoc(focusDoc);
 	// this.forceUpdate();
   }
@@ -157,7 +157,7 @@ function newKitDoc(e) {
 //editor
 function setEditText(fname, text)
 {
-	focusDoc = new DelugeDoc(fname, text, false, false);
+	focusDoc = makeDelugeDoc(fname, text, false, false);
 	setFocusDoc(focusDoc);
 }
 

@@ -1,4 +1,3 @@
-import $ from'./js/jquery-3.2.1.min.js';
 
 class MidiConversion {
   constructor(midi) {
@@ -30,7 +29,7 @@ class MidiConversion {
 		}
 		lanes[m].push(n);
 	}
-	
+
 	let clipMax = 0;
 
 	
@@ -120,7 +119,7 @@ class MidiConversion {
 	  inKeyMode: 0,
 	  yScroll: 60,
 	  yScrollKeyboard: 50,
-	  isPlaying: 0,
+	  isPlaying: 1,
 	  isSoloing: 0,
 	  playEnabledAtStart: 1,
 	  trackLength: 192,

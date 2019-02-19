@@ -8,7 +8,7 @@ import tippy from "./js/tippy.all.min.js";
 import {patchNames, kitNames, newSynthPatchNames} from "./js/delugepatches.js";
 import {formatKit} from "./KitList.jsx";
 import {getXmlDOMFromString, jsonToXMLString, xmlToJson, jsonToTable} from "./JsonXMLUtils.js";
-import {showArranger, bumpTracks} from "./Arranger.jsx";
+import {showArranger, colorForGroup, bumpTracks} from "./Arranger.jsx";
 import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 
 import convertHexTo50 from "./templates/convertHexTo50.js";
@@ -274,16 +274,22 @@ function newToOldNotes(track) {
 	}
 }
 
-
-function pasteTrackText(text, songDoc) {
-	if (!songDoc.jsonDocument) return;
+function pasteTrackJson(pastedJSON, songDoc) {
+	// If we have a document with one empty track at the front, get rid of it.
+	// as this must have been a generated empty document.
 	let song = songDoc.jsonDocument.song;
-	let pastedJSON = JSON.parse(text, reviveClass);
-
-	if (!pastedJSON || !pastedJSON.track) {
-		alert("Invalid data on clipboard.");
-		return;
+	let trackA = forceArray(song.tracks.track);
+	if (trackA.length === 1) {
+		if (typeof trackA[0].noteRows ==='string') {
+			song.tracks = [];
+			song.instruments = [];
+		}
 	}
+	addTrackToSong(pastedJSON, songDoc);
+}
+
+function addTrackToSong(pastedJSON, songDoc) {
+	let song = songDoc.jsonDocument.song;
 
 	// If needed, convert the tracks note format
 	let clipUsingNewNotes = usesNewNotekFormat(pastedJSON.track);
@@ -379,6 +385,21 @@ function pasteTrackText(text, songDoc) {
 		}
 	}
 	songDoc.triggerRedraw();
+}
+
+
+function pasteTrackText(text, songDoc) {
+	if (!songDoc.jsonDocument) return;
+	let song = songDoc.jsonDocument.song;
+	let pastedJSON = JSON.parse(text, reviveClass);
+
+	if (!pastedJSON || !pastedJSON.track) {
+		alert("Invalid data on clipboard.");
+		return;
+	}
+
+	addTrackToSong(pastedJSON, songDoc);
+	
 }
 
 function trackKind(track) {
@@ -854,7 +875,7 @@ function plotTrack14(track, song, obj) {
 var nitTable = "111222132333142434441525354555162636465666172737475767771828384858687888";
 
 
-function activateNoteTips()
+function activateTippy()
 {
 	tippy('.npop', {
 		arrow: true,
@@ -862,8 +883,13 @@ function activateNoteTips()
 		onShow(pop) {
 		// `this` inside callbacks refers to the popper element
 			const content = this.querySelector('.tippy-content');
-			let notehex = pop.reference.getAttribute('data-note');
+			let text = pop.reference.getAttribute('data-text');
+			if (text) {
+				content.innerHTML = text;
+				return;
+			}
 
+			let notehex = pop.reference.getAttribute('data-note');
 			let x = parseInt(notehex.substring(0, 8), 16);
 			let dur =  parseInt(notehex.substring(8, 16), 16);
 			let vel = parseInt(notehex.substring(16, 18), 16);
@@ -1080,15 +1106,18 @@ function patchInfo(track, newSynthNames) {
 	};
 }
 
-function trackHeader(track, newSynthNames, inx, repeatTab, obj) {
+
+
+function trackHeader(track, newSynthNames, inx, repeatTab, template, obj) {
 	let context = patchInfo(track, newSynthNames);
 	let section = Number(track.section);
-
+	let sectionColor = colorForGroup(section);
 	let repeats = Number(repeatTab[section].numRepeats);
 	if (repeats === 0) repeats = '&#x221e;';
 	 else if (repeats === -1) repeats = 'Share';
 	
 	let addedContext = {...context,
+		sectionColor:	sectionColor,
 		colourOffset: 	track.colourOffset,
 		section: 		section,
 		repeats:		repeats,
@@ -1096,22 +1125,8 @@ function trackHeader(track, newSynthNames, inx, repeatTab, obj) {
 		trackIndex:		inx,
 	}
 
-	let trtab = track_head_template(addedContext);
+	let trtab = template(addedContext);
 	obj.append(trtab);
-}
-
-
-function simpleTrackHeader(track, newSynthNames, inx, obj) {
-	let context = patchInfo(track, newSynthNames);
-	let addedContext = {...context,
-		colourOffset: 	track.colourOffset,
-		trackNum:		inx + 1,
-		trackIndex:		inx,
-	}
-
-	let trtab = simple_track_template(addedContext);
-	obj.append(trtab);
-	
 }
 
 function getTrackText(trackNum, songJ)
@@ -1346,7 +1361,7 @@ function formatSong(jdoc, obj) {
 				let fromID = Number(track.instrument.referToTrackId);
 				refTrack = trax[fromID];
 			}
-			trackHeader(track, jdoc.newSynthNames, i, sectionTab, obj);
+			trackHeader(track, jdoc.newSynthNames, i, sectionTab, track_head_template, obj);
 			if(tKind === 'kit') {
 				
 				if(newNoteFormat) {
@@ -1363,7 +1378,7 @@ function formatSong(jdoc, obj) {
 			}
 			plotParams(track, refTrack, jsong, obj);
 		}
-		activateNoteTips();
+		activateTippy();
 	  }
 	}
 	trackPasteField(obj, jdoc);
@@ -1413,7 +1428,7 @@ function formatSongSimple(jdoc, obj) {
 		for(var i = 0; i < trax.length; ++i) {
 			let track = trax[trax.length - i - 1];
 			obj.append($("<table class='simplehead'><tr class=''>"));
-			simpleTrackHeader(track, jdoc.newSynthNames, i, obj);
+			trackHeader(track, jdoc.newSynthNames, i, sectionTab, simple_track_template, obj);
 			let ploto = $("<td class='simpleplot'/>");
 
 			let tKind = trackKind(track);
@@ -1422,7 +1437,7 @@ function formatSongSimple(jdoc, obj) {
 				let fromID = Number(track.instrument.referToTrackId);
 				refTrack = trax[fromID];
 			}
-			// simpleTrackHeader(track, jdoc.newSynthNames, i, obj);
+
 			if(tKind === 'kit') {
 				if(newNoteFormat) {
 					plotKit14(track, refTrack, jsong, ploto);
@@ -1440,12 +1455,11 @@ function formatSongSimple(jdoc, obj) {
 
 			obj.append(ploto);
 			obj.append($("</tr></table>"));
-			// obj.append("</td></tr></table>");
 		}
-		activateNoteTips();
+		activateTippy();
 	  }
 	}
-	trackPasteField(obj, jdoc);
+	// trackPasteField(obj, jdoc);
 }
 
 /*******************************************************************************
@@ -1696,4 +1710,9 @@ function getFocusDoc() {
 	return focusDoc;
 }
 
-export {formatSong, formatSound, DelugeDoc, setFocusDoc, gamma_correct, patchInfo, yToNoteName, getFocusDoc};
+function makeDelugeDoc(fname, text, newKitFlag, simple)
+{
+	return new DelugeDoc(name, text, newKitFlag, simple);
+}
+
+export {formatSong, formatSound, makeDelugeDoc, setFocusDoc, gamma_correct, patchInfo, yToNoteName, getFocusDoc, pasteTrackJson};

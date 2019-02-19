@@ -1,5 +1,5 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import {openMidiDoc, MidiDoc} from './MidiDoc.jsx';
+import {openMidiDoc} from './MidiDoc.jsx';
 
 require('file-loader?name=[name].[ext]!../midian.htm');
 require('file-loader?name=[name].[ext]!../css/midian.css');
@@ -16,7 +16,7 @@ import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser
 import FileSaver from 'file-saver';
 import {stepNextFile} from "./StepNextFile.js";
 
-import {formatSong, formatSound, setFocusDoc, DelugeDoc, getFocusDoc} from "../../xmlView/lib/SongLib.js";
+import {setFocusDoc, makeDelugeDoc, getFocusDoc} from "../../xmlView/lib/SongLib.js";
 
 "use strict";
 
@@ -313,6 +313,8 @@ function onLoad()
 	}
 	$('#downloadbut').click((e)=>{downloader(e)});
 	homeDoc.bindGui();
+
+	createEmptySong();
 }
 
 function openMidiFile(fname)
@@ -329,7 +331,7 @@ function openMidiFile(fname)
 
 function setSongText(fname, text)
 {
-	let focusDoc = new DelugeDoc(fname, text, false, true);
+	let focusDoc = makeDelugeDoc(fname, text, false, true);
 	setFocusDoc(focusDoc);
 }
 
@@ -359,6 +361,12 @@ function setSongText(fname, text)
 	},
 
 	});
+}
+
+function createEmptySong()
+{
+	let data = empty_song_template();
+	setSongText("/SONGS/SONG900.XML", data);
 }
 
 

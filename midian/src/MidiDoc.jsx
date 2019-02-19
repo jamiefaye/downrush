@@ -4,7 +4,7 @@ import $ from'./js/jquery-3.2.1.min.js';
 import Midi from "./Midi/Midi.js";
 import {WedgeIndicator, PushButton, CopyToClipButton} from './GUIstuff.jsx';
 import {MidiConversion} from "./MidiConversion.js";
-
+import {pasteTrackJson, getFocusDoc} from "../../xmlView/lib/SongLib.js";
 var noteHeight = 4;
 var scaling = 32;
 const xPlotOffset = 0;
@@ -73,7 +73,7 @@ class MidiGrid extends React.Component {
   }
 
   render() {
-  	return <div ref={el => this.el = el}> </div>
+	return <div ref={el => this.el = el}> </div>
   }
 }
 
@@ -93,7 +93,9 @@ class MidiTrack extends React.Component {
 		</tr>
 		<tr><td colSpan='2' className='midiinst'>{inst ? <i>{inst.name}</i> : null}</td></tr>
 		<tr className='butnstr'><td colSpan='2' className='butnstd'>
-		<CopyToClipButton title='Copy->Clip' getText={this.copySel.bind(this)} /></td></tr>
+		<PushButton title='+ Song' onPush={this.addSel.bind(this)} />
+		<CopyToClipButton title='&rarr; Clip' getText={this.copySel.bind(this)} />
+		</td></tr>
 		</tbody></table></td>
 		<td>
 		<MidiGrid track={track} converter={this.props.converter}/></td></tr></tbody></table>
@@ -109,6 +111,16 @@ class MidiTrack extends React.Component {
 	let converted = converter.convertTrackToDeluge(trackNum, converter.lowTime, converter.highTime, converter.lowTicks);
 	let asText = JSON.stringify(converted, null, 1);
 	return asText;
+  }
+
+ addSel() {
+	let toCopy = this.props.track;
+	let converter = this.props.converter;
+	let trackNum = this.props.trackNum;
+
+	let converted = converter.convertTrackToDeluge(trackNum, converter.lowTime, converter.highTime, converter.lowTicks);
+
+	pasteTrackJson(converted, getFocusDoc());
   }
 };
 
@@ -170,4 +182,4 @@ function openMidiDoc(where, params) {
 	return midiDoc;
 }
 
-export {openMidiDoc, MidiDoc};
+export {openMidiDoc};
