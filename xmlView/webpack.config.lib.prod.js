@@ -6,7 +6,10 @@ module.exports = {
    devtool:  'source-map',
   output: {
     filename: 'SongLib.js',
-    path: path.resolve(__dirname, './lib')
+    path: path.resolve(__dirname, './lib'),
+    libraryTarget: 'umd',
+    library: 'lib',
+    umdNamedDefine: true,
   },
   module: {
       rules: [

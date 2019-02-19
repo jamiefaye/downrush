@@ -1692,8 +1692,8 @@ function setFocusDoc(toDoc) {
 	focusDoc = toDoc;
 }
 
-function makeDelugeDoc(fname, text, newKitFlag) {
-	return new DelugeDoc(fname, text, newKitFlag);
+function getFocusDoc() {
+	return focusDoc;
 }
 
-export {formatSong, formatSound, DelugeDoc, setFocusDoc, gamma_correct, patchInfo, yToNoteName, makeDelugeDoc};
+export {formatSong, formatSound, DelugeDoc, setFocusDoc, gamma_correct, patchInfo, yToNoteName, getFocusDoc};

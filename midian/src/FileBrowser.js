@@ -123,7 +123,7 @@ class SaveFileBrowser extends FileBrowser {
 		super(params);
 		let me = this;
 		let initName = params.initialPath;
-		if (!initName) initName = '/Untitled.wav';
+		if (!initName) initName = '/Untitled.XML';
 		$('#fw-name').val(initName);
 		$('#savefilebut').click(e=>{me.saveFile(e)});
 	}
@@ -135,8 +135,9 @@ class SaveFileBrowser extends FileBrowser {
 
   dirSelect(browser, path) {
 	let nowName = $('#fw-name').val();
+	if (!nowName) return;
 	let splitup = nowName.split('/');
-	let namePart = 'Untitled.wav';
+	let namePart = 'Untitled.XML';
 	if (splitup.length) {
 		let lastPart = splitup[splitup.length - 1];
 		if (lastPart) {

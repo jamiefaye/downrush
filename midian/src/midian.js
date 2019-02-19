@@ -16,7 +16,7 @@ import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser
 import FileSaver from 'file-saver';
 import {stepNextFile} from "./StepNextFile.js";
 
-import {formatSong, formatSound, setFocusDoc, DelugeDoc, makeDelugeDoc} from "../../xmlView/lib/SongLib.js";
+import {formatSong, formatSound, setFocusDoc, DelugeDoc, getFocusDoc} from "../../xmlView/lib/SongLib.js";
 
 "use strict";
 
@@ -81,7 +81,7 @@ function registerGlobalHandlers() {
 	
 	$('.opensongbutn').click(e=>{
 		let initial; // fname
-		if (!initial) initial = '/';
+		if (!initial) initial = '/SONGS/';
 		openFileBrowser({
 			initialPath:  initial,
 			opener: function(name) {
@@ -222,61 +222,6 @@ function record()
 	});
 }
 
-// use ajax to save-back wav data (instead of a web worker).
-  saveFile(filepath, data)
-{
-	let me = this;
-	var timestring;
-	var dt = new Date();
-	var year = (dt.getFullYear() - 1980) << 9;
-	var month = (dt.getMonth() + 1) << 5;
-	var date = dt.getDate();
-	var hours = dt.getHours() << 11;
-	var minutes = dt.getMinutes() << 5;
-	var seconds = Math.floor(dt.getSeconds() / 2);
-	var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
-	var urlDateSet = '/upload.cgi?FTIME=' + timestring + "&TIME="+(Date.now());;
-	$.get(urlDateSet, function() {
-		$.ajax(filepath, {
-		headers:	{'Overwrite': 't', 'Content-type': 'audio/wav'},
-		cache:		false,
-		contentType: false,
-		data:		data,
-		processData : false,
-		method:		'PUT',
-		error:		function(jqXHR, textStatus, errorThrown) {
-			alert(textStatus + "\n" + errorThrown);
-		},
-		success: function(data, textStatus, jqXHR){
-			console.log("Save OK");
-			$.ajax("/upload.cgi?WRITEPROTECT=OFF",{
-				error:	function(jqXHR, textStatus, errorThrown) {
-					alert(textStatus + "\n" + errorThrown);
-				},
-				headers: {"If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT"},
-				success: function(data, textStatus, jqXHR){
-					console.log("save and unlock done");
-					$("#statind").text(filepath + " saved.");
-				},
-			})
-		},
-
-		xhr: function() {
-			var xhr = new window.XMLHttpRequest();
-			xhr.upload.addEventListener("progress", function(evt){
-			  if (evt.lengthComputable) {
-				  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
-				  //Do something with upload progress
-				 $("#statind").text(filepath + " " + percentComplete + "%");
-				 //console.log(percentComplete);
-			  }
-			}, false);
-		 	return xhr;
-		 }
-		});
-	});
-}
-
 //---------Button-----------
 
 
@@ -284,21 +229,14 @@ function record()
 
   saveAs(){
 	let me = this;
+	let songDoc = getFocusDoc();
+	if (!songDoc) return;
 	saveFileBrowser({
-		initialPath:  this.fname,
+		initialPath:  songDoc.fname,
 		saver: function(name) {
-		//	let aBuf = me.midiDoc.getMidiFile;
-		//	let saveData = audioBufferToWav(aBuf);
-			// console.log("Save to: " + name);
-		//	me.saveFile(name, saveData);
+			songDoc.save(name);
 		}
 	});
-}
-
-  saveFast(){
-	// let aBuf = this.wave.backend.buffer;
-	// let saveData = audioBufferToWav(aBuf);
-	// this.saveFile(this.fname, saveData);
 }
 
   openLocal(evt)
@@ -329,31 +267,24 @@ function record()
 	// Read in the image file as a data URL.
 	reader.readAsBinaryString(f);
  }
-/*
- genWAV() {
- 	let aBuf = this.wave.backend.buffer;
-	let saveData = audioBufferToWav(aBuf);
-	return saveData;
- }
-*/
+
 }; // ** End of class
 
 //.value
 
 function downloader(evt) {
-	if(!focusMidiView) return;
-	/*
-	let saveWAV = focusMidiView.genWAV();
-	var blob = new Blob([saveWAV], {type: "audio/wav"});
+	let focusDoc = getFocusDoc();
+	if(!focusDoc) return;
+	let saveXML = focusDoc.genDocXMLString();
+	var blob = new Blob([saveXML], {type: "text/plain;charset=utf-8"});
 	let saveName;
 	if (local_exec) {
-		saveName = focusMidiView.fname.name 
+		saveName = focusDoc.fname.name 
 	} else {
-		saveName = focusMidiView.fname.split('/').pop();
+		saveName = focusDoc.fname.split('/').pop();
 	}
 	console.log(saveName);
 	FileSaver.saveAs(blob, saveName);
-	*/
 }
 
 //---------- When reading page -------------
