@@ -1,5 +1,6 @@
-const {getPathPrefix} =  require("../viewXML.js");
+const {getSamplePathPrefix} =  require("../samplePath.js");
 
 module.exports = function () {
-	return getPathPrefix();
+//	return '/';
+	return getSamplePathPrefix();
 }

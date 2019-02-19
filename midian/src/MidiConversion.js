@@ -24,7 +24,7 @@ class MidiConversion {
 		let m = n.midi;
 		let t = n.time;
 		let tend = t + n.duration;
-		//if (t > endTime || tend < startTime) continue;
+		if (t > endTime || tend < startTime) continue;
 		if (lanes[m] === undefined) {
 			lanes[m] =[];
 		}
@@ -44,8 +44,6 @@ class MidiConversion {
 		for (let nx = 0; nx < lane.length; ++nx) {
 			let n = lane[nx];
 			let tMstart = n.ticks - tickOffset;
-
-
 			let tMdur = n.durationTicks;
 			let tMend = tMstart + tMdur;
 			if (tMstart <= lastStart) {

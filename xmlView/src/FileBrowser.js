@@ -1,11 +1,12 @@
 import $ from 'jquery';
 import {FileWidget} from './FileWidget.js';
-import {local_exec, sample_path_prefix} from './viewXML.js';
 import open_frame from "./fileWidgetTemplates/open_frame.handlebars";
 import save_frame from "./fileWidgetTemplates/save_frame.handlebars";
 import dir_template from "./fileWidgetTemplates/dir_template.handlebars";
 
 require('file-loader?name=[name].[ext]!../css/filewidget.css');
+
+var local_exec = document.URL.indexOf('file:') == 0;
 
 /*
 var fileopencb;

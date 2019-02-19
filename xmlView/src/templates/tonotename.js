@@ -1,4 +1,4 @@
-const {yToNoteName} =  require("../viewXML.js");
+const {yToNoteName} =  require("../SongViewLib.js");
 
 module.exports = function (y) {
 	let nn = yToNoteName(y);

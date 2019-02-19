@@ -4,7 +4,6 @@ import Dropdown from 'react-dropdown';
 import {WaveView} from './WaveView.jsx';
 import {openFileBrowser} from './FileBrowser.js';
 import {forceArray} from "./JsonXMLUtils.js";
-import {formatSound, sample_path_prefix, local_exec, findKitList} from "./viewXML.js";
 import empty_sound_template from './templates/empty_sound_template.handlebars';
 import {getXmlDOMFromString, xmlToJson, reviveClass} from './JsonXMLUtils.js';
 import shortid from 'shortid';
@@ -13,6 +12,9 @@ import {SortableContainer, SortableElement, SortableHandle, arrayMove} from 'rea
 import TextInput from 'react-autocomplete-input';
 import {SoundTab} from './SoundTab.jsx';
 import $ from 'jquery';
+import {getSamplePathPrefix} from "./samplePath.js";
+
+var local_exec = document.URL.indexOf('file:') == 0;
 
 function fmtTime(tv) {
 	if(tv === undefined) return tv;
@@ -231,7 +233,7 @@ class SampleEntry extends React.Component {
 		   {openEditing ? (<td><Dropdown options={loopModeTab} onChange={this.onLoopSelect.bind(this)} value={defaultOption} /></td>)
 							: (<td className="loopMode">{defaultOption}</td>)}
 		  {showPlayButton ? (<td><PlayerControl pushed={this.state.pushed} command={(e)=>{this.command('play', e)}}/></td>) : 
-			showAudioControl ? (<td><audio controls preload='none'><source src={sample_path_prefix + this.props.osc.fileName} type='audio/wav'/></audio></td>)
+			showAudioControl ? (<td><audio controls preload='none'><source src={getSamplePathPrefix() + this.props.osc.fileName} type='audio/wav'/></audio></td>)
 							 :(<td> </td>)}
 		</tr>
 		{showWaveView ? (<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} editing={openEditing}
@@ -450,7 +452,7 @@ function formatKit(kitList, kitParams, where) {
 	if (!kitList) return;
 	let context = {};
 	context.kitList = kitList;
-	context.sample_path_prefix = sample_path_prefix;
+	context.sample_path_prefix = getSamplePathPrefix();
 	context.useDragHandle = true;
 	context.jqElem =  where;
 	let kitView = new KitView(context);

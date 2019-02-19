@@ -98,6 +98,12 @@ div.notelab {
 	font-size: 9pt;
 }
 
+div.notelabsimp {
+	position: absolute;
+	font-size: 9pt;
+	left: 18px;
+}
+
 div.parmlab {
 	position: absolute;
 	font-size: 7pt;
@@ -483,3 +489,34 @@ min-height: 28px;
 	padding:1px;position:absolute;text-align:left;z-index:20000}
 .react-autocomplete-input>li{cursor:pointer;padding:10px;min-width:100px}
 .react-autocomplete-input>li.active{background-color:#337ab7;color:#fff}
+
+
+td.simplechan {
+	width: 8px;
+	text-align: left;
+	font-size: 18px;
+	border: none;
+	vertical-align: top;
+	padding-left: 1px;
+	padding-right: 1px;
+	padding-top: 4px;
+	padding-bottom: 2px;
+}
+
+table.simplehead {
+  text-align: left;
+  table-layout: fixed;
+  width: 12px;
+  border: none;
+}
+
+td.simpleplot {
+	border: none;
+	padding-left: 4px;
+	padding-right: 2px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+
+}
+
+

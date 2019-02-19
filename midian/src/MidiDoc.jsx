@@ -114,6 +114,7 @@ class MidiTrack extends React.Component {
 
  class MidiDocView extends React.Component {
 
+// 		<pre>{this.props.midiText}</pre>
   render() {
 	let midi = this.props.midi;
 	if (!midi) return null;
@@ -127,7 +128,6 @@ class MidiTrack extends React.Component {
 			return <MidiTrack trackNum={ix + 1} track={track} key={ix} song={midi} converter={mc}/>
 		})}
 		<hr/>
-		<pre>{this.props.midiText}</pre>
 		</React.Fragment>);
 	}
 	

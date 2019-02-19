@@ -2,17 +2,21 @@ import $ from'./js/jquery-3.2.1.min.js';
 import {openMidiDoc, MidiDoc} from './MidiDoc.jsx';
 
 require('file-loader?name=[name].[ext]!../midian.htm');
-require('file-loader?name=[name].[ext]!../css/edit.css');
-
+require('file-loader?name=[name].[ext]!../css/midian.css');
+require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
 import filegroup_template from "./templates/filegroup_template.handlebars";
 import local_exec_head from "./templates/local_exec_head.handlebars";
 import local_exec_info from "./templates/local_exec_info.handlebars";
+import local_exec_song_group from "./templates/local_exec_song_group.handlebars";
+import empty_song_template from "./templates/empty_song.handlebars";
 import UndoStack from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import Dropdown from './Dropdown.js';
 import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser.js';
 import FileSaver from 'file-saver';
 import {stepNextFile} from "./StepNextFile.js";
+
+import {formatSong, formatSound, setFocusDoc, DelugeDoc, makeDelugeDoc} from "../../xmlView/lib/SongLib.js";
 
 "use strict";
 
@@ -29,21 +33,21 @@ var localClipboard;
 var focusMidiView;
 var firstOpened = false;
 
-function openMidiFile(e) {
+function openMidiFileDialog(e) {
 	let initial;
 	if (focusMidiView) initial = focusMidiView.fname;
 	if (!initial) initial = '/';
 	openFileBrowser({
 		initialPath:  initial,
 		opener: function(name) {
-			openFile(name);
+			openMidiFile(name);
 		}
 	});
 }
 
 function stepNextAsync(dir) {
 	setTimeout(e=>{
-		stepNextFile(focusMidiView.fname, dir, openFile);
+		stepNextFile(focusMidiView.fname, dir, openMidiFile);
 	}, 0);
 }
 
@@ -61,19 +65,31 @@ function registerGlobalHandlers() {
 	*/
 
 	$('.savebut').click(e=>{focusMidiView.saveAs(e)});
-	$('.openmidibutn').click(e=>{openMidiFile(e)});
+	$('.openmidibutn').click(e=>{openMidiFileDialog(e)});
+
 	$('.upbut').click(e=>{
-		stepNextFile(focusMidiView.fname, -1, openFile);
+		stepNextFile(focusMidiView.fname, -1, openMidiFile);
 	});
 	
 	$('.downbut').click(e=>{
-		stepNextFile(focusMidiView.fname, 1, openFile);
+		stepNextFile(focusMidiView.fname, 1, openMidiFile);
 	});
 	
 	$(document).keypress(function(e){
 		focusMidiView.handleKeyPress(e);
 	});
-
+	
+	$('.opensongbutn').click(e=>{
+		let initial; // fname
+		if (!initial) initial = '/';
+		openFileBrowser({
+			initialPath:  initial,
+			opener: function(name) {
+				loadSongFile(name);
+//				fname = name;
+			}
+		});
+	});
 }
 
 class MidiViewer {
@@ -112,11 +128,11 @@ class MidiViewer {
 /*
 
 	$('.upbut').click(e=>{
-		stepNextFile(focusMidiView.fname, -1, openFile);
+		stepNextFile(focusMidiView.fname, -1, openMidiFile);
 	});
 	
 	$('.downbut').click(e=>{
-		stepNextFile(focusMidiView.fname, 1, openFile);
+		stepNextFile(focusMidiView.fname, 1, openMidiFile);
 	});
 */
   bindGui() {
@@ -168,7 +184,7 @@ function record()
   setEditData(data)
 {
 	if(!this.midiDoc) {
-		this.midiDoc = openMidiDoc($(this.idFor('waveform'))[0]);
+		this.midiDoc = openMidiDoc($(this.idFor('midianview'))[0]);
 	}
 	this.midiDoc.openOnBuffer(data);
 	this.startGuiCheck();
@@ -285,7 +301,6 @@ function record()
 	// this.saveFile(this.fname, saveData);
 }
 
-
   openLocal(evt)
  {
  	let me = this;
@@ -303,7 +318,7 @@ function record()
 	this.fname = f;
 	var reader = new FileReader();
 	if(!me.midiDoc) {
-		me.midiDoc = new MidiDoc(me.idFor('midiview'));
+		me.midiDoc = openMidiDoc($(this.idFor('midianview'))[0]);
 	}
 
 // Closure to capture the file information.
@@ -359,14 +374,17 @@ function onLoad()
 	} else { // We are running as a 'file://', so change the GUI to reflect me.
 		$('#filegroup').remove();
 		$('#filegroupplace').append(local_exec_head());
-		$(homeDoc.idFor('jtab')).append (local_exec_info());
+		$('#filegroup2').remove();
+		$('#filegroupsong').append(local_exec_song_group());
+				
+		$(homeDoc.idFor('midiantab')).append (local_exec_info());
 		$('#opener').on('change', (e)=>{homeDoc.openLocal(e)});
 	}
 	$('#downloadbut').click((e)=>{downloader(e)});
 	homeDoc.bindGui();
 }
 
-function openFile(fname)
+function openMidiFile(fname)
 {
 	let homeDoc = new MidiViewer('midiview');
 	homeDoc.loadFile(fname);
@@ -377,5 +395,40 @@ function openFile(fname)
 
 	focusMidiView = homeDoc;
 }
+
+function setSongText(fname, text)
+{
+	let focusDoc = new DelugeDoc(fname, text, false, true);
+	setFocusDoc(focusDoc);
+}
+
+// use ajax to load xml data (instead of a web worker).
+  function loadSongFile(fname)
+{
+	$("#statind2").text("Loading: " +  fname);
+	$.ajax({
+	url         : fname,
+	cache       : false,
+	processData : false,
+	method:		'GET',
+	type        : 'GET',
+	success     : function(data, textStatus, jqXHR){
+		setSongText(fname, data);
+		$("#statind2").text(fname + " loaded.");
+	},
+
+	error: function (data, textStatus, jqXHR) {
+		console.log("Error: " + textStatus);
+	},
+
+	xhr: function() {
+		var xhr = new window.XMLHttpRequest();
+		xhr.responseType= 'text';
+		return xhr;
+	},
+
+	});
+}
+
 
 window.onload = onLoad;

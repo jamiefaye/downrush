@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import React from 'react';
-import {formatSound, sample_path_prefix} from "./viewXML.js";
+import {formatSound} from "./SongViewLib.js";
 
 class SoundTab extends React.Component {
 
