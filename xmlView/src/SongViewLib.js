@@ -1712,7 +1712,7 @@ function getFocusDoc() {
 
 function makeDelugeDoc(fname, text, newKitFlag, simple)
 {
-	return new DelugeDoc(name, text, newKitFlag, simple);
+	return new DelugeDoc(fname, text, newKitFlag, simple);
 }
 
 export {formatSong, formatSound, makeDelugeDoc, setFocusDoc, gamma_correct, patchInfo, yToNoteName, getFocusDoc, pasteTrackJson};

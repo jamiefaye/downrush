@@ -38,12 +38,12 @@ table {
 }
 td {
 	border: solid 1px;
-	padding: 0.5em;
+	padding: 0.2em;
 }
 
 th {
 	border: solid 1px;
-	padding: 0.5em;
+	padding: 0.2em;
 }
 
 .samplelist td {
