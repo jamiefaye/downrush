@@ -1,4 +1,5 @@
 import {patchNames, kitNames, newSynthPatchNames} from "./js/delugepatches.js";
+import {jsonequals} from "./JsonXMLUtils.js";
 
 var gamma = 1.0 / 5.0;
 var gammaTab;
@@ -86,6 +87,41 @@ function patchInfo(track, newSynthNames) {
 	};
 }
 
+var noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+// Convert Midi note number into note name + octave, with 0 meaning C minus 2
+function yToNoteName(note)
+{
+	let oct = Math.round(note / 12) - 2;
+	let tone = note % 12;
+	return noteNames[tone] + oct;
+}
 
 
-export {gamma_correct, patchInfo, trackKind};
+var scaleTable = [
+"Major",	[0, 2, 4, 5, 7, 9, 11],
+"Minor",	[0, 2, 3, 5, 7, 8, 10],
+"Dorian",	[0, 2, 3, 5, 7, 9, 10],
+"Phrygian", [0, 1, 3, 5, 7, 8, 10],
+"Lydian", 	[0, 2, 4, 6, 7, 9, 11],
+"Mixolydian", [0, 2, 4, 5, 7, 9, 10],
+"Locrian", 	[0, 1, 3, 5, 6, 8, 10] ];
+
+function scaleString(jsong) {
+	let str = noteNames[Number(jsong.rootNote) % 12] + " ";
+
+	let modeTab = jsong.modeNotes.modeNote;
+	let modeNums = Array(7);
+	for (var j = 0; j < 7; ++j) modeNums[j] = Number(modeTab[j]);
+	for (var i = 0; i < scaleTable.length; i += 2) {
+		let aMode = scaleTable[i + 1];
+		if (jsonequals(modeNums, aMode)) {
+			return str + scaleTable[i];
+		}
+	}
+	return str + "Chromatic";
+}
+
+
+
+export {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString};

@@ -18,7 +18,7 @@ import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 
 import note_tip_template from "./templates/note_tip_template.handlebars";
 
-import {gamma_correct, patchInfo, trackKind} from "./SongUtils.js";
+import {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString} from "./SongUtils.js";
 
 import track_head_template from "./templates/track_head_template.handlebars";
 import sample_list_template from "./templates/sample_list_template.handlebars";
@@ -82,16 +82,6 @@ function rowYfilter(row) {
 	if (row.drumIndex) return Number(row.drumIndex);
 	let y = Number(row.y);
 	return y;
-}
-
-var noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-// Convert Midi note number into note name + octave, with 0 meaning C minus 2
-function yToNoteName(note)
-{
-	let oct = Math.round(note / 12) - 2;
-	let tone = note % 12;
-	return noteNames[tone] + oct;
 }
 
 function encodeNoteInfo(noteName, time, dur, vel, cond)
@@ -1212,32 +1202,6 @@ function genSampleReport(jsong,jdoc)
 	});
 }
 
-var scaleTable = [
-"Major",	[0, 2, 4, 5, 7, 9, 11],
-"Minor",	[0, 2, 3, 5, 7, 8, 10],
-"Dorian",	[0, 2, 3, 5, 7, 9, 10],
-"Phrygian", [0, 1, 3, 5, 7, 8, 10],
-"Lydian", 	[0, 2, 4, 6, 7, 9, 11],
-"Mixolydian", [0, 2, 4, 5, 7, 9, 10],
-"Locrian", 	[0, 1, 3, 5, 6, 8, 10] ];
-
-function scaleString(jsong) {
-	let str = noteNames[Number(jsong.rootNote) % 12] + " ";
-
-	let modeTab = jsong.modeNotes.modeNote;
-	let modeNums = Array(7);
-	for (var j = 0; j < 7; ++j) modeNums[j] = Number(modeTab[j]);
-	for (var i = 0; i < scaleTable.length; i += 2) {
-		let aMode = scaleTable[i + 1];
-		if (jsonequals(modeNums, aMode)) {
-			return str + scaleTable[i];
-		}
-	}
-	return str + "Chromatic";
-}
-
-
-
 function formatSong(jdoc, obj) {
 	let jsong = jdoc.jsonDocument.song;
 	let newNoteFormat = jdoc.newNoteFormat;
@@ -1630,4 +1594,4 @@ function makeDelugeDoc(fname, text, newKitFlag, simple)
 	return new DelugeDoc(fname, text, newKitFlag, simple);
 }
 
-export {formatSong, formatSound, makeDelugeDoc, setFocusDoc, yToNoteName, getFocusDoc, pasteTrackJson};
+export {formatSong, formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson};

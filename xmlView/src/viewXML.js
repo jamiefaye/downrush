@@ -14,8 +14,7 @@ import local_exec_info from "./templates/local_exec_info.handlebars";
 
 import empty_kit_template from "./templates/empty_kit_template.handlebars";
 
-import {formatSong, formatSound, setFocusDoc, makeDelugeDoc} from "./SongViewLib.js";
-// import {formatSong, formatSound, setFocusDoc, DelugeDoc} from "../lib/SongLib.js";
+import {setFocusDoc, makeDelugeDoc} from "./SongViewLib.js";
 import {setSamplePathPrefix} from "./samplePath.js";
 
 "use strict";
