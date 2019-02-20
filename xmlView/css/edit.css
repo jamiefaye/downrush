@@ -69,6 +69,11 @@ th {
 	background-color:#f8f8f8;
 }
 
+td.coltab {
+	width: 10px;
+	height: 10px;
+}
+
 div.trgrid {
 	position: relative;
 	// border: solid 1px;
