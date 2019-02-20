@@ -49,7 +49,7 @@ class MidiGrid extends React.Component {
 
 	let parentDiv = $("<div class='midigrid'/>");
 	let itemClass = 'midiitem';
-	
+
 	console.log("Min time: " + lowTime + " " + firstTime);
 
 	for (let i = 0; i < noteCount; ++i) {
@@ -68,8 +68,19 @@ class MidiGrid extends React.Component {
 
 	let highW = Math.round((highTime - firstTime) * scaling + xPlotOffset);
 	let highH = Math.round((gh + 1) * noteHeight + 4);
+	this.height = highH;
+	this.width = highW;
+
+	this.selection = $("<div class='selbox'/>");
+
+	parentDiv.append(this.selection);
 	parentDiv.css({width: highW + 'px', height: highH});
 	$(this.el).append(parentDiv);
+	this.changeSel(0, 0);
+  }
+
+  changeSel(start, end) {
+	this.selection.css({left: start + 'px', width: (end - start) + 'px', top: 0 + 'px', height: this.height + 'px' });
   }
 
   render() {

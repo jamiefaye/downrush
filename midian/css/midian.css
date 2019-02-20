@@ -181,3 +181,9 @@ td.butnstd {
 td.butnstr {
   border: none;
 }
+
+div.selbox {
+	background-color: gray;
+	position: absolute;
+	opacity: 0.2;
+}
