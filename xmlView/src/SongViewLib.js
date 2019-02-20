@@ -252,8 +252,8 @@ function pasteTrackJson(pastedJSON, songDoc) {
 	let trackA = forceArray(song.tracks.track);
 	if (trackA.length === 1) {
 		if (typeof trackA[0].noteRows ==='string') {
-			song.tracks = [];
-			song.instruments = [];
+			// song.tracks = [];
+			// song.instruments = [];
 		}
 	}
 	addTrackToSong(pastedJSON, songDoc);
@@ -1594,4 +1594,4 @@ function makeDelugeDoc(fname, text, newKitFlag, simple)
 	return new DelugeDoc(fname, text, newKitFlag, simple);
 }
 
-export {formatSong, formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson};
+export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson};
