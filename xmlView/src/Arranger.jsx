@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import $ from'jquery';
-import {gamma_correct, patchInfo} from './SongViewLib.js';
+import {gamma_correct, patchInfo} from './SongUtils.js';
 import {forceArray} from "./JsonXMLUtils.js";
 import {patchNames, kitNames, newSynthPatchNames} from "./js/delugepatches.js";
 

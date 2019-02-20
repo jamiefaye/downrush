@@ -40130,7 +40130,7 @@ var _jquery = __webpack_require__(/*! jquery */ "./node_modules/jquery/dist/jque
 
 var _jquery2 = _interopRequireDefault(_jquery);
 
-var _SongViewLib = __webpack_require__(/*! ./SongViewLib.js */ "./src/SongViewLib.js");
+var _SongUtils = __webpack_require__(/*! ./SongUtils.js */ "./src/SongUtils.js");
 
 var _JsonXMLUtils = __webpack_require__(/*! ./JsonXMLUtils.js */ "./src/JsonXMLUtils.js");
 
@@ -40152,11 +40152,11 @@ var groupColorTab = [0x005AA5, 0xB0004F, 0xb04F00, 0x00C738, 0xFA0005, 0x679800,
 
 function colorForGroup(sect) {
 	var trkColor = groupColorTab[sect % groupColorTab.length];
-	return '#' + (0, _SongViewLib.gamma_correct)(trkColor.toString(16));
+	return '#' + (0, _SongUtils.gamma_correct)(trkColor.toString(16));
 }
 
 function patchLabel(track, newSynthNames) {
-	var context = (0, _SongViewLib.patchInfo)(track, newSynthNames);
+	var context = (0, _SongUtils.patchInfo)(track, newSynthNames);
 	if (!context.patchName) {
 		return context.patch;
 	}
@@ -40229,7 +40229,7 @@ var Instrument = function (_React$Component) {
 					trkLab = (arrangeOnlyTab.length - trk & 0x7FFFFFFF) + 'a';
 				}
 
-				var colorString = '#' + (0, _SongViewLib.gamma_correct)(trkColor.toString(16));
+				var colorString = '#' + (0, _SongUtils.gamma_correct)(trkColor.toString(16));
 				var x = start * scaling + xPlotOffset;
 				var w = len * scaling;
 				if (w > 2) w--;
@@ -43144,11 +43144,118 @@ exports.formatKit = formatKit;
 
 /***/ }),
 
+/***/ "./src/SongUtils.js":
+/*!**************************!*\
+  !*** ./src/SongUtils.js ***!
+  \**************************/
+/*! exports provided: gamma_correct, patchInfo, trackKind */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "gamma_correct", function() { return gamma_correct; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "patchInfo", function() { return patchInfo; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "trackKind", function() { return trackKind; });
+/* harmony import */ var _js_delugepatches_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./js/delugepatches.js */ "./src/js/delugepatches.js");
+
+
+var gamma = 1.0 / 5.0;
+var gammaTab;
+
+function gamma_correct(hexChars) {
+	if(!gammaTab) {
+		gammaTab = [];
+		for(var i = 0; i < 256; ++i) {
+			// gammaTab[i] = 255.0 * ((i / 255.0) ** (1. gamma));
+			
+			gammaTab[i] = Math.round( ((i / 255.0) ** gamma * 255.0 ) );
+		}
+	}
+	let pix = parseInt(hexChars, 16);
+	let r = pix >> 16;
+	let g = pix >> 8 & 0xFF;
+	let b = pix & 0xFF;
+	let fixedPix = (gammaTab[r] << 16) + (gammaTab[g] << 8) + gammaTab[b];
+	let asHex = (fixedPix + 0x1000000).toString(16).slice(-6); // Thanks Fabio Ferrari!
+	return asHex;
+}
+
+
+var trackKindNames = {"kit": "Kit",
+					"sound": "Synth",
+					"midi": "Midi",
+					"cv": "CV",
+					"unknown": "?",
+					};
+
+
+function trackKind(track) {
+	if(track['kit'] !== undefined) return 'kit';
+	if(track['sound'] !== undefined) return 'sound';
+	if(track['midiChannel'] !== undefined) return 'midi';
+	if(track['cvChannel'] !== undefined) return 'cv';
+	// deal with indirect refs
+	if(track['kitParams'] !== undefined) return 'kit';
+	if(track['soundParams'] !== undefined) return 'sound';
+	return 'unknown';
+}
+
+
+function patchInfo(track, newSynthNames) {
+
+	let patchStr = "";
+	let kind = trackKind(track);
+	let patch = Number(track.instrumentPresetSlot);
+
+	if (kind === 'kit' || kind === 'sound') {
+		patchStr = patch;
+		let subpatch = Number(track.instrumentPresetSubSlot);
+		if (subpatch >= 0) {
+			patchStr += ' ';
+			patchStr += String.fromCharCode(subpatch + 65); // 0 = a, 1 = b, …
+		}
+	}
+	let info = "";
+	if (track.soundMidiCommand) {
+		info += "Midi in: " + (Number(track.soundMidiCommand.channel) + 1);
+	}
+	if (track.midiPGM) {
+		if(info) info += ', ';
+		info += "Midi program: " + (Number(track.midiPGM) + 1);
+	}
+	var patchName;
+	if (kind === 'kit') {
+		patchName = _js_delugepatches_js__WEBPACK_IMPORTED_MODULE_0__["kitNames"][patch];
+	} else if (kind === 'midi') {
+		patchStr = Number(track.midiChannel) + 1;
+		patchName = '';
+	} else if (kind === 'sound') {
+		patchName = newSynthNames ? _js_delugepatches_js__WEBPACK_IMPORTED_MODULE_0__["newSynthPatchNames"][patch] : _js_delugepatches_js__WEBPACK_IMPORTED_MODULE_0__["patchNames"][patch];
+	} else if (kind === 'cv') {
+		patchStr = Number(track.cvChannel) + 1;
+		patchName = '';
+	}
+
+	return {
+		len:			track.trackLength,
+		patch: 			patchStr,
+		patchName:		patchName,
+		kindName: 		trackKindNames[kind],
+		info:			info,
+	};
+}
+
+
+
+
+
+/***/ }),
+
 /***/ "./src/SongViewLib.js":
 /*!****************************!*\
   !*** ./src/SongViewLib.js ***!
   \****************************/
-/*! exports provided: formatSong, formatSound, makeDelugeDoc, setFocusDoc, gamma_correct, patchInfo, yToNoteName, getFocusDoc, pasteTrackJson */
+/*! exports provided: formatSong, formatSound, makeDelugeDoc, setFocusDoc, yToNoteName, getFocusDoc, pasteTrackJson */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -43157,8 +43264,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "formatSound", function() { return formatSound; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "makeDelugeDoc", function() { return makeDelugeDoc; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setFocusDoc", function() { return setFocusDoc; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "gamma_correct", function() { return gamma_correct; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "patchInfo", function() { return patchInfo; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "yToNoteName", function() { return yToNoteName; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getFocusDoc", function() { return getFocusDoc; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "pasteTrackJson", function() { return pasteTrackJson; });
@@ -43172,22 +43277,22 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _js_clipboard_min_js__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_js_clipboard_min_js__WEBPACK_IMPORTED_MODULE_3__);
 /* harmony import */ var _js_tippy_all_min_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./js/tippy.all.min.js */ "./src/js/tippy.all.min.js");
 /* harmony import */ var _js_tippy_all_min_js__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_js_tippy_all_min_js__WEBPACK_IMPORTED_MODULE_4__);
-/* harmony import */ var _js_delugepatches_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./js/delugepatches.js */ "./src/js/delugepatches.js");
-/* harmony import */ var _KitList_jsx__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./KitList.jsx */ "./src/KitList.jsx");
-/* harmony import */ var _KitList_jsx__WEBPACK_IMPORTED_MODULE_6___default = /*#__PURE__*/__webpack_require__.n(_KitList_jsx__WEBPACK_IMPORTED_MODULE_6__);
-/* harmony import */ var _JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./JsonXMLUtils.js */ "./src/JsonXMLUtils.js");
-/* harmony import */ var _Arranger_jsx__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./Arranger.jsx */ "./src/Arranger.jsx");
-/* harmony import */ var _Arranger_jsx__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_8__);
-/* harmony import */ var _templates_convertHexTo50_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./templates/convertHexTo50.js */ "./src/templates/convertHexTo50.js");
-/* harmony import */ var _templates_convertHexTo50_js__WEBPACK_IMPORTED_MODULE_9___default = /*#__PURE__*/__webpack_require__.n(_templates_convertHexTo50_js__WEBPACK_IMPORTED_MODULE_9__);
-/* harmony import */ var _templates_fixm50to50_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./templates/fixm50to50.js */ "./src/templates/fixm50to50.js");
-/* harmony import */ var _templates_fixm50to50_js__WEBPACK_IMPORTED_MODULE_10___default = /*#__PURE__*/__webpack_require__.n(_templates_fixm50to50_js__WEBPACK_IMPORTED_MODULE_10__);
-/* harmony import */ var _templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./templates/fmtsync.js */ "./src/templates/fmtsync.js");
-/* harmony import */ var _templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_11___default = /*#__PURE__*/__webpack_require__.n(_templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_11__);
-/* harmony import */ var _Classes_jsx__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./Classes.jsx */ "./src/Classes.jsx");
-/* harmony import */ var _Classes_jsx__WEBPACK_IMPORTED_MODULE_12___default = /*#__PURE__*/__webpack_require__.n(_Classes_jsx__WEBPACK_IMPORTED_MODULE_12__);
-/* harmony import */ var _templates_note_tip_template_handlebars__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./templates/note_tip_template.handlebars */ "./src/templates/note_tip_template.handlebars");
-/* harmony import */ var _templates_note_tip_template_handlebars__WEBPACK_IMPORTED_MODULE_13___default = /*#__PURE__*/__webpack_require__.n(_templates_note_tip_template_handlebars__WEBPACK_IMPORTED_MODULE_13__);
+/* harmony import */ var _KitList_jsx__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./KitList.jsx */ "./src/KitList.jsx");
+/* harmony import */ var _KitList_jsx__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(_KitList_jsx__WEBPACK_IMPORTED_MODULE_5__);
+/* harmony import */ var _JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./JsonXMLUtils.js */ "./src/JsonXMLUtils.js");
+/* harmony import */ var _Arranger_jsx__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./Arranger.jsx */ "./src/Arranger.jsx");
+/* harmony import */ var _Arranger_jsx__WEBPACK_IMPORTED_MODULE_7___default = /*#__PURE__*/__webpack_require__.n(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_7__);
+/* harmony import */ var _templates_convertHexTo50_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./templates/convertHexTo50.js */ "./src/templates/convertHexTo50.js");
+/* harmony import */ var _templates_convertHexTo50_js__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(_templates_convertHexTo50_js__WEBPACK_IMPORTED_MODULE_8__);
+/* harmony import */ var _templates_fixm50to50_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./templates/fixm50to50.js */ "./src/templates/fixm50to50.js");
+/* harmony import */ var _templates_fixm50to50_js__WEBPACK_IMPORTED_MODULE_9___default = /*#__PURE__*/__webpack_require__.n(_templates_fixm50to50_js__WEBPACK_IMPORTED_MODULE_9__);
+/* harmony import */ var _templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./templates/fmtsync.js */ "./src/templates/fmtsync.js");
+/* harmony import */ var _templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_10___default = /*#__PURE__*/__webpack_require__.n(_templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_10__);
+/* harmony import */ var _Classes_jsx__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./Classes.jsx */ "./src/Classes.jsx");
+/* harmony import */ var _Classes_jsx__WEBPACK_IMPORTED_MODULE_11___default = /*#__PURE__*/__webpack_require__.n(_Classes_jsx__WEBPACK_IMPORTED_MODULE_11__);
+/* harmony import */ var _templates_note_tip_template_handlebars__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./templates/note_tip_template.handlebars */ "./src/templates/note_tip_template.handlebars");
+/* harmony import */ var _templates_note_tip_template_handlebars__WEBPACK_IMPORTED_MODULE_12___default = /*#__PURE__*/__webpack_require__.n(_templates_note_tip_template_handlebars__WEBPACK_IMPORTED_MODULE_12__);
+/* harmony import */ var _SongUtils_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./SongUtils.js */ "./src/SongUtils.js");
 /* harmony import */ var _templates_track_head_template_handlebars__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./templates/track_head_template.handlebars */ "./src/templates/track_head_template.handlebars");
 /* harmony import */ var _templates_track_head_template_handlebars__WEBPACK_IMPORTED_MODULE_14___default = /*#__PURE__*/__webpack_require__.n(_templates_track_head_template_handlebars__WEBPACK_IMPORTED_MODULE_14__);
 /* harmony import */ var _templates_sample_list_template_handlebars__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./templates/sample_list_template.handlebars */ "./src/templates/sample_list_template.handlebars");
@@ -43253,26 +43358,7 @@ var xPlotOffset = 32;
 var focusDoc;
 /* Plotters
 */
-var gamma = 1.0 / 5.0;
-var gammaTab;
 
-function gamma_correct(hexChars) {
-	if(!gammaTab) {
-		gammaTab = [];
-		for(var i = 0; i < 256; ++i) {
-			// gammaTab[i] = 255.0 * ((i / 255.0) ** (1. gamma));
-			
-			gammaTab[i] = Math.round( ((i / 255.0) ** gamma * 255.0 ) );
-		}
-	}
-	let pix = parseInt(hexChars, 16);
-	let r = pix >> 16;
-	let g = pix >> 8 & 0xFF;
-	let b = pix & 0xFF;
-	let fixedPix = (gammaTab[r] << 16) + (gammaTab[g] << 8) + gammaTab[b];
-	let asHex = (fixedPix + 0x1000000).toString(16).slice(-6); // Thanks Fabio Ferrari!
-	return asHex;
-}
 function genColorTab(colors)
 {
 	let colTab = jquery__WEBPACK_IMPORTED_MODULE_0___default()("<table class='xmltab'/>");
@@ -43286,7 +43372,7 @@ function genColorTab(colors)
 			//console.log(hex2);
 			let td = jquery__WEBPACK_IMPORTED_MODULE_0___default()("<td class='coltab' data-hex='" + hex2 + "'/>");
 			// if (hex !== '000000') console.log("(" + x + ", " + y + " = 0x" + hex);
-			td.css("background-color", '#' + gamma_correct(hex));
+			td.css("background-color", '#' + Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["gamma_correct"])(hex));
 			colRow.append(td);
 		}
 		colTab.append(colRow);
@@ -43437,11 +43523,11 @@ function formatModKnobsMidi(knobs, obj)
 // Convert an old (pre 1.4) noteRow from the note array representation into the noteData representation.
 function oldToNewNotes(track)
 {
-	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(track.noteRows.noteRow);
+	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(track.noteRows.noteRow);
 	track.noteRows.noteRow = rowList;
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx]; // make sure JSON is updated.
-		var noteList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(row.notes.note);
+		var noteList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(row.notes.note);
 		let noteData = '0x';
 		for (var nx = 0; nx < noteList.length; ++nx) {
 			let n = noteList[nx];
@@ -43459,7 +43545,7 @@ function oldToNewNotes(track)
 
 
 function newToOldNotes(track) {
-	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(track.noteRows.noteRow);
+	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(track.noteRows.noteRow);
 	track.noteRows.noteRow = rowList;
 
 	for (var rx = 0; rx < rowList.length; ++rx) {
@@ -43490,7 +43576,7 @@ function pasteTrackJson(pastedJSON, songDoc) {
 	// If we have a document with one empty track at the front, get rid of it.
 	// as this must have been a generated empty document.
 	let song = songDoc.jsonDocument.song;
-	let trackA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(song.tracks.track);
+	let trackA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(song.tracks.track);
 	if (trackA.length === 1) {
 		if (typeof trackA[0].noteRows ==='string') {
 			song.tracks = [];
@@ -43516,7 +43602,7 @@ function addTrackToSong(pastedJSON, songDoc) {
 	}
 
 	// Place the new track at the beginning of the track array
-	let trackA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(song.tracks.track);
+	let trackA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(song.tracks.track);
 	song.tracks.track = trackA; // If we forced an array, we want that permanent.
 	// The beginning of the track array shows up at the screen bottom.
 	trackA.unshift(pastedJSON.track);
@@ -43532,9 +43618,9 @@ function addTrackToSong(pastedJSON, songDoc) {
 	
 	let track0 = trackA[0];
 	if (songDoc.version2x) {
-		song.instruments = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(song.instruments);
+		song.instruments = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(song.instruments);
 		// Check if we need to add the sound, kit, midiChannel, or cvChannel to the instruments list.
-		let tKind = trackKind(track0);
+		let tKind = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["trackKind"])(track0);
 		if (tKind === 'kit') {
 			let ko = findKitInstrument(track0, song.instruments);
 			if (!ko) {
@@ -43552,7 +43638,7 @@ function addTrackToSong(pastedJSON, songDoc) {
 		} else if (tKind === 'midi') {
 			let mi = findMidiInstrument(track0, song.instruments);
 			if (!mi) {
-				let mo = new _Classes_jsx__WEBPACK_IMPORTED_MODULE_12__["MidiChannel"]();
+				let mo = new _Classes_jsx__WEBPACK_IMPORTED_MODULE_11__["MidiChannel"]();
 				mo.channel = track0.midiChannel;
 				mo.suffix = -1;
 				song.instruments.unshift(mo);
@@ -43560,14 +43646,14 @@ function addTrackToSong(pastedJSON, songDoc) {
 		} else if (tKind === 'cv') {
 			let ci = findCVInstrument(track0, song.instruments);
 			if (!ci) {
-				let co = new _Classes_jsx__WEBPACK_IMPORTED_MODULE_12__["CVChannel"]();
+				let co = new _Classes_jsx__WEBPACK_IMPORTED_MODULE_11__["CVChannel"]();
 				co.channel = track0.cvChannel;
 				song.instruments.unshift(co);
 			}
 		}
 		// Iterate thru the song-level instruments element if it exists, fixing the track numbers.
 		for (let inst in song.instruments) {
-			Object(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_8__["bumpTracks"])(song.instruments[inst]);
+			Object(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_7__["bumpTracks"])(song.instruments[inst]);
 		}
 	} else {
 		// If we are editing pre 2.x songs:
@@ -43581,7 +43667,7 @@ function addTrackToSong(pastedJSON, songDoc) {
 		if (trackType !== undefined) {
 			for(var i = 1; i < trackA.length; ++i) {
 				let aTrack = trackA[i];
-				if (Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["jsonequals"])(track0[trackType], aTrack[trackType])) {
+				if (Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["jsonequals"])(track0[trackType], aTrack[trackType])) {
 					delete aTrack[trackType];
 					aTrack.instrument = {"referToTrackId": 0};
 					// Since the track we just put a referToTrackId into may have
@@ -43603,7 +43689,7 @@ function addTrackToSong(pastedJSON, songDoc) {
 function pasteTrackText(text, songDoc) {
 	if (!songDoc.jsonDocument) return;
 	let song = songDoc.jsonDocument.song;
-	let pastedJSON = JSON.parse(text, _JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["reviveClass"]);
+	let pastedJSON = JSON.parse(text, _JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["reviveClass"]);
 
 	if (!pastedJSON || !pastedJSON.track) {
 		alert("Invalid data on clipboard.");
@@ -43612,17 +43698,6 @@ function pasteTrackText(text, songDoc) {
 
 	addTrackToSong(pastedJSON, songDoc);
 	
-}
-
-function trackKind(track) {
-	if(track['kit'] !== undefined) return 'kit';
-	if(track['sound'] !== undefined) return 'sound';
-	if(track['midiChannel'] !== undefined) return 'midi';
-	if(track['cvChannel'] !== undefined) return 'cv';
-	// deal with indirect refs
-	if(track['kitParams'] !== undefined) return 'kit';
-	if(track['soundParams'] !== undefined) return 'sound';
-	return 'unknown';
 }
 
 
@@ -43653,7 +43728,7 @@ function formatSound(obj)
 	}
 
 	if (context.midiKnobs && context.midiKnobs.midiKnob) {
-		obj.append(_templates_midiKnobTemplate_handlebars__WEBPACK_IMPORTED_MODULE_18___default()(Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(context.midiKnobs.midiKnob)));
+		obj.append(_templates_midiKnobTemplate_handlebars__WEBPACK_IMPORTED_MODULE_18___default()(Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(context.midiKnobs.midiKnob)));
 		// formatModKnobs(context.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
 	}
 
@@ -43664,17 +43739,17 @@ function formatSound(obj)
 	// Populate mod sources fields with specified destinations
 	if (context.patchCables) {
 		let destMap = {};
-		let patchA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(context.patchCables.patchCable);
+		let patchA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(context.patchCables.patchCable);
 		for (var i = 0; i < patchA.length; ++i) {
 			let cable = patchA[i];
 			let sName = "m_" + cable.source;
 			let aDest = cable.destination;
 			// Vibrato is represented by a patchCable between lfo1 and pitch
 			if (cable.source === 'lfo1' && aDest === 'pitch') {
-				let vibratoVal = _templates_fixm50to50_js__WEBPACK_IMPORTED_MODULE_10___default()(cable.amount);
+				let vibratoVal = _templates_fixm50to50_js__WEBPACK_IMPORTED_MODULE_9___default()(cable.amount);
 				context['vibrato'] = vibratoVal;
 			}
-			let amount = _templates_fixm50to50_js__WEBPACK_IMPORTED_MODULE_10___default()(cable.amount);
+			let amount = _templates_fixm50to50_js__WEBPACK_IMPORTED_MODULE_9___default()(cable.amount);
 			let info = aDest + "(" + amount + ")";
 			let val = destMap[sName];
 			if (val) val += ' ';
@@ -43716,7 +43791,7 @@ function viewSound(e, songJ) {
 	let hideShow = target.textContent;
 	if (!songJ) return;
 
-	let trackA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(songJ.tracks.track);
+	let trackA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(songJ.tracks.track);
 	let trackIX = trackA.length - trn - 1;
 	let trackD = trackA[trackIX];
 	
@@ -43735,7 +43810,7 @@ function viewSound(e, songJ) {
 		react_dom__WEBPACK_IMPORTED_MODULE_2___default.a.unmountComponentAtNode(jquery__WEBPACK_IMPORTED_MODULE_0___default()(where)[0]);
 		jquery__WEBPACK_IMPORTED_MODULE_0___default()(where)[0].innerHTML = "";
 	} else {
-		let trackType = trackKind(trackD);
+		let trackType = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["trackKind"])(trackD);
 		if (trackType === 'sound' || trackType === 'kit'|| trackType === 'midi') {
 			target.textContent = "▼";
 		} else {
@@ -43754,7 +43829,7 @@ function viewSound(e, songJ) {
 			}
 
 			if(kitroot) {
-				Object(_KitList_jsx__WEBPACK_IMPORTED_MODULE_6__["formatKit"])(kitroot, trackD.kitParams, where[0]);
+				Object(_KitList_jsx__WEBPACK_IMPORTED_MODULE_5__["formatKit"])(kitroot, trackD.kitParams, where[0]);
 			}
 		} else if(trackType === 'midi') {
 			formatMidi(where, trackD);
@@ -43776,7 +43851,7 @@ function plotKit13(track, reftrack, obj) {
 // first walk the track and find min and max y positions
 	let ymin =  1000000;
 	let ymax = -1000000;
-	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(track.noteRows.noteRow);
+	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(track.noteRows.noteRow);
 	let parentDiv = jquery__WEBPACK_IMPORTED_MODULE_0___default()("<div class='kitgrid'/>");
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
@@ -43790,12 +43865,12 @@ function plotKit13(track, reftrack, obj) {
 	if (!reftrack.kit.soundSources) {
 		let meow = 2;
 	}
-	let kitList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(reftrack.kit.soundSources);
+	let kitList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(reftrack.kit.soundSources);
 	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
 	if (kitList) {
 		for (var rx = 0; rx < rowList.length; ++rx) {
 			let row = rowList[rx];
-			var noteList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(row.notes.note);
+			var noteList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(row.notes.note);
 			let y = rowYfilter(row);
 			let ypos = (y- ymin) * kitItemH;
 			let labName = '';
@@ -43832,10 +43907,10 @@ function plotKit13(track, reftrack, obj) {
 function findKitInstrument(track, list) {
 	let pSlot = track.instrumentPresetSlot;
 	let pSubSlot = track.instrumentPresetSubSlot;
-	let items = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(list);
+	let items = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(list);
 	if (items) {
 		for(let k of items) {
-			if (k instanceof _Classes_jsx__WEBPACK_IMPORTED_MODULE_12__["Kit"]) {
+			if (k instanceof _Classes_jsx__WEBPACK_IMPORTED_MODULE_11__["Kit"]) {
 				if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
 			}
 		}
@@ -43846,10 +43921,10 @@ function findKitInstrument(track, list) {
 function findSoundInstrument(track, list) {
 	let pSlot = track.instrumentPresetSlot;
 	let pSubSlot = track.instrumentPresetSubSlot;
-	let items = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(list);
+	let items = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(list);
 	if (items) {
 		for(let k of items) {
-			if (k instanceof _Classes_jsx__WEBPACK_IMPORTED_MODULE_12__["Sound"]) {
+			if (k instanceof _Classes_jsx__WEBPACK_IMPORTED_MODULE_11__["Sound"]) {
 				if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
 			}
 		}
@@ -43859,10 +43934,10 @@ function findSoundInstrument(track, list) {
 
 function findCVInstrument(track, list) {
 	let pChan = track.cvChannel;
-	let items = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(list);
+	let items = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(list);
 	if (items) {
 		for(let k of items) {
-			if (k instanceof _Classes_jsx__WEBPACK_IMPORTED_MODULE_12__["CVChannel"]) {
+			if (k instanceof _Classes_jsx__WEBPACK_IMPORTED_MODULE_11__["CVChannel"]) {
 				if (k.channel === pChan) return k;
 			}
 		}
@@ -43872,10 +43947,10 @@ function findCVInstrument(track, list) {
 
 function findMidiInstrument(track, list) {
 	let pChan = track.midiChannel;
-	let items = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(list);
+	let items = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(list);
 	if (items) {
 		for(let k of items) {
-			if (k instanceof _Classes_jsx__WEBPACK_IMPORTED_MODULE_12__["MidiChannel"]) {
+			if (k instanceof _Classes_jsx__WEBPACK_IMPORTED_MODULE_11__["MidiChannel"]) {
 				if (k.channel === pChan) return k;
 			}
 		}
@@ -43887,14 +43962,14 @@ function findMidiInstrument(track, list) {
 function findKitList(track, song) {
 	let kitList;
 	if (track.kit) {
-		kitList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(track.kit.soundSources);
+		kitList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(track.kit.soundSources);
 	} else {
 		let kitI = findKitInstrument(track, song.instruments);
 		if(!kitI) {
 			console.log("Missing kit instrument");
 			return;
 		}
-		kitList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(kitI.soundSources);
+		kitList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(kitI.soundSources);
 	}
 	return kitList;
 }
@@ -43918,7 +43993,7 @@ function plotKit14(track, reftrack, song, obj) {
 // first walk the track and find min and max y positions
 	let ymin =  1000000;
 	let ymax = -1000000;
-	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(track.noteRows.noteRow);
+	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(track.noteRows.noteRow);
 	if (rowList.length === 0) return;
 	let parentDiv = jquery__WEBPACK_IMPORTED_MODULE_0___default()("<div class='kitgrid'/>");
 	for (var rx = 0; rx < rowList.length; ++rx) {
@@ -43986,7 +44061,7 @@ function plotTrack13(track, obj) {
 	let trackW = Number(track.trackLength);
 	let ymin =  1000000;
 	let ymax = -1000000;
-	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(track.noteRows.noteRow);
+	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(track.noteRows.noteRow);
 	let parentDiv = jquery__WEBPACK_IMPORTED_MODULE_0___default()("<div class='trgrid'/>");
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
@@ -44003,7 +44078,7 @@ function plotTrack13(track, obj) {
 
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
-		var noteList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(row.notes.note);
+		var noteList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(row.notes.note);
 		let y = rowYfilter(row);
 		let labName = yToNoteName(y);
 		if (y < 0) continue;
@@ -44036,7 +44111,7 @@ function plotTrack14(track, song, obj) {
 	let trackW = Number(track.trackLength);
 	let ymin =  1000000;
 	let ymax = -1000000;
-	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(track.noteRows.noteRow);
+	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(track.noteRows.noteRow);
 	if (rowList.length === 0) return;
 	let parentDiv = jquery__WEBPACK_IMPORTED_MODULE_0___default()("<div class='trgrid'/>");
 	for (var rx = 0; rx < rowList.length; ++rx) {
@@ -44135,7 +44210,7 @@ function activateTippy()
 				beatX += '+' + simplifyFraction(subFrac, 192);
 			}
 			// {{notename}} {{notevel}} {{notedur}} {{notestart}} {{noteprob}}
-			let noteInfo = _templates_note_tip_template_handlebars__WEBPACK_IMPORTED_MODULE_13___default()({
+			let noteInfo = _templates_note_tip_template_handlebars__WEBPACK_IMPORTED_MODULE_12___default()({
 				notename: notename,
 				notevel: vel,
 				notedur: durFrac,
@@ -44152,7 +44227,7 @@ function activateTippy()
 }
 
 function usesNewNotekFormat(track) {
-	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(track.noteRows.noteRow);
+	let rowList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(track.noteRows.noteRow);
 	if (rowList.length === 0) return true;
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
@@ -44171,10 +44246,10 @@ function plotParamChanges(k, ps, tracklen, prefix, elem)
 	let xpos = 0;
 	let textH = 8;
 
-	var runVal = _templates_convertHexTo50_js__WEBPACK_IMPORTED_MODULE_9___default()(ps.substring(2,10));
+	var runVal = _templates_convertHexTo50_js__WEBPACK_IMPORTED_MODULE_8___default()(ps.substring(2,10));
 
 	while (cursor < ps.length) {
-		let nextVal = _templates_convertHexTo50_js__WEBPACK_IMPORTED_MODULE_9___default()(ps.substring(cursor, cursor + 8));
+		let nextVal = _templates_convertHexTo50_js__WEBPACK_IMPORTED_MODULE_8___default()(ps.substring(cursor, cursor + 8));
 		let runx = parseInt(ps.substring(cursor + 8, cursor + 16), 16);
 		let runto = runx & 0x7FFFFFFF; // mask off sign
 		let ndiv = jquery__WEBPACK_IMPORTED_MODULE_0___default()("<div class='paramrun'/>");
@@ -44222,7 +44297,7 @@ function plotNoteLevelParams(noteRowA, track, trackW, song, elem)
 	if (!noteRowA) return;
 	let kitList = findKitList(track, song);
 	if (!kitList) return;
-	noteRowA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(noteRowA);
+	noteRowA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(noteRowA);
 	for (var i = 0; i < noteRowA.length; ++i) {
 		let aRow = noteRowA[i];
 		let aDrum = kitList[aRow.drumIndex];
@@ -44247,7 +44322,7 @@ function plotKnobLevelParams(knobs, track, trackW, elem)
 }
 
 function plotParams(track, refTrack, song, elem) {
-	let trackType = trackKind(track);
+	let trackType = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["trackKind"])(track);
 	let trackW = Number(track.trackLength);
 	if (track.sound) plotParamLevel("sound.", track.sound, trackW, elem);
 	if (track.defaultParams) plotParamLevel("default.", track.defaultParams, trackW, elem);
@@ -44260,70 +44335,15 @@ function plotParams(track, refTrack, song, elem) {
 		}
 	}
 	if (trackType == 'midi' && track.modKnobs) {
-		plotKnobLevelParams(Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(track.modKnobs.modKnob), track, trackW, song, elem);
+		plotKnobLevelParams(Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(track.modKnobs.modKnob), track, trackW, song, elem);
 	}
 }
-
-
-
-var trackKindNames = {"kit": "Kit",
-					"sound": "Synth",
-					"midi": "Midi",
-					"cv": "CV",
-					"unknown": "?",
-					};
-
-
-function patchInfo(track, newSynthNames) {
-
-	let patchStr = "";
-	let kind = trackKind(track);
-	let patch = Number(track.instrumentPresetSlot);
-
-	if (kind === 'kit' || kind === 'sound') {
-		patchStr = patch;
-		let subpatch = Number(track.instrumentPresetSubSlot);
-		if (subpatch >= 0) {
-			patchStr += ' ';
-			patchStr += String.fromCharCode(subpatch + 65); // 0 = a, 1 = b, …
-		}
-	}
-	let info = "";
-	if (track.soundMidiCommand) {
-		info += "Midi in: " + (Number(track.soundMidiCommand.channel) + 1);
-	}
-	if (track.midiPGM) {
-		if(info) info += ', ';
-		info += "Midi program: " + (Number(track.midiPGM) + 1);
-	}
-	var patchName;
-	if (kind === 'kit') {
-		patchName = _js_delugepatches_js__WEBPACK_IMPORTED_MODULE_5__["kitNames"][patch];
-	} else if (kind === 'midi') {
-		patchStr = Number(track.midiChannel) + 1;
-		patchName = '';
-	} else if (kind === 'sound') {
-		patchName = newSynthNames ? _js_delugepatches_js__WEBPACK_IMPORTED_MODULE_5__["newSynthPatchNames"][patch] : _js_delugepatches_js__WEBPACK_IMPORTED_MODULE_5__["patchNames"][patch];
-	} else if (kind === 'cv') {
-		patchStr = Number(track.cvChannel) + 1;
-		patchName = '';
-	}
-
-	return {
-		len:			track.trackLength,
-		patch: 			patchStr,
-		patchName:		patchName,
-		kindName: 		trackKindNames[kind],
-		info:			info,
-	};
-}
-
 
 
 function trackHeader(track, newSynthNames, inx, repeatTab, template, obj) {
-	let context = patchInfo(track, newSynthNames);
+	let context = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["patchInfo"])(track, newSynthNames);
 	let section = Number(track.section);
-	let sectionColor = Object(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_8__["colorForGroup"])(section);
+	let sectionColor = Object(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_7__["colorForGroup"])(section);
 	let repeats = Number(repeatTab[section].numRepeats);
 	if (repeats === 0) repeats = '&#x221e;';
 	 else if (repeats === -1) repeats = 'Share';
@@ -44345,7 +44365,7 @@ function getTrackText(trackNum, songJ)
 {
 	if (!songJ) return;
 
-	let trackA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(songJ.tracks.track);
+	let trackA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(songJ.tracks.track);
 	let trackIX = trackA.length - trackNum - 1;
 	let trackJ = trackA[trackIX];
 	// Dereference referToTrackId if needed.
@@ -44355,7 +44375,7 @@ function getTrackText(trackNum, songJ)
 		delete trackD.instrument; // zonk reference
 		let sourceT = trackA[fromID];
 		// patch in data from source (depending on what type).
-		let kind = trackKind(sourceT);
+		let kind = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["trackKind"])(sourceT);
 		if (kind === 'kit') {
 			trackD["kit"] = sourceT["kit"];
 		} else if (kind === 'sound') {
@@ -44366,14 +44386,14 @@ function getTrackText(trackNum, songJ)
 	}
 	// If we are a kit track, and we don't have a kit element, see if the song-level 
 	// instruments element is available. If so, borrow from that.
-	let tkind = trackKind(trackD);
+	let tkind = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["trackKind"])(trackD);
 	if (tkind === 'kit') {
 		if (!trackD["kit"]) {
 			let kitI = findKitInstrument(trackD, songJ.instruments);
 			if(!kitI) {
 				console.log("Missing kit instrument");
 			} else {
-				let kd = new _Classes_jsx__WEBPACK_IMPORTED_MODULE_12__["Kit"](kitI);
+				let kd = new _Classes_jsx__WEBPACK_IMPORTED_MODULE_11__["Kit"](kitI);
 				delete kd.trackInstances;
 				trackD['kit'] = kd;
 				
@@ -44385,15 +44405,15 @@ function getTrackText(trackNum, songJ)
 			if(!soundI) {
 				console.log("Missing sound instrument");
 			} else {
-				let sd = new _Classes_jsx__WEBPACK_IMPORTED_MODULE_12__["Sound"](soundI);
+				let sd = new _Classes_jsx__WEBPACK_IMPORTED_MODULE_11__["Sound"](soundI);
 				delete sd.trackInstances;
 				trackD['sound'] = sd;
 			}
 		}
 	}
-	Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["zonkDNS"])(trackD);
+	Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["zonkDNS"])(trackD);
 	let trackWrap = {"track": trackD};
-	let asText = JSON.stringify(trackWrap, _JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["classReplacer"], 1);
+	let asText = JSON.stringify(trackWrap, _JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["classReplacer"], 1);
 	return asText;
 }
 
@@ -44472,10 +44492,10 @@ function scanSamples(json, sampMap) {
 			if (k === 'fileName' && typeof v === "string") {
 				sampMap.add(v);
 			} else
-			if (Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["isArrayLike"])(v)) {
+			if (Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["isArrayLike"])(v)) {
 				for(var ix = 0; ix < v.length; ++ix) {
 					let aobj = v[ix];
-					if (Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["isArrayLike"])(aobj) || aobj instanceof Object) {
+					if (Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["isArrayLike"])(aobj) || aobj instanceof Object) {
 						scanSamples(v[ix], sampMap);
 					}
 				}
@@ -44526,7 +44546,7 @@ function scaleString(jsong) {
 	for (var j = 0; j < 7; ++j) modeNums[j] = Number(modeTab[j]);
 	for (var i = 0; i < scaleTable.length; i += 2) {
 		let aMode = scaleTable[i + 1];
-		if (Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["jsonequals"])(modeNums, aMode)) {
+		if (Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["jsonequals"])(modeNums, aMode)) {
 			return str + scaleTable[i];
 		}
 	}
@@ -44549,25 +44569,25 @@ function formatSong(jdoc, obj) {
 	if(swing !== 0) {
 		swing += 50;
 		let sync = Number(jsong.swingInterval);
-		obj.append(", Swing = " + swing + "% on " + _templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_11___default.a[sync]);
+		obj.append(", Swing = " + swing + "% on " + _templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_10___default.a[sync]);
 	}
 	
 	obj.append(", Key = " + scaleString(jsong));
 	obj.append(jquery__WEBPACK_IMPORTED_MODULE_0___default()("<p class='tinygap'>"));
 	
-	Object(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_8__["showArranger"])(jsong, jdoc.newSynthNames, obj);
+	Object(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_7__["showArranger"])(jsong, jdoc.newSynthNames, obj);
 
 	obj.append(jquery__WEBPACK_IMPORTED_MODULE_0___default()("<p class='tinygap'>"));
 
-	let sectionTab = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(jsong.sections.section);
+	let sectionTab = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(jsong.sections.section);
 
 	if(jsong.tracks) {
-	  let trax = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(jsong.tracks.track);
+	  let trax = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(jsong.tracks.track);
 	  if (trax) {
 		for(var i = 0; i < trax.length; ++i) {
 			// obj.append($("<h3/>").text("Track " + (i + 1)));
 			let track = trax[trax.length - i - 1];
-			let tKind = trackKind(track);
+			let tKind = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["trackKind"])(track);
 			let refTrack = track;
 			if (track.instrument && track.instrument.referToTrackId !== undefined) {
 				let fromID = Number(track.instrument.referToTrackId);
@@ -44621,20 +44641,20 @@ function formatSongSimple(jdoc, obj) {
 	if(swing !== 0) {
 		swing += 50;
 		let sync = Number(jsong.swingInterval);
-		obj.append(", Swing = " + swing + "% on " + _templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_11___default.a[sync]);
+		obj.append(", Swing = " + swing + "% on " + _templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_10___default.a[sync]);
 	}
 	
 	obj.append(", Key = " + scaleString(jsong));
 	obj.append(jquery__WEBPACK_IMPORTED_MODULE_0___default()("<p class='tinygap'>"));
 	
-	Object(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_8__["showArranger"])(jsong, jdoc.newSynthNames, obj);
+	Object(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_7__["showArranger"])(jsong, jdoc.newSynthNames, obj);
 
 	obj.append(jquery__WEBPACK_IMPORTED_MODULE_0___default()("<p class='tinygap'>"));
 
-	let sectionTab = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(jsong.sections.section);
+	let sectionTab = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(jsong.sections.section);
 
 	if(jsong.tracks) {
-	  let trax = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["forceArray"])(jsong.tracks.track);
+	  let trax = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(jsong.tracks.track);
 	  if (trax) {
 
 		for(var i = 0; i < trax.length; ++i) {
@@ -44643,7 +44663,7 @@ function formatSongSimple(jdoc, obj) {
 			trackHeader(track, jdoc.newSynthNames, i, sectionTab, _templates_simple_track_template_handlebars__WEBPACK_IMPORTED_MODULE_24___default.a, obj);
 			let ploto = jquery__WEBPACK_IMPORTED_MODULE_0___default()("<td class='simpleplot'/>");
 
-			let tKind = trackKind(track);
+			let tKind = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["trackKind"])(track);
 			let refTrack = track;
 			if (track.instrument && track.instrument.referToTrackId !== undefined) {
 				let fromID = Number(track.instrument.referToTrackId);
@@ -44732,10 +44752,10 @@ class DelugeDoc {
 //	let firstFixed = fixedText.substring(0, 160);
 //	alert (firstFixed);
 
-	var asDOM = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["getXmlDOMFromString"])(fixedText);
+	var asDOM = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["getXmlDOMFromString"])(fixedText);
 	// Uncomment following to generate ordering table based on a real-world example.
 	// enOrderTab(asDOM);
-	var asJSON = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["xmlToJson"])(asDOM);
+	var asJSON = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["xmlToJson"])(asDOM);
 	if (newKitFlag) {
 		asJSON.kit.soundSources = [];
 	}
@@ -44772,9 +44792,9 @@ class DelugeDoc {
 	} else if(json['kit']) {
 		let wherePut = jquery__WEBPACK_IMPORTED_MODULE_0___default()(this.idFor('jtab'))[0];
 		let kitList = json.kit.soundSources;
-		Object(_KitList_jsx__WEBPACK_IMPORTED_MODULE_6__["formatKit"])(kitList, json.kitParams, wherePut);
+		Object(_KitList_jsx__WEBPACK_IMPORTED_MODULE_5__["formatKit"])(kitList, json.kitParams, wherePut);
 	} else {
-		Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["jsonToTable"])(json, obj);
+		Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["jsonToTable"])(json, obj);
 	}
 }
 
@@ -44846,7 +44866,7 @@ class DelugeDoc {
 	  else if (jsonDoc['sound']) toMake = 'sound';
 	   else if (jsonDoc['kit']) toMake = 'kit';
 	if (!toMake) return;
- 	let saveText = headerStr + Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_7__["jsonToXMLString"])(toMake, this.jsonDocument[toMake]);
+ 	let saveText = headerStr + Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["jsonToXMLString"])(toMake, this.jsonDocument[toMake]);
  	return saveText;
  }
 
@@ -44924,7 +44944,7 @@ function getFocusDoc() {
 
 function makeDelugeDoc(fname, text, newKitFlag, simple)
 {
-	return new DelugeDoc(name, text, newKitFlag, simple);
+	return new DelugeDoc(fname, text, newKitFlag, simple);
 }
 
 

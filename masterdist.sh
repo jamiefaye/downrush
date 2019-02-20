@@ -2,7 +2,6 @@ cd /Users/jamie/deluge/downrush/FTF
 npm run build
 cd /Users/jamie/deluge/downrush/xmlView
 npm run build
-npm run buildlib
 cd /Users/jamie/deluge/downrush/waverly
 npm run build
 cd /Users/jamie/deluge/downrush/midian
