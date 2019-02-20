@@ -495,7 +495,8 @@ td.simplechan {
 	width: 8px;
 	text-align: left;
 	font-size: 18px;
-	border: none;
+
+	color: white;
 	vertical-align: top;
 	padding-left: 1px;
 	padding-right: 1px;
@@ -508,6 +509,7 @@ table.simplehead {
   table-layout: fixed;
   width: 12px;
   border: none;
+  	border: 1px;
 }
 
 td.simpleplot {
