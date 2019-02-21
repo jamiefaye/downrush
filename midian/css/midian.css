@@ -154,12 +154,15 @@ div.midilab {
 div.midigrid {
 	position: relative;
 	background-color:#E8E8E0;
+	overflow: hidden;
+	cursor: default;
 }
 
 div.midiitem {
 	position: absolute;
 	height: 4px;
 	background-color: black;
+	user-select: none;
 }
 
 div.midiitembow {

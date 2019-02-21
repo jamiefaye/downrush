@@ -4,7 +4,7 @@ class MidiConversion {
 	this.midi = midi;
   }
 
-  convertTrackToDeluge(trackNum, startTime, endTime, tickOffset) {
+  convertTrackToDeluge(trackNum, startTime, endTime, masterTicks, dontAdjustToClip) {
 	let midi = this.midi;
 	let midiPPQ = midi.header.ppq;
 	console.log("MidiPPQ= " + midiPPQ);
@@ -17,13 +17,22 @@ class MidiConversion {
 	let trackOut= this.protoTrack();
 	let trout = trackOut.track;
 
+	let tickOffset = masterTicks;
+
+	if (startTime === endTime) {
+		startTime = 0;
+		endTime = 10000000;
+	} else if(!dontAdjustToClip) {
+		tickOffset = this.calcTrackLowTick(track, startTime, endTime);
+	}
+
 	// sort notes by note number filtering for time interval
 	for (let i = 0; i < noteCount; ++i) {
 		let n = notes[i];
 		let m = n.midi;
 		let t = n.time;
 		let tend = t + n.duration;
-		if (t > endTime || tend < startTime) continue;
+		if (t >= endTime || tend <= startTime) continue;
 		if (lanes[m] === undefined) {
 			lanes[m] =[];
 		}
@@ -110,6 +119,21 @@ class MidiConversion {
 	this.highTime = highTime;
 	this.lowTicks = lowTicks;
 	this.highTicks = highTicks;
+  }
+
+  calcTrackLowTick(track, start, end) {
+	let lowTicks = this.highTicks;
+	let notes = track.notes;
+	let noteCount = notes.length;
+	for (let i = 0; i < noteCount; ++i) {
+		let n = notes[i];
+		let t = n.time;
+		let tend = t + n.duration;
+		if (t >= end || tend <= start) continue;
+		let tt = n.ticks;
+		if (tt < lowTicks) lowTicks = tt;
+	}
+	return lowTicks;
   }
 
   protoTrack() {
