@@ -22,7 +22,7 @@ class MidiPlot extends React.Component {
 	this.insetX = 6;
 	this.insetY = 4;
 	this.noteHeight = 4;
-	this.scaling = 48;
+	this.scaling = 24;
 	this.symbolize();
 	this.dragging = false;
 	this.dragStart = 0;
