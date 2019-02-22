@@ -119,14 +119,13 @@ th {
 }
 
 td.midichan {
-	width: 28px;
 	font-size: 14px;
 	border: none;
 	padding: none;
 }
 
 td.midiinst {
-	font-size: 14px;
+	font-size: 12px;
 	border: none;
 	padding: none;
 }

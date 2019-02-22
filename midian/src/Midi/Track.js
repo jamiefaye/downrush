@@ -67,6 +67,7 @@ export class Track {
 					const noteOff = noteOffs.splice(offIndex, 1)[0]
 					this.addNote({
 						midi : currentNote.noteNumber,
+						channel: currentNote.channel,
 						ticks : currentNote.absoluteTime,
 						velocity : currentNote.velocity / 127,
 						durationTicks : noteOff.absoluteTime - currentNote.absoluteTime,

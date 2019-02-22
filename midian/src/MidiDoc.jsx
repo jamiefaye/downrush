@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import $ from'./js/jquery-3.2.1.min.js';
-import Midi from "./Midi/Midi.js";
+import {Midi} from "./Midi/Midi.js";
 import {WedgeIndicator, PushButton, CopyToClipButton} from './GUIstuff.jsx';
 import {MidiConversion} from "./MidiConversion.js";
 import {pasteTrackJson, getFocusDoc} from "../../xmlView/lib/SongLib.js";
@@ -202,24 +202,45 @@ class MidiGrid extends React.Component {
   }
 }
 
+class ChannelMask extends React.Component {
+	render() {
+		let mask = this.props.channelMask;
+		let moreThanOne = false;
+		let rotating = 1;
+		let chanText = "";
+		for (let i = 1; i <= 16; ++ i) {
+			if ((mask & rotating) != 0) {
+				if (moreThanOne) {
+					chanText += ", ";
+				} else {
+					moreThanOne = true;
+				}
+				chanText += i.toString(10);
+			}
+			rotating <<= 1;
+		}
+	  return chanText;
+	}
+}
+
 class MidiTrack extends React.Component {
 
   render() {
 		let track = this.props.track;
 		let trackNum = this.props.trackNum;
+		let trackIndex = trackNum - 1;
 		let song = this.props.song;
 		let tname = track.name;
 		let inst = track.instrument;
+		let trackMask = this.props.converter.channelMasks[trackIndex];
 		
 		return (<React.Fragment><table className='miditrack'><tbody><tr><td className='midiheadr'><table className='midihead'><tbody>
-		<tr>
-		<td className='midichan'><b>{trackNum}</b>:{track.channel}</td>
-		<td className='midiinst'>{tname ? track.name : null}</td>
-		</tr>
-		<tr><td colSpan='2' className='midiinst'>{inst ? <i>{inst.name}</i> : null}</td></tr>
-		<tr className='butnstr'><td colSpan='2' className='butnstd'>
-		<PushButton title='+ Song' onPush={this.addSel.bind(this)} />
-		<CopyToClipButton title='&rarr; Clip' getText={this.copySel.bind(this)} />
+		<tr><td className='midichan'><b>{trackNum}</b>:<ChannelMask channelMask={trackMask} /></td></tr>
+		<tr><td className='midiinst'>{tname ? track.name : null}</td></tr>
+		<tr><td className='midiinst'>{inst ? <i>{inst.name}</i> : null}</td></tr>
+		<tr className='butnstr'><td className='butnstd'>
+			<PushButton title='+ Song' onPush={this.addSel.bind(this)} />
+			<CopyToClipButton title='&rarr; Clip' getText={this.copySel.bind(this)} />
 		</td></tr>
 		</tbody></table></td>
 		<td><MidiGrid ref={el => this.grid = el} track={track} converter={this.props.converter} /></td></tr></tbody></table>

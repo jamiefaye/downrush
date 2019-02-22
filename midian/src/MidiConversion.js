@@ -10,6 +10,19 @@ class MidiConversion {
 	console.log("MidiPPQ= " + midiPPQ);
 	let delugePPQ = 48;
 	let track = midi.tracks[trackNum - 1];
+	let chanMask = this.channelMasks[trackNum - 1];
+	let chanNum = 0;
+
+	// Output all the events in this track on the lowest channel number found in it.
+	// so we need to find the lowest-order one bit.
+	if (chanMask) {
+		let bit = 1;
+		while ((bit & chanMask) === 0) {
+			bit = bit << 1;
+			chanNum++;
+		}
+	}
+
 	let notes = track.notes;
 	let noteCount = notes.length;
 	let lanes = [];
@@ -84,7 +97,7 @@ class MidiConversion {
 		let noteData = {"y": i, "noteData": laneh}
 		trout.noteRows.noteRow.push(noteData);
 	}
-	// trout.midiChannel = midi.header.
+	trout.midiChannel = chanNum;
 	trout.trackLength = clipMax;
 	return trackOut;
   }
@@ -97,8 +110,9 @@ class MidiConversion {
 	let highTime = -100000000;
 	let lowTicks = 100000000;
 	let highTicks = -100000000;
-
+	let maskList = [];
 	for(let tn = 0; tn < midi.tracks.length; ++tn) {
+		let channelMask = 0;
 		let track = midi.tracks[tn];
 		let notes = track.notes;
 		let noteCount = notes.length;
@@ -113,12 +127,18 @@ class MidiConversion {
 			let ttend = tt + n.durationTicks;
 			if (tt < lowTicks) lowTicks = tt;
 			if (ttend > highTicks) highTicks = ttend;
+			let c = n.channel;
+			if (c !== undefined) {
+				channelMask |= (1 << c);
+			}
 		}
+		maskList.push(channelMask);
 	}
 	this.lowTime = lowTime;
 	this.highTime = highTime;
 	this.lowTicks = lowTicks;
 	this.highTicks = highTicks;
+	this.channelMasks = maskList;
   }
 
   calcTrackLowTick(track, start, end) {
