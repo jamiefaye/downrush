@@ -192,7 +192,7 @@ function record()
 	// console.log("Load time: " + (loadEndTime - loadStartTime));
 }
 
-// use ajax to load wav data (instead of a web worker).
+// use ajax to load midi data (instead of a web worker).
   loadFile(fname)
 {
 	this.fname = fname;
@@ -276,13 +276,14 @@ function downloader(evt) {
 	let focusDoc = getFocusDoc();
 	if(!focusDoc) return;
 	let saveXML = focusDoc.genDocXMLString();
-	var blob = new Blob([saveXML], {type: "text/plain;charset=utf-8"});
+	var blob = new Blob([saveXML], {type: "text/xml;charset=utf-8"});
 	let saveName;
 	if (local_exec) {
 		saveName = focusDoc.fname.name 
 	} else {
 		saveName = focusDoc.fname.split('/').pop();
 	}
+	if (!saveName) saveName ='SONG.XML';
 	console.log(saveName);
 	FileSaver.saveAs(blob, saveName);
 }
@@ -310,6 +311,7 @@ function onLoad()
 				
 		$(homeDoc.idFor('midiantab')).append (local_exec_info());
 		$('#opener').on('change', (e)=>{homeDoc.openLocal(e)});
+		$('#openlocalsongbutn').on('change', (e)=>{openSongLocal(e)});
 	}
 	$('#downloadbut').click((e)=>{downloader(e)});
 	homeDoc.bindGui();
@@ -334,6 +336,31 @@ function setSongText(fname, text)
 	let focusDoc = makeDelugeDoc(fname, text, false, true);
 	setFocusDoc(focusDoc);
 }
+
+
+function openSongLocal(evt)
+ {
+ 	let me = this;
+	var files = evt.target.files;
+	var f = files[0];
+	if (f === undefined) return;
+	var fname = f;
+	var reader = new FileReader();
+
+	reader.onloadend = (function(theFile) {
+		return function(e) {
+			// Display contents of file
+				let t = e.target.result;
+				setSongText(theFile, t);
+				$("#statind2").text(fname + " loaded.");
+
+			};
+	})(f);
+	
+	// Read in the image file as a data URL.
+	reader.readAsBinaryString(f);
+ }
+
 
 // use ajax to load xml data (instead of a web worker).
   function loadSongFile(fname)
@@ -366,7 +393,7 @@ function setSongText(fname, text)
 function createEmptySong()
 {
 	let data = empty_song_template();
-	setSongText("/SONGS/SONG900.XML", data);
+	setSongText("/SONGS/SONG.XML", data);
 }
 
 

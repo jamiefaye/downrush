@@ -90,13 +90,14 @@ function openLocal(evt)
 function downloader(evt) {
 	if(!focusDoc) return;
 	let saveXML = focusDoc.genDocXMLString();
-	var blob = new Blob([saveXML], {type: "text/plain;charset=utf-8"});
+	var blob = new Blob([saveXML], {type: "text/xml;charset=utf-8"});
 	let saveName;
 	if (local_exec) {
 		saveName = focusDoc.fname.name 
 	} else {
 		saveName = focusDoc.fname.split('/').pop();
 	}
+	if (!saveName) saveName ='SONG.XML';
 	console.log(saveName);
 	FileSaver.saveAs(blob, saveName);
 }

@@ -43148,7 +43148,7 @@ exports.formatKit = formatKit;
 /*!**************************!*\
   !*** ./src/SongUtils.js ***!
   \**************************/
-/*! exports provided: gamma_correct, patchInfo, trackKind */
+/*! exports provided: gamma_correct, patchInfo, trackKind, yToNoteName, scaleString */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -43156,7 +43156,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "gamma_correct", function() { return gamma_correct; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "patchInfo", function() { return patchInfo; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "trackKind", function() { return trackKind; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "yToNoteName", function() { return yToNoteName; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "scaleString", function() { return scaleString; });
 /* harmony import */ var _js_delugepatches_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./js/delugepatches.js */ "./src/js/delugepatches.js");
+/* harmony import */ var _JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./JsonXMLUtils.js */ "./src/JsonXMLUtils.js");
+
 
 
 var gamma = 1.0 / 5.0;
@@ -43245,6 +43249,41 @@ function patchInfo(track, newSynthNames) {
 	};
 }
 
+var noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+// Convert Midi note number into note name + octave, with 0 meaning C minus 2
+function yToNoteName(note)
+{
+	let oct = Math.round(note / 12) - 2;
+	let tone = note % 12;
+	return noteNames[tone] + oct;
+}
+
+
+var scaleTable = [
+"Major",	[0, 2, 4, 5, 7, 9, 11],
+"Minor",	[0, 2, 3, 5, 7, 8, 10],
+"Dorian",	[0, 2, 3, 5, 7, 9, 10],
+"Phrygian", [0, 1, 3, 5, 7, 8, 10],
+"Lydian", 	[0, 2, 4, 6, 7, 9, 11],
+"Mixolydian", [0, 2, 4, 5, 7, 9, 10],
+"Locrian", 	[0, 1, 3, 5, 6, 8, 10] ];
+
+function scaleString(jsong) {
+	let str = noteNames[Number(jsong.rootNote) % 12] + " ";
+
+	let modeTab = jsong.modeNotes.modeNote;
+	let modeNums = Array(7);
+	for (var j = 0; j < 7; ++j) modeNums[j] = Number(modeTab[j]);
+	for (var i = 0; i < scaleTable.length; i += 2) {
+		let aMode = scaleTable[i + 1];
+		if (Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_1__["jsonequals"])(modeNums, aMode)) {
+			return str + scaleTable[i];
+		}
+	}
+	return str + "Chromatic";
+}
+
 
 
 
@@ -43255,16 +43294,14 @@ function patchInfo(track, newSynthNames) {
 /*!****************************!*\
   !*** ./src/SongViewLib.js ***!
   \****************************/
-/*! exports provided: formatSong, formatSound, makeDelugeDoc, setFocusDoc, yToNoteName, getFocusDoc, pasteTrackJson */
+/*! exports provided: formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "formatSong", function() { return formatSong; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "formatSound", function() { return formatSound; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "makeDelugeDoc", function() { return makeDelugeDoc; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setFocusDoc", function() { return setFocusDoc; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "yToNoteName", function() { return yToNoteName; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getFocusDoc", function() { return getFocusDoc; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "pasteTrackJson", function() { return pasteTrackJson; });
 /* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! jquery */ "./node_modules/jquery/dist/jquery.js");
@@ -43401,16 +43438,6 @@ function rowYfilter(row) {
 	return y;
 }
 
-var noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-// Convert Midi note number into note name + octave, with 0 meaning C minus 2
-function yToNoteName(note)
-{
-	let oct = Math.round(note / 12) - 2;
-	let tone = note % 12;
-	return noteNames[tone] + oct;
-}
-
 function encodeNoteInfo(noteName, time, dur, vel, cond)
 {
 	// Use hack to generate leading zeros.
@@ -43423,7 +43450,7 @@ function encodeNoteInfo(noteName, time, dur, vel, cond)
 }
 
 function plotNoteName(note, style, parentDiv) {
-	let labName = yToNoteName(note);
+	let labName = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["yToNoteName"])(note);
 	if (labName != undefined) {
 		let labdiv = jquery__WEBPACK_IMPORTED_MODULE_0___default()("<div class='notelab'/>");
 		labdiv.text(labName);
@@ -43576,10 +43603,13 @@ function pasteTrackJson(pastedJSON, songDoc) {
 	// If we have a document with one empty track at the front, get rid of it.
 	// as this must have been a generated empty document.
 	let song = songDoc.jsonDocument.song;
+	
 	let trackA = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(song.tracks.track);
+	song.tracks.track = trackA; // If we forced an array, we want that permanent.
+
 	if (trackA.length === 1) {
 		if (typeof trackA[0].noteRows ==='string') {
-			song.tracks = [];
+			song.tracks.track = [];
 			song.instruments = [];
 		}
 	}
@@ -44080,7 +44110,7 @@ function plotTrack13(track, obj) {
 		let row = rowList[rx];
 		var noteList = Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["forceArray"])(row.notes.note);
 		let y = rowYfilter(row);
-		let labName = yToNoteName(y);
+		let labName = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["yToNoteName"])(y);
 		if (y < 0) continue;
 		for (var nx = 0; nx < noteList.length; ++nx) {
 			let n = noteList[nx];
@@ -44132,7 +44162,7 @@ function plotTrack14(track, song, obj) {
 		var noteData = row.noteData;
 		let y = rowYfilter(row);
 		if (y < 0) continue;
-		let labName = yToNoteName(y);
+		let labName = Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["yToNoteName"])(y);
 		for (var nx = 2; nx < noteData.length; nx += 20) {
 			let notehex = noteData.substring(nx, nx + 20);
 			let x = parseInt(notehex.substring(0, 8), 16);
@@ -44480,8 +44510,14 @@ function convertTempo(jsong)
 {
 	let fractPart = (jsong.timerTickFraction>>>0) / 0x100000000;
 	let realTPT = Number(jsong.timePerTimerTick) + fractPart;
-	
-	let tempo = Math.round(120.0 * realTPT / 459.375);
+	// Timer tick math: 44100 = standard Fs; 48 = PPQN;
+	// tempo = (44100 * 60) / 48 * realTPT;
+	// tempo = 55125 / realTPT
+	// rounded to 1 place after decimal point:
+	let tempo = Math.round(551250 / realTPT) / 10;
+
+	// console.log("timePerTimerTick=" + jsong.timePerTimerTick + " realTPT= " +  realTPT + " tempo= " + tempo);
+	// console.log("timerTickFraction=" + jsong.timerTickFraction + " fractPart= " +  fractPart);
 	return tempo;
 }
 
@@ -44529,32 +44565,6 @@ function genSampleReport(jsong,jdoc)
 	});
 }
 
-var scaleTable = [
-"Major",	[0, 2, 4, 5, 7, 9, 11],
-"Minor",	[0, 2, 3, 5, 7, 8, 10],
-"Dorian",	[0, 2, 3, 5, 7, 9, 10],
-"Phrygian", [0, 1, 3, 5, 7, 8, 10],
-"Lydian", 	[0, 2, 4, 6, 7, 9, 11],
-"Mixolydian", [0, 2, 4, 5, 7, 9, 10],
-"Locrian", 	[0, 1, 3, 5, 6, 8, 10] ];
-
-function scaleString(jsong) {
-	let str = noteNames[Number(jsong.rootNote) % 12] + " ";
-
-	let modeTab = jsong.modeNotes.modeNote;
-	let modeNums = Array(7);
-	for (var j = 0; j < 7; ++j) modeNums[j] = Number(modeTab[j]);
-	for (var i = 0; i < scaleTable.length; i += 2) {
-		let aMode = scaleTable[i + 1];
-		if (Object(_JsonXMLUtils_js__WEBPACK_IMPORTED_MODULE_6__["jsonequals"])(modeNums, aMode)) {
-			return str + scaleTable[i];
-		}
-	}
-	return str + "Chromatic";
-}
-
-
-
 function formatSong(jdoc, obj) {
 	let jsong = jdoc.jsonDocument.song;
 	let newNoteFormat = jdoc.newNoteFormat;
@@ -44572,7 +44582,7 @@ function formatSong(jdoc, obj) {
 		obj.append(", Swing = " + swing + "% on " + _templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_10___default.a[sync]);
 	}
 	
-	obj.append(", Key = " + scaleString(jsong));
+	obj.append(", Key = " + Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["scaleString"])(jsong));
 	obj.append(jquery__WEBPACK_IMPORTED_MODULE_0___default()("<p class='tinygap'>"));
 	
 	Object(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_7__["showArranger"])(jsong, jdoc.newSynthNames, obj);
@@ -44644,7 +44654,7 @@ function formatSongSimple(jdoc, obj) {
 		obj.append(", Swing = " + swing + "% on " + _templates_fmtsync_js__WEBPACK_IMPORTED_MODULE_10___default.a[sync]);
 	}
 	
-	obj.append(", Key = " + scaleString(jsong));
+	obj.append(", Key = " + Object(_SongUtils_js__WEBPACK_IMPORTED_MODULE_13__["scaleString"])(jsong));
 	obj.append(jquery__WEBPACK_IMPORTED_MODULE_0___default()("<p class='tinygap'>"));
 	
 	Object(_Arranger_jsx__WEBPACK_IMPORTED_MODULE_7__["showArranger"])(jsong, jdoc.newSynthNames, obj);
@@ -56144,7 +56154,7 @@ module.exports = (Handlebars["default"] || Handlebars).template({"compiler":[7,"
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-const {yToNoteName} =  __webpack_require__(/*! ../SongViewLib.js */ "./src/SongViewLib.js");
+const {yToNoteName} =  __webpack_require__(/*! ../SongUtils.js */ "./src/SongUtils.js");
 
 module.exports = function (y) {
 	let nn = yToNoteName(y);

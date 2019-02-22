@@ -2,7 +2,7 @@ import FileBrowser from './FileBrowser.js';
 
 let fileManagerHTML =`<html>
 		<head>
-			<title>FlashTools File Manager</title>
+			<title>Downrush File Manager</title>
 			<meta name="viewport" content="width=device-width">
 			<meta charset="UTF-8">
 		</head>

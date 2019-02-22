@@ -249,11 +249,14 @@ function pasteTrackJson(pastedJSON, songDoc) {
 	// If we have a document with one empty track at the front, get rid of it.
 	// as this must have been a generated empty document.
 	let song = songDoc.jsonDocument.song;
+	
 	let trackA = forceArray(song.tracks.track);
+	song.tracks.track = trackA; // If we forced an array, we want that permanent.
+
 	if (trackA.length === 1) {
 		if (typeof trackA[0].noteRows ==='string') {
-			// song.tracks = [];
-			// song.instruments = [];
+			song.tracks.track = [];
+			song.instruments = [];
 		}
 	}
 	addTrackToSong(pastedJSON, songDoc);
@@ -1153,8 +1156,14 @@ function convertTempo(jsong)
 {
 	let fractPart = (jsong.timerTickFraction>>>0) / 0x100000000;
 	let realTPT = Number(jsong.timePerTimerTick) + fractPart;
-	
-	let tempo = Math.round(120.0 * realTPT / 459.375);
+	// Timer tick math: 44100 = standard Fs; 48 = PPQN;
+	// tempo = (44100 * 60) / 48 * realTPT;
+	// tempo = 55125 / realTPT
+	// rounded to 1 place after decimal point:
+	let tempo = Math.round(551250 / realTPT) / 10;
+
+	// console.log("timePerTimerTick=" + jsong.timePerTimerTick + " realTPT= " +  realTPT + " tempo= " + tempo);
+	// console.log("timerTickFraction=" + jsong.timerTickFraction + " fractPart= " +  fractPart);
 	return tempo;
 }
 
