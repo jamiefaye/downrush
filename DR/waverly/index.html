@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1, maximum-scale=1, user-scalable=no">
+		<meta charset="UTF-8">
+		<title>Waverly</title>
+<!-- https://stackoverflow.com/questions/951791/javascript-global-error-handling -->
+<div id="npoptemp" style="display: none;"></div>
+<script type="text/javascript">
+<!--
+window.onerror = function(msg, url, line, col, error) {
+   var extra = !col ? '' : '\ncolumn: ' + col;
+   extra += !error ? '' : '\nerror: ' + error;
+   alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
+   return true;
+};
+-->
+var standAlone = true;
+</script>
+<link rel="stylesheet" href="filewidget.css">
+<link rel="stylesheet" href="edit.css">
+</head>
+<body>
+<div id='instructions'>
+ This is the web-based version of the Waverly WAV sound editor.<p>
+To use this program, press the "Choose File" button and select a WAV file to work with. To save your result, press the Download button.
+</div>
+	<div id='filegroupplace'>
+	<table class='nobord'><tr>
+		<td><input id='opener' name="file" type="file" accept=".wav,.WAV" /></td>
+		<td><input id='downloadbut' type="button" value="Download" style="width:55pt" ></td>
+	</tr>
+	</table>
+		</div>
+		<div id='popupspot'></div>
+		<p class='tinygap'/>
+<div id='wavegroups'>
+</div>
+</div>
+
+<script src="waverly.js"></script>
+</body>
+</html>

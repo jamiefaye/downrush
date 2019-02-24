@@ -20,17 +20,16 @@ var standAlone = true;
 <link rel="stylesheet" href="filewidget.css">
 	</head>
 	<body>
+		<div id='instructions'>
+ 			This is the web-based version of the Deluge XML File Viewer.<p>
+			To use this program, press the "Choose File" button and select an Deluge XML file to work with. To save your result, press the Download button.
+		</div>
 		<div id='filegroupplace'>
-			<table id='filegroup' class='nobord'><tr>
-				<td><button id="openbutn" class="butn openbutn" title="open">Open</button></td>
-				<td><button id="savebut" class="butn savebut" title="save">Save</button></td>
-				<td><button id="upbut" class="butn upbut" title="save">&#x2191;</button></td>
-				<td><button id="downbut" class="butn downbut" title="save">&#x2193;</button></td>
-				<td><button id="newkitbut" class="butn nkitbut" title="newk">New Kit</button></td>
-				<td><button id='downloadbut' class='butn downlbut' title="download">Download</button></td>
-				<td><div id="statind" style='font-size: 9pt'></div></td>
-			</tr>
-			</table>
+		<table class='nobord'><tr>
+		<td><input id='opener' name="file" type="file" accept=".xml,.XML" /></td>
+		<td><input id='downloadbut' type="button" value="Download" style="width:55pt" ></td></tr>
+		</table>
+
 		</div>
 		<div id='popupspot'></div>
 		<div id='docspot'>

@@ -1,13 +1,50 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import Wave from './Wave.js';
-require('file-loader?name=[name].[ext]!../viewWAV.htm');
+
+require('file-loader?name=[name].[ext]!../html/viewWAV.htm');
+require('file-loader?name=[name].[ext]!../html/index.html');
 require('file-loader?name=[name].[ext]!../css/edit.css');
+require('file-loader?name=img/[name].[ext]!../img/copy-to-clipboard.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-170-record.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-171-step-backward.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-172-fast-backward.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-173-rewind.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-174-play.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-175-pause.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-176-stop.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-177-forward.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-178-fast-forward.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-179-step-forward.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-180-eject.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-182-download-alt.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-221-play-button.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-237-zoom-in.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-238-zoom-out.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-257-delete.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-301-microphone.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-366-restart.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-419-disk-import.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-420-disk-export.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-433-plus.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-434-minus.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-435-redo.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-436-undo.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-447-floppy-save.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-448-floppy-open.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-511-duplicate.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-512-copy.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-513-paste.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-545-eye-plus.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-546-eye-minus.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-599-scissors-alt.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-728-resize-vertical.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-729-resize-horizontal.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-782-drop.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-94-crop.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-zoom-sel.png');
 
 import filegroup_template from "./templates/filegroup_template.handlebars";
 import sfx_dropdn_template from "./templates/sfx_dropdn_template.handlebars";
-import local_exec_head from "./templates/local_exec_head.handlebars";
-import local_exec_info from "./templates/local_exec_info.handlebars";
-
 import UndoStack from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import {audioBufferToWav} from './audioBufferToWav.js';
@@ -25,7 +62,7 @@ import {stepNextFile} from "./StepNextFile.js";
 "use strict";
 
 // Flag to enable local execution (not via the FlashAir web server)
-var local_exec = document.URL.indexOf('file:') == 0;
+var local_exec = document.URL.indexOf('file:') == 0 || standAlone;
 var sample_path_prefix = '/';
 
 // Used to enable 'multiple samples open on one page'.
@@ -699,7 +736,9 @@ function record()
 	if(!me.wave) {
 		me.wave = new Wave(me.idFor('waveform'));
 	}
-
+	if (local_exec) {
+		$('#instructions').empty();
+	}
 // Closure to capture the file information.
 	reader.onloadend = (function(theFile) {
 		me.wave.openOnBuffer(theFile);
@@ -749,9 +788,6 @@ function onLoad()
 		let fname = decodeURI(urlarg);
 		homeDoc.loadFile(fname);
 	} else { // We are running as a 'file://', so change the GUI to reflect me.
-		$('#filegroup').remove();
-		$('#filegroupplace').append(local_exec_head());
-		$(homeDoc.idFor('jtab')).append (local_exec_info());
 		$('#opener').on('change', (e)=>{homeDoc.openLocal(e)});
 	}
 	$('#downloadbut').click((e)=>{downloader(e)});
@@ -764,7 +800,6 @@ function openFile(fname)
 	homeDoc.loadFile(fname);
 	if(!multiDocs) $('#wavegroups').empty();
 	$('#wavegroups').append(homeDoc.html);
-
 	homeDoc.bindGui();
 
 	focusWaveView = homeDoc;

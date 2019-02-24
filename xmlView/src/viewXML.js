@@ -17,9 +17,6 @@ import ReactDOM from "react-dom";
 import FileSaver from 'file-saver';
 
 import {stepNextFile} from "./StepNextFile.js";
-import local_exec_head from "./templates/local_exec_head.handlebars";
-import local_exec_info from "./templates/local_exec_info.handlebars";
-
 import empty_kit_template from "./templates/empty_kit_template.handlebars";
 
 import {setFocusDoc, makeDelugeDoc} from "./SongViewLib.js";
@@ -35,12 +32,7 @@ var custom_sample_path = undefined;
 // Flag to enable local execution (not via the FlashAir web server)
 var local_exec = document.URL.indexOf('file:') == 0 || standAlone;
 
-
-
 var focusDoc;
-
-
-
 
 /*******************************************************************************
 
@@ -81,6 +73,9 @@ function openLocal(evt)
 	var files = evt.target.files;
 	var f = files[0];
 	if (f === undefined) return;
+	if (local_exec) {
+		$('#instructions').empty();
+	}
 	var reader = new FileReader();
 // Closure to capture the file information.
 	reader.onload = (function(theFile) {
@@ -125,9 +120,6 @@ function onLoad()
 	if(!local_exec) {
 		loadFile(fname);
 	} else {
-		$('#filegroup').remove();
-		$('#filegroupplace').append(local_exec_head());
-		$('#jtab').append (local_exec_info()); // ** JFF jtab??
 		$('#opener').on('change', openLocal);
 		if (custom_sample_path) {
 			setSamplePathPrefix(custom_sample_path);

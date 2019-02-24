@@ -15,12 +15,16 @@ window.onerror = function(msg, url, line, col, error) {
    return true;
 };
 -->
-
+var standAlone = false;
 </script>
 <link rel="stylesheet" href="filewidget.css">
 <link rel="stylesheet" href="edit.css">
 	</head>
 	<body>
+		<div id='instructions'>
+ 			This is the web-based version of the Waverly WAV Sound Editor.<p>
+			To use this program, press the "Choose File" button and select an WAV file to work with. To save your result, press the Download button.
+		</div>
 		<div id='filegroupplace'>
 			<table id='filegroup' class='nobord'><tr>
 				<td><button id="openbutn" class="butn openbutn" title="open">Open</button></td>
