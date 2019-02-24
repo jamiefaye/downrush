@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1, maximum-scale=1, user-scalable=no">
+		<meta charset="UTF-8">
+		<title>Midian</title>
+<!-- https://stackoverflow.com/questions/951791/javascript-global-error-handling -->
+<div id="npoptemp" style="display: none;"></div>
+<script type="text/javascript">
+<!--
+window.onerror = function(msg, url, line, col, error) {
+   var extra = !col ? '' : '\ncolumn: ' + col;
+   extra += !error ? '' : '\nerror: ' + error;
+   alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
+   return true;
+};
+-->
+
+</script>
+<link rel="stylesheet" href="filewidget.css">
+<link rel="stylesheet" href="edit.css">
+<link rel="stylesheet" href="midian.css">
+
+	</head>
+	<body>
+		<div id='filegroupplace'>
+			<table id='filegroup' class='nobord'><tr>
+				<td><button id="openmidibutn" class="butn openmidibutn" title="openmidi">Open Midi</button></td>
+				<td><button id="upbut" class="butn upbut" title="upbutn">&#x2191;</button></td>
+				<td><button id="downbut" class="butn downbut" title="dnbutn">&#x2193;</button></td>
+				<td><div id="statind" style='font-size: 9pt'></div></td>
+				</tr>
+			</table>
+		</div>
+		<div id='popupspot'></div>
+		<p class='tinygap'/>
+	<div id='midiview'>
+	</div>
+	
+	<div id='docspot'>
+	</div>
+	<div id='midiantab'>
+	</div>
+	<div id='filegroupsong'>
+		<table id='filegroup2' class='nobord'><tr>
+			<td><button id="opensongbutn" class="butn opensongbutn" title="open">Open Song</button></td>
+			<td><button id="savebut" class="butn savebut" title="save">Save Song</button></td>
+			<td><button id='downloadbut' class='butn downlbut' title="download">Download Song</button></td>
+			<td><div id="statind2" style='font-size: 9pt'></div></td>
+		</tr>
+		</table>
+	</div>
+<div id='songiew'>
+</div>
+<script src="midian.js"></script>
+</body>
+</html>

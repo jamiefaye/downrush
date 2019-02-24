@@ -1,3 +1,4 @@
+import mpcpattern_file_tamplate from "./templates/mpcpattern_file_template.handlebars";
 
 class MidiConversion {
   constructor(midi) {
@@ -180,6 +181,77 @@ class MidiConversion {
 	return proto;
   }
 
-} // of class
+  convertTrackToMPC(trackNum, startTime, endTime, masterTicks, dontAdjustToClip) {
+	let midi = this.midi;
+	let midiPPQ = midi.header.ppq;
+	console.log("MidiPPQ= " + midiPPQ);
+	let forcePPQ = 960;
+	let track = midi.tracks[trackNum - 1];
+	let chanMask = this.channelMasks[trackNum - 1];
+	let chanNum = 0;
+
+	// Output all the events in this track on the lowest channel number found in it.
+	// so we need to find the lowest-order one bit.
+	if (chanMask) {
+		let bit = 1;
+		while ((bit & chanMask) === 0) {
+			bit = bit << 1;
+			chanNum++;
+		}
+	}
+
+	let notes = track.notes;
+	let noteCount = notes.length;
+
+	let tickOffset = masterTicks;
+
+	if (startTime === endTime) {
+		startTime = 0;
+		endTime = 10000000;
+	} else if(!dontAdjustToClip) {
+		tickOffset = this.calcTrackLowTick(track, startTime, endTime);
+	}
+
+	// Encode the notes into an array of Json objects.
+	let notesOut = [];
+	
+	let clipMax = 0;
+
+	for (let i = 0; i < noteCount; ++i) {
+		let n = notes[i];
+		let m = n.midi;
+		let t = n.time;
+		let tend = t + n.duration;
+		if (t >= endTime || tend <= startTime) continue;
+
+		let tMstart = n.ticks - tickOffset;
+		let tMdur = n.durationTicks;
+		let tMend = tMstart + tMdur;
+		
+		let tDstart = Math.round(tMstart * forcePPQ / midiPPQ);
+		let tDdur = Math.round(tMdur * forcePPQ / midiPPQ);
+		let tDnoteEnd = tDstart + tDdur;
+		if (tDnoteEnd > clipMax) clipMax = tDnoteEnd;
+		let velString = n.velocity.toString(10);
+		let trimedVel = velString.substring(0,17);
+		let nj = {
+			"type":		2,
+			"time": 	tDstart,
+			"duration": tDdur,
+			"note": 	m,
+			"velocity": trimedVel,
+			"3": 		0,
+			"mod": 		0,
+			"modVal": 	0.5,
+			"isNotLast": i < (noteCount - 1),
+		};
+		notesOut.push(nj);
+	}
+	
+	let context = {events: notesOut};
+	let mpcOut = mpcpattern_file_tamplate(context);
+	return mpcOut;
+  }
+} // end class.
 
 export {MidiConversion};

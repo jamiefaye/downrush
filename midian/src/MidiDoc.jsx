@@ -4,8 +4,16 @@ import $ from'./js/jquery-3.2.1.min.js';
 import {Midi} from "./Midi/Midi.js";
 import {WedgeIndicator, PushButton, CopyToClipButton} from './GUIstuff.jsx';
 import {MidiConversion} from "./MidiConversion.js";
-import {pasteTrackJson, getFocusDoc} from "../../xmlView/lib/SongLib.js";
 
+import eol from "eol";
+
+import FileSaver from 'file-saver';
+
+var clipboardEnabled = false;
+var mpcEnabled = false;
+
+var focusMidiView;
+var addToDocFunction;
 
 class MidiHeader extends React.Component {
 
@@ -233,14 +241,15 @@ class MidiTrack extends React.Component {
 		let tname = track.name;
 		let inst = track.instrument;
 		let trackMask = this.props.converter.channelMasks[trackIndex];
-		
+		let addFunctionDefined = addToDocFunction !== undefined;
 		return (<React.Fragment><table className='miditrack'><tbody><tr><td className='midiheadr'><table className='midihead'><tbody>
 		<tr><td className='midichan'><b>{trackNum}</b>:<ChannelMask channelMask={trackMask} /></td></tr>
 		<tr><td className='midiinst'>{tname ? track.name : null}</td></tr>
 		<tr><td className='midiinst'>{inst ? <i>{inst.name}</i> : null}</td></tr>
 		<tr className='butnstr'><td className='butnstd'>
-			<PushButton title='+ Song' onPush={this.addSel.bind(this)} />
-			<CopyToClipButton title='&rarr; Clip' getText={this.copySel.bind(this)} />
+			{addFunctionDefined ? <PushButton title='+ Song' onPush={this.addSel.bind(this)} /> : null}
+			{clipboardEnabled ? <CopyToClipButton title='&rarr; Clip' getText={this.copySel.bind(this)}/> : null} 
+			{mpcEnabled ? <PushButton title='+ MPC' onPush={this.getMPC.bind(this)} /> : null}
 		</td></tr>
 		</tbody></table></td>
 		<td><MidiGrid ref={el => this.grid = el} track={track} converter={this.props.converter} /></td></tr></tbody></table>
@@ -258,16 +267,47 @@ class MidiTrack extends React.Component {
 	return asText;
   }
 
- addSel() {
+  addSel() {
 	let toCopy = this.props.track;
 	let converter = this.props.converter;
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
 	let converted = converter.convertTrackToDeluge(trackNum, start, end, converter.lowTicks, false);
+	addToDocFunction(converted);
+  }
+  
 
-	pasteTrackJson(converted, getFocusDoc());
+  getMPC() {
+	let toCopy = this.props.track;
+	let converter = this.props.converter;
+	let trackNum = this.props.trackNum;
+	let {start, end} = this.grid.getSelectedTimes();
+	let converted = converter.convertTrackToMPC(trackNum, start, end, converter.lowTicks, false);
+	exportMPC(converted, trackNum, this.props.song);
   }
 };
+
+function exportMPC(asText, trackNum, song) {
+	let asLinux = eol.lf(asText);
+	var blob = new Blob([asLinux], {type: "text/json"});
+
+	let fromDocPath = focusMidiView.fname;
+	if (fromDocPath['name']) {
+		fromDocPath = fromDocPath.name;
+	}
+	let parts = fromDocPath.split('/');
+	let namePart;
+	if (parts.length > 1) {
+		namePart = parts.pop();
+	} else {
+		namePart = parts[0];
+	}
+	// get file name from end.
+	let nameOnly = namePart.split('.')[0]; // get rid of extension
+	let saveName = nameOnly + "_Track_" + trackNum + ".mpcpattern";
+	FileSaver.saveAs(blob, saveName);
+}
+
 
  class MidiDocView extends React.Component {
 
@@ -325,4 +365,16 @@ function openMidiDoc(where, params) {
 	return midiDoc;
 }
 
-export {openMidiDoc};
+function setFocusMidiView(toMidi) {
+	focusMidiView = toMidi;
+}
+
+function setAddToDocFunction(toAdder) {
+	addToDocFunction = toAdder;
+}
+
+function setMpcEnabled(flag) {
+	mpcEnabled = true;
+}
+
+export {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled};

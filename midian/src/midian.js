@@ -1,5 +1,5 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import {openMidiDoc} from './MidiDoc.jsx';
+import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled} from './MidiDoc.jsx';
 
 require('file-loader?name=[name].[ext]!../midian.htm');
 require('file-loader?name=[name].[ext]!../css/midian.css');
@@ -16,7 +16,7 @@ import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser
 import FileSaver from 'file-saver';
 import {stepNextFile} from "./StepNextFile.js";
 
-import {setFocusDoc, makeDelugeDoc, getFocusDoc} from "../../xmlView/lib/SongLib.js";
+import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson} from "../../xmlView/lib/SongLib.js";
 
 "use strict";
 
@@ -248,6 +248,7 @@ function record()
 		 $('#midiview').append(me.html);
 		 me.bindGui();
 		 focusMidiView = that;
+		 setFocusMidiView(focusMidiView)
 	}
 	firstOpened = true;
 	var files = evt.target.files;
@@ -296,6 +297,7 @@ function onLoad()
 
 	if(!focusMidiView) {
 		focusMidiView = homeDoc;
+		setFocusMidiView(focusMidiView)
 		registerGlobalHandlers();
 	}
 
@@ -390,6 +392,13 @@ function openSongLocal(evt)
 	});
 }
 
+ function addToDocFunction(jsonTrack) {
+ 	pasteTrackJson(jsonTrack, getFocusDoc());
+ }
+
+setAddToDocFunction(addToDocFunction);
+setMpcEnabled(true);
+ 
 function createEmptySong()
 {
 	let data = empty_song_template();

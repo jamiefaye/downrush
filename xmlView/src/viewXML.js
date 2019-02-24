@@ -1,7 +1,15 @@
 
 import $ from'jquery';
 require('file-loader?name=[name].[ext]!../viewXML.htm');
+require('file-loader?name=[name].[ext]!../index.html');
 require('file-loader?name=[name].[ext]!../css/edit.css');
+require('file-loader?name=img/[name].[ext]!../img/copy-to-clipboard.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-174-play.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-175-pause.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-182-download-alt.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-237-zoom-in.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-238-zoom-out.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-594-voice.png');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";
 import React from 'react';
@@ -25,7 +33,7 @@ import {setSamplePathPrefix} from "./samplePath.js";
 var custom_sample_path = undefined;
 
 // Flag to enable local execution (not via the FlashAir web server)
-var local_exec = document.URL.indexOf('file:') == 0;
+var local_exec = document.URL.indexOf('file:') == 0 || standAlone;
 
 
 
