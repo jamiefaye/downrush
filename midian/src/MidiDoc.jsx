@@ -14,6 +14,7 @@ var mpcEnabled = false;
 
 var focusMidiView;
 var addToDocFunction;
+var docCounter = 0;
 
 class MidiHeader extends React.Component {
 
@@ -305,6 +306,7 @@ function exportMPC(asText, trackNum, song) {
 	// get file name from end.
 	let nameOnly = namePart.split('.')[0]; // get rid of extension
 	let saveName = nameOnly + "_Track_" + trackNum + ".mpcpattern";
+	
 	FileSaver.saveAs(blob, saveName);
 }
 
@@ -319,10 +321,10 @@ function exportMPC(asText, trackNum, song) {
 	this.midiConversion = new MidiConversion(midi);
 	let mc = this.midiConversion;
 	mc.calcTimeBounds();
-
+	docCounter+= 100000;
 	return (<React.Fragment><MidiHeader header={midi.header} text={this.props.midiText}/>
 		{midi.tracks.map((track, ix) =>{
-			return <MidiTrack trackNum={ix + 1} track={track} key={ix} song={midi} converter={mc}/>
+			return <MidiTrack trackNum={ix + 1} track={track} key={docCounter + ix} song={midi} converter={mc}/>
 		})}
 		<hr/>
 		</React.Fragment>);

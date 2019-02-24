@@ -234,6 +234,9 @@ class MidiConversion {
 		if (tDnoteEnd > clipMax) clipMax = tDnoteEnd;
 		let velString = n.velocity.toString(10);
 		let trimedVel = velString.substring(0,17);
+		if (n === 76) {
+			console.log("Wacko");
+		}
 		let nj = {
 			"type":		2,
 			"time": 	tDstart,
