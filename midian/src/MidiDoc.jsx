@@ -374,7 +374,11 @@ function setAddToDocFunction(toAdder) {
 }
 
 function setMpcEnabled(flag) {
-	mpcEnabled = true;
+	mpcEnabled = flag;
 }
 
-export {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled};
+function setClipboardEnabled(flag) {
+	clipboardEnabled = flag;
+}
+
+export {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled};

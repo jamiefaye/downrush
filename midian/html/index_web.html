@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1, maximum-scale=1, user-scalable=no">
+		<meta charset="UTF-8">
+		<title>Midian</title>
+<!-- https://stackoverflow.com/questions/951791/javascript-global-error-handling -->
+<div id="npoptemp" style="display: none;"></div>
+<script type="text/javascript">
+<!--
+window.onerror = function(msg, url, line, col, error) {
+   var extra = !col ? '' : '\ncolumn: ' + col;
+   extra += !error ? '' : '\nerror: ' + error;
+   alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
+   return true;
+};
+-->
+
+</script>
+<link rel="stylesheet" href="edit.css">
+<link rel="stylesheet" href="midian.css">
+</head>
+<body>
+This program lets you import Midi-format files into Synthstrom Deluge SONG.XML files.
+<p>
+To use this program, press the "Choose File" button and select a Midi file to work with. You will then see one or more Midi tracks displayed graphically. To add a track, click on the "+ Song" button and the track will be converted and appended.
+		<div id='filegroupplace'>
+			<table class='nobord'><tr>
+			<td>Midi File to Import:</td>
+			<td><input id='opener' name="file" type="file" accept=".mid,.MID"/></td>
+			</tr>
+			</table>
+		</div>
+		<div id='popupspot'></div>
+		<p class='tinygap'/>
+	<div id='midiview'>
+	</div>
+	<hr>
+	<div id='docspot'>
+	</div>
+<hr>
+	<div id='midiantab'>
+	</div>
+	<div id='filegroupsong'>
+		<table class='nobord'><tr>
+			<td>Song File:</td>
+			<td><input id='openlocalsongbutn' name="file" type="file" accept=".xml,.XML" value='Open Song'/></td>
+			<td><input id='downloadbut' type="button" value="Download" style="width:55pt" ></td>
+		</tr></table>
+	</div>
+<div id='songiew'>
+</div>
+<hr>
+	<ul>
+		<li>Download the updated song by clicking on the Download button at the bottom.</li>
+		<li>To add to an existing song, open it with the "Choose File" button.</li>
+		<li>Select a subset of a track to extract by clicking and dragging.</li>
+		<li>The "&rarr; Clip" button puts the midi track data on the clipboard. You can then paste it into the <a href="../xmlView/index.html">main XML viewer program.</a></li> 
+		<li>At present, the program only converts Note On/Note Off events.</li>
+		<li>The Midi file you choose and the SONG.XML file are processed entirely on your own computer. No information about it is sent anywhere else.</li>
+		<li>The program is experimental and no liability is assumed for bugs, crashes, etc. by Catnip or Synthstrom Audible.
+	</ul>
+<hr>
+© 2019 Catnip/Jamie Faye Fenton.
+<script src="midianweb.js"></script>
+</body>
+</html>

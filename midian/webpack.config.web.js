@@ -1,13 +1,15 @@
 const path = require('path');
 
 module.exports = {
-  entry: './src/midian.js',
-  watch: false,
-   devtool:  false,
+  entry: './src/midianweb.js',
+  devtool: 'source-map',
+  watch: true,
+  watchOptions: {ignored: 'node_modules/'},
   output: {
-    filename: 'midian.js',
-    path: path.resolve(__dirname, '../DR/midian/')
-//    path: "/Volumes/NO NAME/DR/midian"
+    filename: 'midianweb.js',
+//    path: path.resolve(__dirname, './')
+//	 path: path.resolve(__dirname, '../web/midian/')
+	     path: "/Volumes/NO NAME/web/midian"
   },
   module: {
       rules: [

@@ -8,7 +8,9 @@
     "dev": "webpack --mode development --config webpack.config.js",
     "build": "webpack --mode production --config webpack.config.prod.js",
     "devmpc": "webpack --mode development --config webpack.config.mpc.js",
-    "buildmpc": "webpack --mode production --config webpack.config.mpc.prod.js"
+    "buildmpc": "webpack --mode production --config webpack.config.mpc.prod.js",
+    "devweb": "webpack --mode development --config webpack.config.web.js",
+    "buildweb": "webpack --mode production --config webpack.config.web.prod.js"
   },
   "author": "",
   "license": "ISC",

@@ -1,13 +1,12 @@
 const path = require('path');
 
 module.exports = {
-  entry: './src/midian.js',
+  entry: './src/midianweb.js',
   watch: false,
    devtool:  false,
   output: {
-    filename: 'midian.js',
-    path: path.resolve(__dirname, '../DR/midian/')
-//    path: "/Volumes/NO NAME/DR/midian"
+    filename: 'midianweb.js',
+	 path: path.resolve(__dirname, '../web/midian/')
   },
   module: {
       rules: [

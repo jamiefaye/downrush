@@ -1,7 +1,7 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled} from './MidiDoc.jsx';
 
-require('file-loader?name=[name].[ext]!../midian.htm');
+require('file-loader?name=[name].[ext]!../html/midian.htm');
 require('file-loader?name=[name].[ext]!../css/midian.css');
 require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
 import filegroup_template from "./templates/filegroup_template.handlebars";

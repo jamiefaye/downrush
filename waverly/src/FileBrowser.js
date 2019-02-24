@@ -135,6 +135,7 @@ class SaveFileBrowser extends FileBrowser {
 
   dirSelect(browser, path) {
 	let nowName = $('#fw-name').val();
+	if (!nowName) return;
 	let splitup = nowName.split('/');
 	let namePart = 'Untitled.wav';
 	if (splitup.length) {

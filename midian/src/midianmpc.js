@@ -1,11 +1,8 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled} from './MidiDoc.jsx';
-require('file-loader?name=[name].[ext]!../index.html');
+require('file-loader?name=index.html!../html/index_mpc.html');
 require('file-loader?name=[name].[ext]!../css/midian.css');
 import filegroup_template from "./templates/filegroup_template.handlebars";
-import local_exec_head from "./templates/local_exec_head.handlebars";
-import local_exec_info from "./templates/local_exec_info.handlebars";
-import local_exec_song_group from "./templates/local_exec_song_group.handlebars";
 import FileSaver from 'file-saver';
 
 "use strict";
