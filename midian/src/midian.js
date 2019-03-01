@@ -1,9 +1,10 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled} from './MidiDoc.jsx';
+import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled} from './MidiDoc.jsx';
 
 require('file-loader?name=[name].[ext]!../html/midian.htm');
 require('file-loader?name=[name].[ext]!../css/midian.css');
 require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
+require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
 import filegroup_template from "./templates/filegroup_template.handlebars";
 import local_exec_head from "./templates/local_exec_head.handlebars";
 import local_exec_info from "./templates/local_exec_info.handlebars";
@@ -16,7 +17,7 @@ import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser
 import FileSaver from 'file-saver';
 import {stepNextFile} from "./StepNextFile.js";
 
-import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson} from "../../xmlView/lib/SongLib.js";
+import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson} from "../../xmlView/src/SongViewLib.js";
 
 "use strict";
 
@@ -397,7 +398,8 @@ function openSongLocal(evt)
  }
 
 setAddToDocFunction(addToDocFunction);
-setMpcEnabled(true);
+setMpcEnabled(false);
+setClipboardEnabled(true);
  
 function createEmptySong()
 {

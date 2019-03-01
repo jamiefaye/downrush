@@ -6,8 +6,8 @@ module.exports = {
    devtool:  false,
   output: {
     filename: 'midian.js',
-    path: path.resolve(__dirname, '../DR/midian/')
-//    path: "/Volumes/NO NAME/DR/midian"
+//    path: path.resolve(__dirname, '../DR/midian/')
+      path: "/Volumes/NO NAME/DR/midian"
   },
   module: {
       rules: [

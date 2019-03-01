@@ -472,6 +472,10 @@ height: 28px;
 min-height: 28px;
 }
 
+.tinybutn {
+	padding: 1px;
+}
+
 #hiddenfileopener
 {
     display:none;

@@ -1,0 +1,808 @@
+import $ from'jquery';
+
+import React from 'react';
+import ReactDOM from "react-dom";
+import convertHexTo50 from "./templates/convertHexTo50.js";
+import tippy from "./js/tippy.all.min.js";
+import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
+import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
+import note_tip_template from "./templates/note_tip_template.handlebars";
+import {trackKind, yToNoteName} from "./SongUtils.js";
+
+"use strict";
+
+var jQuery = $;
+
+var xPlotOffset = 32;
+
+function encodeNoteInfo(noteName, time, dur, vel, cond)
+{
+	// Use hack to generate leading zeros.
+	let th = (Number(time) + 0x100000000).toString(16).substring(1);
+	let dh = (Number(dur) + 0x100000000).toString(16).substring(1);
+	let vh = (Number(vel) + 0x100).toString(16).substring(1);
+	let ch = (Number(cond) + 0x100).toString(16).substring(1);
+
+	return th + dh + vh + ch + noteName;
+}
+// Used to cope with y addresses of -32768
+function rowYfilter(row) {
+	if (row.drumIndex) return Number(row.drumIndex);
+	let y = Number(row.y);
+	return y;
+}
+
+function plotNoteName(note, style, parentDiv) {
+	let labName = yToNoteName(note);
+	if (labName != undefined) {
+		let labdiv = $("<div class='notelab'/>");
+		labdiv.text(labName);
+		labdiv.css(style);
+		parentDiv.append(labdiv);
+	}
+}
+
+// 192 is the typical denominator. It's prime factors are 2 and 3.
+function simplifyFraction(num, den)
+{
+	while (num && den && (num & 1) === 0 && (den & 1) === 0) {
+		num >>= 1; den >>= 1;
+	}
+	while (num && den && (num % 3) === 0 && (den % 3) === 0) {
+		num /= 3; den /= 3;
+	}
+	if(num === den) return "1";
+
+	if(den === 1) return num.toString();
+
+	return num.toString() + '/' + den.toString();
+}
+
+function rgbToHexColor(r, g, b)
+{
+	let rh = r.toString(16);
+	if (rh.length < 2) rh = "0" + rh;
+	let gh = g.toString(16);
+	if (gh.length < 2) gh = "0" + gh;
+	let bh = b.toString(16);
+	if (bh.length < 2) bh = "0" + bh;
+	return '#' + rh + gh + bh;
+	
+}
+function colorEncodeNote(vel,cond) {
+	if (cond === 0x14) {
+		// vanilla note, just encode velocity	
+		let cv = (128 - vel) + 0x30;
+		return rgbToHexColor(cv, cv, cv);
+	}
+	if (cond < 0x14) {
+		if (cond < 5) { // red
+			return 'red';
+		} else if(cond < 15) { // yellow
+			return 'yellow';
+		} else { // green
+			return 'green';
+			
+		}
+	}
+	else if (cond > 0x14) { // blue for conditional
+		return 'lightblue';
+	}
+}
+
+
+/*******************************************************************************
+
+		TRACK
+
+ *******************************************************************************
+*/
+
+function plotKit13(track, reftrack) {
+	let kitItemH = 8;
+	let trackW = Number(track.trackLength);
+// first walk the track and find min and max y positions
+	let ymin =  1000000;
+	let ymax = -1000000;
+	let rowList = forceArray(track.noteRows.noteRow);
+	let parentDiv = $("<div class='kitgrid'/>");
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		let y = rowYfilter(row);
+		if (y >= 0) {
+			if (y < ymin) ymin = y;
+			if (y > ymax) ymax = y;
+		}
+	}
+	let totH = ((ymax - ymin) + 1) * kitItemH;
+	if (!reftrack.kit.soundSources) {
+		let meow = 2;
+	}
+	let kitList = forceArray(reftrack.kit.soundSources);
+	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+	if (kitList) {
+		for (var rx = 0; rx < rowList.length; ++rx) {
+			let row = rowList[rx];
+			var noteList = forceArray(row.notes.note);
+			let y = rowYfilter(row);
+			let ypos = (y- ymin) * kitItemH;
+			let labName = '';
+			if (row.drumIndex) {
+				let rowInfo = kitList[row.drumIndex];
+				labName = rowInfo.name;
+				if (labName != undefined) {
+					let labdiv = $("<div class='kitlab'/>");
+					labdiv.text(labName);
+					labdiv.css({left: 0, bottom: (ypos - 2) + 'px'});
+					parentDiv.append(labdiv);
+				}
+			}
+			if (y < 0) continue;
+			for (var nx = 0; nx < noteList.length; ++nx) {
+				let n = noteList[nx];
+				let x = Number(n.pos);
+				let dx = x + xPlotOffset;
+				let dur = n.length;
+				if (dur > 1) dur--;
+				let vel = n.velocity;
+
+				let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
+				let ndiv = $("<div class='trkitnote npop' data-note='" + noteInfo + "'/>");
+
+				ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
+				parentDiv.append(ndiv);
+			}
+		}
+	}
+	return parentDiv;
+}
+
+function findKitInstrument(track, list) {
+	let pSlot = track.instrumentPresetSlot;
+	let pSubSlot = track.instrumentPresetSubSlot;
+	let items = forceArray(list);
+	if (items) {
+		for(let k of items) {
+			if (k instanceof Kit) {
+				if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
+			}
+		}
+	}
+	return undefined;
+}
+
+function findSoundInstrument(track, list) {
+	let pSlot = track.instrumentPresetSlot;
+	let pSubSlot = track.instrumentPresetSubSlot;
+	let items = forceArray(list);
+	if (items) {
+		for(let k of items) {
+			if (k instanceof Sound) {
+				if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
+			}
+		}
+	}
+	return undefined;
+}
+
+function findCVInstrument(track, list) {
+	let pChan = track.cvChannel;
+	let items = forceArray(list);
+	if (items) {
+		for(let k of items) {
+			if (k instanceof CVChannel) {
+				if (k.channel === pChan) return k;
+			}
+		}
+	}
+	return undefined;
+}
+
+function findMidiInstrument(track, list) {
+	let pChan = track.midiChannel;
+	let items = forceArray(list);
+	if (items) {
+		for(let k of items) {
+			if (k instanceof MidiChannel) {
+				if (k.channel === pChan) return k;
+			}
+		}
+	}
+	return undefined;
+}
+
+
+function findKitList(track, song) {
+	let kitList;
+	if (track.kit) {
+		kitList = forceArray(track.kit.soundSources);
+	} else {
+		let kitI = findKitInstrument(track, song.instruments);
+		if(!kitI) {
+			console.log("Missing kit instrument");
+			return;
+		}
+		kitList = forceArray(kitI.soundSources);
+	}
+	return kitList;
+}
+
+function findSoundData(track, song) {
+	let soundData;
+	if (track.sound) {
+		soundData = track.sound;
+	} else {
+		soundData = findSoundInstrument(track, song.instruments);
+		if(!soundData) {
+			console.log("Missing sound data");
+		}
+	}
+	return soundData;
+}
+
+function plotKit14(track, reftrack, song) {
+	let kitItemH = 8;
+	let trackW = Number(track.trackLength);
+// first walk the track and find min and max y positions
+	let ymin =  1000000;
+	let ymax = -1000000;
+	let rowList = forceArray(track.noteRows.noteRow);
+
+	let parentDiv = $("<div class='kitgrid'/>");
+	if (rowList.length === 0) return parentDiv;
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		let y = rowYfilter(row);
+		if (y >= 0) {
+			if (y < ymin) ymin = y;
+			if (y > ymax) ymax = y;
+		}
+	}
+	let totH = ((ymax - ymin) + 1) * kitItemH;
+	let kitList = findKitList(reftrack, song);
+
+	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+	if (kitList) {
+		for (var rx = 0; rx < rowList.length; ++rx) {
+			let row = rowList[rx];
+			var noteData = row.noteData;
+			let labName = '';
+			let y = rowYfilter(row);
+			let ypos = (y- ymin) * kitItemH;
+	
+			if (row.drumIndex) {
+				let rowInfo = kitList[row.drumIndex];
+				labName = rowInfo.name;
+				if (rowInfo.channel) {
+					let chanNum = Number(rowInfo.channel);
+					if (rowInfo.note) { // Midi
+						labName = (chanNum + 1) + "." + rowInfo.note;
+					} else { // CV
+						labName = "Gate " + chanNum;
+					}
+				}
+				if (labName != undefined) {
+					let labdiv = $("<div class='kitlab'/>");
+					labdiv.text(labName);
+					labdiv.css({left: 0, bottom: (ypos - 2) + 'px'});
+					parentDiv.append(labdiv);
+				}
+			}
+			if (y < 0) continue;
+			if (noteData) {
+				for (var nx = 2; nx < noteData.length; nx += 20) {
+					let notehex = noteData.substring(nx, nx + 20);
+					let x = parseInt(notehex.substring(0, 8), 16);
+					let dur =  parseInt(notehex.substring(8, 16), 16);
+					let vel = parseInt(notehex.substring(16, 18), 16);
+					let cond = parseInt(notehex.substring(18, 20), 16);
+					let noteInfo = notehex + labName;
+					x += xPlotOffset;
+					if (dur > 1) dur--;
+					let ndiv = $("<div class='trnkn npop' data-note='" + noteInfo + "'/>");
+					ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
+					parentDiv.append(ndiv);
+				}
+			}
+		}
+	}
+	return parentDiv;
+}
+
+
+function plotTrack13(track, song) {
+// first walk the track and find min and max y positions
+	let trackW = Number(track.trackLength);
+	let ymin =  1000000;
+	let ymax = -1000000;
+	let rowList = forceArray(track.noteRows.noteRow);
+	let parentDiv = $("<div class='trgrid'/>");
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		let y = rowYfilter(row);
+		if (y >= 0) {
+			if (y < ymin) ymin = y;
+			if (y > ymax) ymax = y;
+		}
+	}
+	let totH = ((ymax - ymin) + 2) * 4;
+
+	parentDiv.css({height: totH + 'px'});
+	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		var noteList = forceArray(row.notes.note);
+		let y = rowYfilter(row);
+		let labName = yToNoteName(y);
+		if (y < 0) continue;
+		for (var nx = 0; nx < noteList.length; ++nx) {
+			let n = noteList[nx];
+			let x = Number(n.pos);
+			let dx = x + xPlotOffset;
+			let dur = n.length;
+			if (dur > 1) dur--;
+			let vel = n.velocity;
+
+			let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
+			let ndiv = $("<div class='trnote npop' data-note='" + noteInfo + "'/>");
+			let ypos = (y- ymin) * 4 + 2;
+			ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
+			parentDiv.append(ndiv);
+		}
+	}
+	let miny = totH - 10;
+	plotNoteName(ymin, {top: miny + 'px'}, parentDiv);
+	if (ymin !== ymax) {
+		plotNoteName(ymax, {top: '0px'}, parentDiv);
+	}
+	return parentDiv;
+}
+
+
+function plotTrack14(track, song) {
+// first walk the track and find min and max y positions 
+	let trackW = Number(track.trackLength);
+	let ymin =  1000000;
+	let ymax = -1000000;
+	let rowList = forceArray(track.noteRows.noteRow);
+	let parentDiv = $("<div class='trgrid'/>");
+	if (rowList.length === 0) return parentDiv;
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		let y = rowYfilter(row);
+		if (y >= 0) {
+			if (y < ymin) ymin = y;
+			if (y > ymax) ymax = y;
+		}
+	}
+	let totH = ((ymax - ymin) + 2) * 4;
+
+	parentDiv.css({height: totH + 'px'});
+	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		var noteData = row.noteData;
+		let y = rowYfilter(row);
+		if (y < 0) continue;
+		let labName = yToNoteName(y);
+		for (var nx = 2; nx < noteData.length; nx += 20) {
+			let notehex = noteData.substring(nx, nx + 20);
+			let x = parseInt(notehex.substring(0, 8), 16);
+			let dur =  parseInt(notehex.substring(8, 16), 16);
+			let vel = parseInt(notehex.substring(16, 18), 16);
+			let cond = parseInt(notehex.substring(18, 20), 16);
+			let noteInfo = notehex + labName;
+			x += xPlotOffset;
+			if (dur > 1) dur--;
+			let ndiv = $("<div class='trnsn npop' data-note='" + noteInfo + "'/>");
+
+			let ypos = (y- ymin) * 4 + 2;
+			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
+			parentDiv.append(ndiv);
+		}
+	}
+	let miny = totH - 10;
+	plotNoteName(ymin, {top: miny + 'px'}, parentDiv);
+	if (ymin !== ymax) {
+		plotNoteName(ymax, {top: '0px'}, parentDiv);
+	}
+	return parentDiv;
+
+}
+
+
+var nitTable = "111222132333142434441525354555162636465666172737475767771828384858687888";
+
+
+function activateTippy()
+{
+	tippy('.npop', {
+		arrow: true,
+		html: '#npoptemp',
+		onShow(pop) {
+		// `this` inside callbacks refers to the popper element
+			const content = this.querySelector('.tippy-content');
+			let text = pop.reference.getAttribute('data-text');
+			if (text) {
+				content.innerHTML = text;
+				return;
+			}
+
+			let notehex = pop.reference.getAttribute('data-note');
+			let x = parseInt(notehex.substring(0, 8), 16);
+			let dur =  parseInt(notehex.substring(8, 16), 16);
+			let vel = parseInt(notehex.substring(16, 18), 16);
+			let cond = parseInt(notehex.substring(18, 20), 16);
+			let notename = notehex.substring(20);
+			let condtext = '';
+			let condcode = cond & 0x7F;
+			if (condcode != 0x14) {
+				if (condcode < 0x14) { // Its a probability.
+					let prob = condcode * 5;
+					condtext = prob + '%';
+					if(cond & 0x80) { // if it has a dot, show that
+						condtext = '.' + condtext;
+					}
+				} else { // Its a 1 of N
+					let nitBase = (condcode - 0x14) * 2;
+					condtext = '[' + nitTable[nitBase] + " out of " + nitTable[nitBase + 1] + ']';
+				}
+			}
+
+			// Convert duration to fraction of a measure
+			let durFrac = simplifyFraction(dur, 192);
+
+			// Convert start time to measure, beat, subbeat
+			let meas = Math.floor(x / 192) + 1;
+			let beat = Math.floor((x % 192) / 48)+ 1;
+			let subbeat = Math.floor((x % 48) / 12) + 1;
+			let subFrac = Math.floor(x % 12);
+			let beatX = meas.toString() + '.' + beat.toString() + '.' + subbeat.toString();
+			if (subFrac > 0) {
+				beatX += '+' + simplifyFraction(subFrac, 192);
+			}
+			// {{notename}} {{notevel}} {{notedur}} {{notestart}} {{noteprob}}
+			let noteInfo = note_tip_template({
+				notename: notename,
+				notevel: vel,
+				notedur: durFrac,
+				notestart: beatX,
+				noteprob: condtext,
+			});
+			content.innerHTML = noteInfo;
+			},
+		onHidden() {
+			const content = this.querySelector('.tippy-content')
+			content.innerHTML = '';
+			},
+	});
+}
+
+function usesNewNoteFormat(track) {
+	let rowList = forceArray(track.noteRows.noteRow);
+	if (rowList.length === 0) return true;
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		if (row.noteData) return true;
+		if (row.notes && row.notes.note) return false;
+	}
+	return false;
+}
+
+
+function plotParamChanges(k, ps, tracklen, prefix, elem)
+{
+	elem.append($("<p class='tinygap'/>"));
+	let parentDiv = $("<div class='parmplot'/>");
+	let cursor = 10;
+	let xpos = 0;
+	let textH = 8;
+
+	var runVal = convertHexTo50(ps.substring(2,10));
+
+	while (cursor < ps.length) {
+		let nextVal = convertHexTo50(ps.substring(cursor, cursor + 8));
+		let runx = parseInt(ps.substring(cursor + 8, cursor + 16), 16);
+		let runto = runx & 0x7FFFFFFF; // mask off sign
+		let ndiv = $("<div class='paramrun'/>");
+		ndiv.css({left: (xpos + xPlotOffset) + 'px', bottom: (runVal + 2) + 'px', width: (runto - xpos) + 'px'});
+		parentDiv.append(ndiv);
+		cursor += 16;
+		xpos = runto;
+		runVal = nextVal;
+	}
+	// Handle last run in sequence
+	if (xpos <= tracklen) {
+		let ndiv = $("<div class='paramrun'/>");
+		ndiv.css({left: (xpos + xPlotOffset) + 'px', bottom: (runVal + 2)  + 'px', width: (tracklen - xpos) + 'px'});
+		parentDiv.append(ndiv);
+	}
+
+	let labdiv = $("<div class='parmlab'/>");
+	labdiv.text(prefix + k);
+	parentDiv.append(labdiv);
+	parentDiv.css({width: (tracklen + xPlotOffset) + 'px'});
+	elem.append(parentDiv);
+}
+
+var knobToParamNameTab = ["Pan", "Volume", "Res/FM", "Cutoff/FM",
+ "Release","Attack", "Amount", "Delay Time",
+ "Reverb", "Sidechain","Depth", "Mod Rate",
+ "Custom 1", "Stutter", "Custom 3", "Custom 2"];
+
+
+function plotParamLevel(prefix, track, trackW, elem)
+{
+	if (!track) return;
+	for (var k in track) {
+		if(track.hasOwnProperty(k)) {
+			let v = track[k];
+			if(typeof v === "string"&& v.startsWith('0x') && v.length > 10) {
+				plotParamChanges(k, v, trackW, prefix, elem);
+			}
+		}
+	}
+}
+
+function plotNoteLevelParams(noteRowA, track, trackW, song, elem)
+{
+	if (!noteRowA) return;
+	let kitList = findKitList(track, song);
+	if (!kitList) return;
+	noteRowA = forceArray(noteRowA);
+	for (var i = 0; i < noteRowA.length; ++i) {
+		let aRow = noteRowA[i];
+		let aDrum = kitList[aRow.drumIndex];
+		
+		let prefix = aDrum ? kitList[aRow.drumIndex].name + '.' : '.';
+		plotParamLevel(prefix, aRow.soundParams, trackW, elem);
+	}
+}
+
+function plotKnobLevelParams(knobs, track, trackW, elem)
+{
+	if (!knobs) return;
+	for (var i = 0; i < knobs.length; ++i) {
+		// if(typeof v === "string"&& v.startsWith('0x') && v.length > 10)
+		let aKnob = knobs[i];
+		let v = aKnob.value;
+		if (typeof v === "string"&& v.startsWith('0x') && v.length > 10) {
+			let prefix = "CC: " + aKnob.cc + " (" + knobToParamNameTab[i] + ")";
+			plotParamChanges('', v, trackW, prefix, elem);
+		}
+	}
+}
+
+function plotParams(track, refTrack, song, elem) {
+	let trackType = trackKind(track);
+	let trackW = Number(track.trackLength);
+	if (track.sound) plotParamLevel("sound.", track.sound, trackW, elem);
+	if (track.defaultParams) plotParamLevel("default.", track.defaultParams, trackW, elem);
+	if (track.soundParams) plotParamLevel("params.", track.soundParams, trackW, elem);
+
+	if (track.kitParams) {
+		plotParamLevel("kit.", track.kitParams, trackW, elem);
+		if (track.noteRows) {
+			plotNoteLevelParams(track.noteRows.noteRow, refTrack, trackW, song, elem);
+		}
+	}
+	if (trackType == 'midi' && track.modKnobs) {
+		plotKnobLevelParams(forceArray(track.modKnobs.modKnob), track, trackW, song, elem);
+	}
+}
+
+
+
+class NotePlot extends React.Component {
+
+  componentDidMount() {
+
+	this.insetX = 6;
+	this.scaling = 1;
+	this.symbolize();
+	this.dragging = false;
+	this.dragStart = 0;
+	this.start = 0;
+	this.end = 0;
+	this.duration = 0;
+
+  }
+
+  symbolize() {
+
+	let track = this.props.track;
+	let tKind = trackKind(track);
+	let jsong = this.props.song;
+	let refTrack = track;
+	let newNotes = usesNewNoteFormat(track);
+	if (track.instrument && track.instrument.referToTrackId !== undefined) {
+		let trax = forceArray(jsong.tracks.track);
+		let fromID = Number(track.instrument.referToTrackId);
+		refTrack = trax[fromID];
+	}
+
+	let parentDiv;
+	if(tKind === 'kit') {
+		if(newNotes) {
+			parentDiv = plotKit14(track, refTrack, jsong);
+		} else {
+			parentDiv = plotKit13(track, refTrack);
+		}
+	} else {
+		if(newNotes) {
+			parentDiv = plotTrack14(track, jsong);
+		} else {
+			parentDiv = plotTrack13(track, jsong);
+		}
+	}
+	plotParams(track, refTrack, this.props.song, parentDiv)
+	this.selection = $("<div class='selbox'/>");
+	parentDiv.append(this.selection);
+	$(this.el).append(parentDiv);
+	
+
+  }
+
+  changeSel(t0, t1) {
+	let startX = this.timeToX(t0);
+	let endX = this.timeToX(t1);
+	this.start = t0;
+	this.end = t1;
+
+	// console.log("start: " + start + " end: " + end);
+	this.selection.css({left: startX + 'px', width: (endX - startX) + 'px', top: 0 + 'px', height: this.height + 'px' });
+  }
+
+  timeToX(t) {
+
+	let x = Math.round(t * this.scaling) + this.insetX;
+	//if (x < 0) x = 0;
+	//if (x > this.highW) x = this.highW;
+	return x;
+  }
+
+  xToTime(xr) {
+
+	let xt = (xr - this.insetX) / this.scaling;
+	//if (xt < 0) xt = 0;
+	//if (xt > this.duration) xt = this.duration;
+	return xt;
+  }
+
+  render() {
+	return <div ref={el => this.el = el}> </div>
+  }
+
+  bounds() {
+  	return this.el.getBoundingClientRect();
+  }
+
+  getSelection() {
+  	let firstTime = this.props.converter.lowTime;
+  	return {
+		start: this.start + firstTime,
+		end:   this.end + firstTime
+	}
+  }
+}
+
+
+
+class NoteGrid extends React.Component {
+  constructor(props) {
+  	super(props);
+  }
+
+  render() {
+  	return <div onMouseDown={(e)=>{this.begin_drag(e)}}>
+		<NotePlot ref={el => this.plot = el} track={this.props.track} song={this.props.song} />
+  		</div>
+  }
+
+  begin_drag(e) {
+	var dragActive;
+	var t0;
+	var t1;
+	var me = this;
+	var clientRect = me.plot.bounds();
+
+	var rangeUpdater = function(e) {
+		let x = e.clientX - clientRect.left;
+		t1 = me.plot.xToTime(x);
+		let tS = t0;
+		let tE = t1;
+		if (t1 < t0) {
+			tS = t1;
+			tE = t0;
+		}
+		me.plot.changeSel(tS, tE);
+	}
+
+	var eventMove = function (e) {
+		if (!dragActive) return;
+		rangeUpdater(e);
+	}
+
+	var eventUp = function (e) {
+		dragActive = false;
+		if (t0 === t1) {
+			me.plot.changeSel(0,0)
+		}
+		let win = $(window);
+		win.off('mousemove', eventMove);
+		win.off('touchmove', eventMove);
+		win.off('mouseup', eventUp);
+		win.off('touchend', eventUp);
+	}
+
+	var eventDown = function (e) {
+		let x = e.clientX - clientRect.left;
+		t0 = me.plot.xToTime(x);
+		t1 = t0;
+
+		dragActive = true;
+
+		let win = $(window);
+		win.on('mousemove', eventMove); // dynamic listeners
+		win.on('touchmove', eventMove);
+		win.on('mouseup', eventUp);
+		win.on('touchend', eventUp);
+	}
+
+	eventDown(e);
+  }
+
+  getSelectedTimes() {
+	return this.plot.getSelection();
+  }
+}
+
+
+ class TrackView extends React.Component {
+    constructor(context) {
+      	super(context);
+		this.context = context;
+		this.jqElem = context.jqElem;
+  	}
+ 
+ 	render() {
+ 		let props = this.props;
+ 		let track = props.track;
+
+ 		
+ 		return <NoteGrid track={track} song={props.song} />
+ 	
+ 	}
+ }
+
+ class TrackObj {
+   constructor(context) {
+		this.context = context;
+		this.jqElem = context.jqElem;
+  	}
+
+	render() {
+		let jqElem = this.jqElem;
+		this.trackObj = React.createElement(TrackView, this.context);
+		ReactDOM.render(this.trackObj, jqElem);
+	}
+
+} // End class
+
+function placeTrackObj(where, trackJ, song) {
+	
+	let context = {};
+	// React wants to be given a DOM object to replace, so we make one up
+	where.append("<div/>");
+	let obj = where[0].lastChild
+	context.jqElem = obj
+	context.track = trackJ;
+	context.song = song;
+	let trackObj = new TrackObj(context);
+	trackObj.render();
+	return trackObj;
+}
+
+export {placeTrackObj, activateTippy, findKitList, findKitInstrument, findSoundInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}

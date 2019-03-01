@@ -12,7 +12,7 @@ import empty_song_template from "./templates/empty_song.handlebars";
 
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import FileSaver from 'file-saver';
-import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson} from "../../xmlView/lib/SongLib.js";
+import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson} from "../../xmlView/src/SongViewLib.js";
 
 "use strict";
 

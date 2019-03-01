@@ -10,7 +10,6 @@ import {getXmlDOMFromString, jsonToXMLString, xmlToJson, jsonToTable} from "./Js
 import {showArranger, colorForGroup, bumpTracks} from "./Arranger.jsx";
 import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 
-import convertHexTo50 from "./templates/convertHexTo50.js";
 import fixm50to50 from "./templates/fixm50to50.js";
 import fmtsync from "./templates/fmtsync.js";
 
@@ -22,7 +21,6 @@ import {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString} from "./S
 
 import track_head_template from "./templates/track_head_template.handlebars";
 import sample_list_template from "./templates/sample_list_template.handlebars";
-import param_plot_template from "./templates/param_plot_template.handlebars";
 import paster_template from "./templates/paster_template.handlebars";
 import midiKnobTemplate from "./templates/midiKnobTemplate.handlebars";
 import modKnobTemplate from "./templates/modKnobTemplate.handlebars";
@@ -32,12 +30,14 @@ import sound_template from "./templates/sound_template.handlebars";
 import song_template from "./templates/song_template.handlebars";
 import simple_track_template from "./templates/simple_track_template.handlebars";
 
+import {placeTrackObj, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
+
 "use strict";
 
 var jQuery = $;
 var COLOR_POPUP = false;
 var gIdCounter = 0;
-var xPlotOffset = 32;
+
 var focusDoc;
 /* Plotters
 */
@@ -77,82 +77,7 @@ function enableColorPops() {
 		},
 	});
 }
-// Used to cope with y addresses of -32768
-function rowYfilter(row) {
-	if (row.drumIndex) return Number(row.drumIndex);
-	let y = Number(row.y);
-	return y;
-}
 
-function encodeNoteInfo(noteName, time, dur, vel, cond)
-{
-	// Use hack to generate leading zeros.
-	let th = (Number(time) + 0x100000000).toString(16).substring(1);
-	let dh = (Number(dur) + 0x100000000).toString(16).substring(1);
-	let vh = (Number(vel) + 0x100).toString(16).substring(1);
-	let ch = (Number(cond) + 0x100).toString(16).substring(1);
-
-	return th + dh + vh + ch + noteName;
-}
-
-function plotNoteName(note, style, parentDiv) {
-	let labName = yToNoteName(note);
-	if (labName != undefined) {
-		let labdiv = $("<div class='notelab'/>");
-		labdiv.text(labName);
-		labdiv.css(style);
-		parentDiv.append(labdiv);
-	}
-}
-
-
-function rgbToHexColor(r, g, b)
-{
-	let rh = r.toString(16);
-	if (rh.length < 2) rh = "0" + rh;
-	let gh = g.toString(16);
-	if (gh.length < 2) gh = "0" + gh;
-	let bh = b.toString(16);
-	if (bh.length < 2) bh = "0" + bh;
-	return '#' + rh + gh + bh;
-	
-}
-function colorEncodeNote(vel,cond) {
-	if (cond === 0x14) {
-		// vanilla note, just encode velocity	
-		let cv = (128 - vel) + 0x30;
-		return rgbToHexColor(cv, cv, cv);
-	}
-	if (cond < 0x14) {
-		if (cond < 5) { // red
-			return 'red';
-		} else if(cond < 15) { // yellow
-			return 'yellow';
-		} else { // green
-			return 'green';
-			
-		}
-	}
-	else if (cond > 0x14) { // blue for conditional
-		return 'lightblue';
-	}
-}
-
-// 192 is the typical denominator. It's prime factors are 2 and 3.
-function simplifyFraction(num, den)
-{
-	while (num && den && (num & 1) === 0 && (den & 1) === 0) {
-		num >>= 1; den >>= 1;
-	}
-	while (num && den && (num % 3) === 0 && (den % 3) === 0) {
-		num /= 3; den /= 3;
-	}
-	if(num === den) return "1";
-
-	if(den === 1) return num.toString();
-
-	return num.toString() + '/' + den.toString();
-}
 
 function formatModKnobs(knobs, title, obj)
 {
@@ -266,7 +191,7 @@ function addTrackToSong(pastedJSON, songDoc) {
 	let song = songDoc.jsonDocument.song;
 
 	// If needed, convert the tracks note format
-	let clipUsingNewNotes = usesNewNotekFormat(pastedJSON.track);
+	let clipUsingNewNotes = usesNewNoteFormat(pastedJSON.track);
 	if (clipUsingNewNotes !== songDoc.newNoteFormat) {
 		if (songDoc.newNoteFormat) {
 			console.log('converting old note format to new');
@@ -521,501 +446,6 @@ function viewSound(e, songJ) {
  *******************************************************************************
 */
 
-function plotKit13(track, reftrack, obj) {
-	let kitItemH = 8;
-	let trackW = Number(track.trackLength);
-// first walk the track and find min and max y positions
-	let ymin =  1000000;
-	let ymax = -1000000;
-	let rowList = forceArray(track.noteRows.noteRow);
-	let parentDiv = $("<div class='kitgrid'/>");
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		let y = rowYfilter(row);
-		if (y >= 0) {
-			if (y < ymin) ymin = y;
-			if (y > ymax) ymax = y;
-		}
-	}
-	let totH = ((ymax - ymin) + 1) * kitItemH;
-	if (!reftrack.kit.soundSources) {
-		let meow = 2;
-	}
-	let kitList = forceArray(reftrack.kit.soundSources);
-	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
-	if (kitList) {
-		for (var rx = 0; rx < rowList.length; ++rx) {
-			let row = rowList[rx];
-			var noteList = forceArray(row.notes.note);
-			let y = rowYfilter(row);
-			let ypos = (y- ymin) * kitItemH;
-			let labName = '';
-			if (row.drumIndex) {
-				let rowInfo = kitList[row.drumIndex];
-				labName = rowInfo.name;
-				if (labName != undefined) {
-					let labdiv = $("<div class='kitlab'/>");
-					labdiv.text(labName);
-					labdiv.css({left: 0, bottom: (ypos - 2) + 'px'});
-					parentDiv.append(labdiv);
-				}
-			}
-			if (y < 0) continue;
-			for (var nx = 0; nx < noteList.length; ++nx) {
-				let n = noteList[nx];
-				let x = Number(n.pos);
-				let dx = x + xPlotOffset;
-				let dur = n.length;
-				if (dur > 1) dur--;
-				let vel = n.velocity;
-
-				let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
-				let ndiv = $("<div class='trkitnote npop' data-note='" + noteInfo + "'/>");
-
-				ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
-				parentDiv.append(ndiv);
-			}
-		}
-	}
-	obj.append(parentDiv);
-}
-
-function findKitInstrument(track, list) {
-	let pSlot = track.instrumentPresetSlot;
-	let pSubSlot = track.instrumentPresetSubSlot;
-	let items = forceArray(list);
-	if (items) {
-		for(let k of items) {
-			if (k instanceof Kit) {
-				if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
-			}
-		}
-	}
-	return undefined;
-}
-
-function findSoundInstrument(track, list) {
-	let pSlot = track.instrumentPresetSlot;
-	let pSubSlot = track.instrumentPresetSubSlot;
-	let items = forceArray(list);
-	if (items) {
-		for(let k of items) {
-			if (k instanceof Sound) {
-				if (k.presetSlot === pSlot && k.presetSubSlot === pSubSlot) return k;
-			}
-		}
-	}
-	return undefined;
-}
-
-function findCVInstrument(track, list) {
-	let pChan = track.cvChannel;
-	let items = forceArray(list);
-	if (items) {
-		for(let k of items) {
-			if (k instanceof CVChannel) {
-				if (k.channel === pChan) return k;
-			}
-		}
-	}
-	return undefined;
-}
-
-function findMidiInstrument(track, list) {
-	let pChan = track.midiChannel;
-	let items = forceArray(list);
-	if (items) {
-		for(let k of items) {
-			if (k instanceof MidiChannel) {
-				if (k.channel === pChan) return k;
-			}
-		}
-	}
-	return undefined;
-}
-
-
-function findKitList(track, song) {
-	let kitList;
-	if (track.kit) {
-		kitList = forceArray(track.kit.soundSources);
-	} else {
-		let kitI = findKitInstrument(track, song.instruments);
-		if(!kitI) {
-			console.log("Missing kit instrument");
-			return;
-		}
-		kitList = forceArray(kitI.soundSources);
-	}
-	return kitList;
-}
-
-function findSoundData(track, song) {
-	let soundData;
-	if (track.sound) {
-		soundData = track.sound;
-	} else {
-		soundData = findSoundInstrument(track, song.instruments);
-		if(!soundData) {
-			console.log("Missing sound data");
-		}
-	}
-	return soundData;
-}
-
-function plotKit14(track, reftrack, song, obj) {
-	let kitItemH = 8;
-	let trackW = Number(track.trackLength);
-// first walk the track and find min and max y positions
-	let ymin =  1000000;
-	let ymax = -1000000;
-	let rowList = forceArray(track.noteRows.noteRow);
-	if (rowList.length === 0) return;
-	let parentDiv = $("<div class='kitgrid'/>");
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		let y = rowYfilter(row);
-		if (y >= 0) {
-			if (y < ymin) ymin = y;
-			if (y > ymax) ymax = y;
-		}
-	}
-	let totH = ((ymax - ymin) + 1) * kitItemH;
-	let kitList = findKitList(reftrack, song);
-
-	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
-	if (kitList) {
-		for (var rx = 0; rx < rowList.length; ++rx) {
-			let row = rowList[rx];
-			var noteData = row.noteData;
-			let labName = '';
-			let y = rowYfilter(row);
-			let ypos = (y- ymin) * kitItemH;
-	
-			if (row.drumIndex) {
-				let rowInfo = kitList[row.drumIndex];
-				labName = rowInfo.name;
-				if (rowInfo.channel) {
-					let chanNum = Number(rowInfo.channel);
-					if (rowInfo.note) { // Midi
-						labName = (chanNum + 1) + "." + rowInfo.note;
-					} else { // CV
-						labName = "Gate " + chanNum;
-					}
-				}
-				if (labName != undefined) {
-					let labdiv = $("<div class='kitlab'/>");
-					labdiv.text(labName);
-					labdiv.css({left: 0, bottom: (ypos - 2) + 'px'});
-					parentDiv.append(labdiv);
-				}
-			}
-			if (y < 0) continue;
-			if (noteData) {
-				for (var nx = 2; nx < noteData.length; nx += 20) {
-					let notehex = noteData.substring(nx, nx + 20);
-					let x = parseInt(notehex.substring(0, 8), 16);
-					let dur =  parseInt(notehex.substring(8, 16), 16);
-					let vel = parseInt(notehex.substring(16, 18), 16);
-					let cond = parseInt(notehex.substring(18, 20), 16);
-					let noteInfo = notehex + labName;
-					x += xPlotOffset;
-					if (dur > 1) dur--;
-					let ndiv = $("<div class='trnkn npop' data-note='" + noteInfo + "'/>");
-					ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
-					parentDiv.append(ndiv);
-				}
-			}
-		}
-	}
-	obj.append(parentDiv);
-}
-
-
-function plotTrack13(track, obj) {
-// first walk the track and find min and max y positions
-	let trackW = Number(track.trackLength);
-	let ymin =  1000000;
-	let ymax = -1000000;
-	let rowList = forceArray(track.noteRows.noteRow);
-	let parentDiv = $("<div class='trgrid'/>");
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		let y = rowYfilter(row);
-		if (y >= 0) {
-			if (y < ymin) ymin = y;
-			if (y > ymax) ymax = y;
-		}
-	}
-	let totH = ((ymax - ymin) + 2) * 4;
-
-	parentDiv.css({height: totH + 'px'});
-	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
-
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		var noteList = forceArray(row.notes.note);
-		let y = rowYfilter(row);
-		let labName = yToNoteName(y);
-		if (y < 0) continue;
-		for (var nx = 0; nx < noteList.length; ++nx) {
-			let n = noteList[nx];
-			let x = Number(n.pos);
-			let dx = x + xPlotOffset;
-			let dur = n.length;
-			if (dur > 1) dur--;
-			let vel = n.velocity;
-
-			let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
-			let ndiv = $("<div class='trnote npop' data-note='" + noteInfo + "'/>");
-			let ypos = (y- ymin) * 4 + 2;
-			ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
-			parentDiv.append(ndiv);
-		}
-	}
-	let miny = totH - 10;
-	plotNoteName(ymin, {top: miny + 'px', obj}, parentDiv);
-	if (ymin !== ymax) {
-		plotNoteName(ymax, {top: '0px'}, parentDiv);
-	}
-	obj.append(parentDiv);
-}
-
-
-function plotTrack14(track, song, obj) {
-// first walk the track and find min and max y positions 
-	let trackW = Number(track.trackLength);
-	let ymin =  1000000;
-	let ymax = -1000000;
-	let rowList = forceArray(track.noteRows.noteRow);
-	if (rowList.length === 0) return;
-	let parentDiv = $("<div class='trgrid'/>");
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		let y = rowYfilter(row);
-		if (y >= 0) {
-			if (y < ymin) ymin = y;
-			if (y > ymax) ymax = y;
-		}
-	}
-	let totH = ((ymax - ymin) + 2) * 4;
-
-	parentDiv.css({height: totH + 'px'});
-	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
-
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		var noteData = row.noteData;
-		let y = rowYfilter(row);
-		if (y < 0) continue;
-		let labName = yToNoteName(y);
-		for (var nx = 2; nx < noteData.length; nx += 20) {
-			let notehex = noteData.substring(nx, nx + 20);
-			let x = parseInt(notehex.substring(0, 8), 16);
-			let dur =  parseInt(notehex.substring(8, 16), 16);
-			let vel = parseInt(notehex.substring(16, 18), 16);
-			let cond = parseInt(notehex.substring(18, 20), 16);
-			let noteInfo = notehex + labName;
-			x += xPlotOffset;
-			if (dur > 1) dur--;
-			let ndiv = $("<div class='trnsn npop' data-note='" + noteInfo + "'/>");
-
-			let ypos = (y- ymin) * 4 + 2;
-			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
-			parentDiv.append(ndiv);
-		}
-	}
-	let miny = totH - 10;
-	plotNoteName(ymin, {top: miny + 'px', obj}, parentDiv);
-	if (ymin !== ymax) {
-		plotNoteName(ymax, {top: '0px'}, parentDiv);
-	}
-	obj.append(parentDiv);
-
-}
-
-
-var nitTable = "111222132333142434441525354555162636465666172737475767771828384858687888";
-
-
-function activateTippy()
-{
-	tippy('.npop', {
-		arrow: true,
-		html: '#npoptemp',
-		onShow(pop) {
-		// `this` inside callbacks refers to the popper element
-			const content = this.querySelector('.tippy-content');
-			let text = pop.reference.getAttribute('data-text');
-			if (text) {
-				content.innerHTML = text;
-				return;
-			}
-
-			let notehex = pop.reference.getAttribute('data-note');
-			let x = parseInt(notehex.substring(0, 8), 16);
-			let dur =  parseInt(notehex.substring(8, 16), 16);
-			let vel = parseInt(notehex.substring(16, 18), 16);
-			let cond = parseInt(notehex.substring(18, 20), 16);
-			let notename = notehex.substring(20);
-			let condtext = '';
-			let condcode = cond & 0x7F;
-			if (condcode != 0x14) {
-				if (condcode < 0x14) { // Its a probability.
-					let prob = condcode * 5;
-					condtext = prob + '%';
-					if(cond & 0x80) { // if it has a dot, show that
-						condtext = '.' + condtext;
-					}
-				} else { // Its a 1 of N
-					let nitBase = (condcode - 0x14) * 2;
-					condtext = '[' + nitTable[nitBase] + " out of " + nitTable[nitBase + 1] + ']';
-				}
-			}
-
-			// Convert duration to fraction of a measure
-			let durFrac = simplifyFraction(dur, 192);
-
-			// Convert start time to measure, beat, subbeat
-			let meas = Math.floor(x / 192) + 1;
-			let beat = Math.floor((x % 192) / 48)+ 1;
-			let subbeat = Math.floor((x % 48) / 12) + 1;
-			let subFrac = Math.floor(x % 12);
-			let beatX = meas.toString() + '.' + beat.toString() + '.' + subbeat.toString();
-			if (subFrac > 0) {
-				beatX += '+' + simplifyFraction(subFrac, 192);
-			}
-			// {{notename}} {{notevel}} {{notedur}} {{notestart}} {{noteprob}}
-			let noteInfo = note_tip_template({
-				notename: notename,
-				notevel: vel,
-				notedur: durFrac,
-				notestart: beatX,
-				noteprob: condtext,
-			});
-			content.innerHTML = noteInfo;
-			},
-		onHidden() {
-			const content = this.querySelector('.tippy-content')
-			content.innerHTML = '';
-			},
-	});
-}
-
-function usesNewNotekFormat(track) {
-	let rowList = forceArray(track.noteRows.noteRow);
-	if (rowList.length === 0) return true;
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		if (row.noteData) return true;
-		if (row.notes && row.notes.note) return false;
-	}
-	return false;
-}
-
-
-function plotParamChanges(k, ps, tracklen, prefix, elem)
-{
-	elem.append($("<p class='tinygap'/>"));
-	let parentDiv = $("<div class='parmplot'/>");
-	let cursor = 10;
-	let xpos = 0;
-	let textH = 8;
-
-	var runVal = convertHexTo50(ps.substring(2,10));
-
-	while (cursor < ps.length) {
-		let nextVal = convertHexTo50(ps.substring(cursor, cursor + 8));
-		let runx = parseInt(ps.substring(cursor + 8, cursor + 16), 16);
-		let runto = runx & 0x7FFFFFFF; // mask off sign
-		let ndiv = $("<div class='paramrun'/>");
-		ndiv.css({left: (xpos + xPlotOffset) + 'px', bottom: (runVal + 2) + 'px', width: (runto - xpos) + 'px'});
-		parentDiv.append(ndiv);
-		cursor += 16;
-		xpos = runto;
-		runVal = nextVal;
-	}
-	// Handle last run in sequence
-	if (xpos <= tracklen) {
-		let ndiv = $("<div class='paramrun'/>");
-		ndiv.css({left: (xpos + xPlotOffset) + 'px', bottom: (runVal + 2)  + 'px', width: (tracklen - xpos) + 'px'});
-		parentDiv.append(ndiv);
-	}
-
-	let labdiv = $("<div class='parmlab'/>");
-	labdiv.text(prefix + k);
-	parentDiv.append(labdiv);
-	parentDiv.css({width: (tracklen + xPlotOffset) + 'px'});
-	elem.append(parentDiv);
-}
-
-var knobToParamNameTab = ["Pan", "Volume", "Res/FM", "Cutoff/FM",
- "Release","Attack", "Amount", "Delay Time",
- "Reverb", "Sidechain","Depth", "Mod Rate",
- "Custom 1", "Stutter", "Custom 3", "Custom 2"];
-
-
-function plotParamLevel(prefix, track, trackW, elem)
-{
-	if (!track) return;
-	for (var k in track) {
-		if(track.hasOwnProperty(k)) {
-			let v = track[k];
-			if(typeof v === "string"&& v.startsWith('0x') && v.length > 10) {
-				plotParamChanges(k, v, trackW, prefix, elem);
-			}
-		}
-	}
-}
-
-function plotNoteLevelParams(noteRowA, track, trackW, song, elem)
-{
-	if (!noteRowA) return;
-	let kitList = findKitList(track, song);
-	if (!kitList) return;
-	noteRowA = forceArray(noteRowA);
-	for (var i = 0; i < noteRowA.length; ++i) {
-		let aRow = noteRowA[i];
-		let aDrum = kitList[aRow.drumIndex];
-		
-		let prefix = aDrum ? kitList[aRow.drumIndex].name + '.' : '.';
-		plotParamLevel(prefix, aRow.soundParams, trackW, elem);
-	}
-}
-
-function plotKnobLevelParams(knobs, track, trackW, elem)
-{
-	if (!knobs) return;
-	for (var i = 0; i < knobs.length; ++i) {
-		// if(typeof v === "string"&& v.startsWith('0x') && v.length > 10)
-		let aKnob = knobs[i];
-		let v = aKnob.value;
-		if (typeof v === "string"&& v.startsWith('0x') && v.length > 10) {
-			let prefix = "CC: " + aKnob.cc + " (" + knobToParamNameTab[i] + ")";
-			plotParamChanges('', v, trackW, prefix, elem);
-		}
-	}
-}
-
-function plotParams(track, refTrack, song, elem) {
-	let trackType = trackKind(track);
-	let trackW = Number(track.trackLength);
-	if (track.sound) plotParamLevel("sound.", track.sound, trackW, elem);
-	if (track.defaultParams) plotParamLevel("default.", track.defaultParams, trackW, elem);
-	if (track.soundParams) plotParamLevel("params.", track.soundParams, trackW, elem);
-
-	if (track.kitParams) {
-		plotParamLevel("kit.", track.kitParams, trackW, elem);
-		if (track.noteRows) {
-			plotNoteLevelParams(track.noteRows.noteRow, refTrack, trackW, song, elem);
-		}
-	}
-	if (trackType == 'midi' && track.modKnobs) {
-		plotKnobLevelParams(forceArray(track.modKnobs.modKnob), track, trackW, song, elem);
-	}
-}
-
-
 function trackHeader(track, newSynthNames, inx, repeatTab, template, obj) {
 	let context = patchInfo(track, newSynthNames);
 	let section = Number(track.section);
@@ -1092,15 +522,6 @@ function getTrackText(trackNum, songJ)
 	let asText = JSON.stringify(trackWrap, classReplacer, 1);
 	return asText;
 }
-
-function trackCopyButton(trackNum, obj) {
-	obj.append(track_copy_template({trackNum: trackNum}));
-}
-
-function soundViewButton(trackNum, obj) {
-	obj.append(sound_view_template({trackNum: trackNum}));
-}
-
 
 /*******************************************************************************
 
@@ -1250,21 +671,7 @@ function formatSong(jdoc, obj) {
 				refTrack = trax[fromID];
 			}
 			trackHeader(track, jdoc.newSynthNames, i, sectionTab, track_head_template, obj);
-			if(tKind === 'kit') {
-				
-				if(newNoteFormat) {
-					plotKit14(track, refTrack, jsong, obj);
-				} else {
-					plotKit13(track, refTrack, obj);
-				}
-			} else {
-				if(newNoteFormat) {
-					plotTrack14(track, jsong, obj);
-				} else {
-					plotTrack13(track, obj);
-				}
-			}
-			plotParams(track, refTrack, jsong, obj);
+			placeTrackObj(obj, track, jsong);
 		}
 		activateTippy();
 	  }
@@ -1319,6 +726,9 @@ function formatSongSimple(jdoc, obj) {
 			trackHeader(track, jdoc.newSynthNames, i, sectionTab, simple_track_template, obj);
 			let ploto = $("<td class='simpleplot'/>");
 
+			placeTrackObj(ploto, track, jsong);
+			obj.append(ploto);
+/*
 			let tKind = trackKind(track);
 			let refTrack = track;
 			if (track.instrument && track.instrument.referToTrackId !== undefined) {
@@ -1340,14 +750,17 @@ function formatSongSimple(jdoc, obj) {
 				}
 			}
 			plotParams(track, refTrack, jsong, ploto);
+*/
 
-			obj.append(ploto);
+
 			obj.append($("</tr></table>"));
 		}
 		activateTippy();
 	  }
 	}
-	// trackPasteField(obj, jdoc);
+	$(".soundviewbtn").on('click', function(e) {
+		viewSound(e, jsong);
+	});
 }
 
 /*******************************************************************************
