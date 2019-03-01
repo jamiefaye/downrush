@@ -1,4 +1,15 @@
 import {Midi} from "./Midi/Midi.js";
+import {Note} from "./Midi/Note.js";
+import {Track} from "./Midi/Track.js";
+
+var delugePPQ = 48;
+
+function isArrayLike(val) {
+    if (val === null) { return false;}
+    if (Array.isArray(val)) return true;
+//    if (isObservableArray(val)) return true;
+    return false;
+}
 
 function forceArray(obj) {
 	if(obj !== undefined && isArrayLike(obj)) return obj;
@@ -17,6 +28,7 @@ function rowYfilter(row) {
 
 // Encode a particular Deluge track as a Midi sequence
 function encodeAsMidi14(track, start, len, chan, head) {
+	let midiPPQ = head.ppq;
 	let endT = start + len;
 	let midiOut = [];
 	let baseT = start;
@@ -35,10 +47,11 @@ function encodeAsMidi14(track, start, len, chan, head) {
 				let dur =  parseInt(notehex.substring(8, 16), 16);
 				let vel = parseInt(notehex.substring(16, 18), 16);
 //				let cond = parseInt(notehex.substring(18, 20), 16);
-
+				let tX = Math.round((x + baseT) * midiPPQ / delugePPQ);
+				let tDur = Math.round(dur * midiPPQ / delugePPQ);
 				let velN = vel / 127;
-				let onTime = x + baseT;
-				let offTime = onTime + dur;
+				let onTime = tX;
+				let offTime = onTime + tDur;
 
 				let note = new Note({midi: y, ticks: onTime, velocity: velN, channel: chan},{ticks: offTime, velocity: 0, channel: chan}, head);
 
@@ -52,8 +65,9 @@ function encodeAsMidi14(track, start, len, chan, head) {
 	return midiOut;
 }
 
-function encodeAsMidi13((track, start, len, chan), head {
+function encodeAsMidi13(track, start, len, chan, head) {
 // first walk the track and find min and max y positions
+	let midiPPQ = head.ppq;
 	let trackLen = Number(track.trackLength);
 	if (!trackLen) return [];
 	let endT = start + len;
@@ -70,11 +84,12 @@ function encodeAsMidi13((track, start, len, chan), head {
 			for (var nx = 0; nx < noteList.length; ++nx) {
 				let n = noteList[nx];
 				let x = Number(n.pos);
-				let dx = x + xPlotOffset;
 				let dur = n.length;
 				let vel = n.velocity / 127;
-				let onTime = x + baseT;
-				let offTime = onTime + dur;
+				let tX = Math.round((x + baseT) * midiPPQ / delugePPQ);
+				let tDur = Math.round(dur * midiPPQ / delugePPQ);
+				let onTime = tX;
+				let offTime = onTime + tDur;
 				let note = new Note({midi: y, ticks: onTime, velocity: vel, channel: chan},{ticks: offTime, velocity: 0, channel: chan}, head);
 				midiOut.push(note); 
 			}
@@ -117,7 +132,6 @@ function encodeInstrumentAsMidiTrack(inst, chan, head)
 	if (song.arrangementOnlyTracks) {
 		arrangeOnlyTab = forceArray(song.arrangementOnlyTracks.track);
 	}
-	let maxTrack = trackTab.length;
 	for (var nx = 2; nx < instString.length; nx += 24) {
 		let start = parseInt(instString.substring(nx, nx + 8), 16);
 		let len = parseInt(instString.substring(nx + 8, nx + 16), 16);
@@ -155,7 +169,7 @@ function addMetadataTrack(song, midi) {
 		"name": songName,
 		tempos: [{ticks : 0, bpm : tempo}],
 		timpeSingatures: [{ticks : 0, timeSignature : [4, 4]}],
-		meta, [],
+		meta: [],
 		ppq:  48
 	};
 
@@ -198,15 +212,19 @@ function delugeToMidiArranged(song) {
 	});
 }
 
-function addTrackToMidi(midi, song, trackNum) {
+function addTrackToMidi(midiDoc, song, trackNum) {
 	let delTrackTab = forceArray(song.tracks.track);
-	let delTrack = delTrackTab[trackNum];
+	let delTrack = delTrackTab[trackNum - 1];
 	let trackLen = Number(delTrack.trackLength);
 	let toMidi = 0;
 	if (delTrack.midiChannel) {
 		toMidi = Number(delTrack.midiChannel);
 	}
-	let notes = encodeAsMidi(delTrack, 0, trackLen, toMidi, midi) {
+	let midiTrack = midiDoc.midi.addTrack();
+	midiTrack.channel = toMidi;
+	let notes = encodeAsMidi(delTrack, 0, trackLen, toMidi, midiDoc.midi.header);
+	midiTrack.notes = midiTrack.notes.concat(notes);
+	midiTrack.notes.sort((a,b)=>{ return a.ticks - b.ticks});
 }
 
-export {delugeToMidiArranged}, addTrackToMidi};
+export {delugeToMidiArranged, addTrackToMidi};

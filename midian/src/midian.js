@@ -10,14 +10,16 @@ import local_exec_head from "./templates/local_exec_head.handlebars";
 import local_exec_info from "./templates/local_exec_info.handlebars";
 import local_exec_song_group from "./templates/local_exec_song_group.handlebars";
 import empty_song_template from "./templates/empty_song.handlebars";
+import deluge_track_header_template from "./templates/deluge_track_header_template.handlebars";
 import UndoStack from './UndoStack.js';
 import {base64ArrayBuffer, base64ToArrayBuffer} from './base64data.js';
 import Dropdown from './Dropdown.js';
 import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser.js';
 import FileSaver from 'file-saver';
 import {stepNextFile} from "./StepNextFile.js";
+import {delugeToMidiArranged, addTrackToMidi} from "./DelugeToMidi.js";
 
-import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson} from "../../xmlView/src/SongViewLib.js";
+import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson, registerCallbacks} from "../../xmlView/src/SongViewLib.js";
 
 "use strict";
 
@@ -397,10 +399,22 @@ function openSongLocal(evt)
  	pasteTrackJson(jsonTrack, getFocusDoc());
  }
 
+ function registerDelugeTrackGUI() {
+	$(".add2midi").click((e)=>{
+		let el =  $(e.target).closest('.add2midi')[0];
+		let trackNum = Number(el.dataset.tracknum);
+		let fromSong = getFocusDoc();
+		addTrackToMidi(focusMidiView.midiDoc, fromSong.jsonDocument.song, trackNum);
+		focusMidiView.midiDoc.render();
+	});
+}
+
+
 setAddToDocFunction(addToDocFunction);
+registerCallbacks(registerDelugeTrackGUI, deluge_track_header_template);
 setMpcEnabled(false);
 setClipboardEnabled(true);
- 
+
 function createEmptySong()
 {
 	let data = empty_song_template();

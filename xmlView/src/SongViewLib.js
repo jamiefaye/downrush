@@ -28,7 +28,6 @@ import midiModKnobTemplate from "./templates/midiModKnobTemplate.handlebars";
 import sample_range_prefix from "./templates/sample_range_prefix.handlebars";
 import sound_template from "./templates/sound_template.handlebars";
 import song_template from "./templates/song_template.handlebars";
-import simple_track_template from "./templates/simple_track_template.handlebars";
 
 import {placeTrackObj, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
 
@@ -39,6 +38,10 @@ var COLOR_POPUP = false;
 var gIdCounter = 0;
 
 var focusDoc;
+
+var trackGuiCallback = function() {};
+var trackHeaderTemplate = track_head_template;
+
 /* Plotters
 */
 
@@ -670,9 +673,10 @@ function formatSong(jdoc, obj) {
 				let fromID = Number(track.instrument.referToTrackId);
 				refTrack = trax[fromID];
 			}
-			trackHeader(track, jdoc.newSynthNames, i, sectionTab, track_head_template, obj);
+			trackHeader(track, jdoc.newSynthNames, i, sectionTab, trackHeaderTemplate, obj);
 			placeTrackObj(obj, track, jsong);
 		}
+		trackGuiCallback();
 		activateTippy();
 	  }
 	}
@@ -719,42 +723,18 @@ function formatSongSimple(jdoc, obj) {
 	if(jsong.tracks) {
 	  let trax = forceArray(jsong.tracks.track);
 	  if (trax) {
-
 		for(var i = 0; i < trax.length; ++i) {
 			let track = trax[trax.length - i - 1];
 			obj.append($("<table class='simplehead'><tr class=''>"));
-			trackHeader(track, jdoc.newSynthNames, i, sectionTab, simple_track_template, obj);
+			trackHeader(track, jdoc.newSynthNames, i, sectionTab, trackHeaderTemplate, obj);
 			let ploto = $("<td class='simpleplot'/>");
 
 			placeTrackObj(ploto, track, jsong);
 			obj.append(ploto);
-/*
-			let tKind = trackKind(track);
-			let refTrack = track;
-			if (track.instrument && track.instrument.referToTrackId !== undefined) {
-				let fromID = Number(track.instrument.referToTrackId);
-				refTrack = trax[fromID];
-			}
-
-			if(tKind === 'kit') {
-				if(newNoteFormat) {
-					plotKit14(track, refTrack, jsong, ploto);
-				} else {
-					plotKit13(track, refTrack, ploto);
-				}
-			} else {
-				if(newNoteFormat) {
-					plotTrack14(track, jsong, ploto);
-				} else {
-					plotTrack13(track, ploto);
-				}
-			}
-			plotParams(track, refTrack, jsong, ploto);
-*/
-
-
 			obj.append($("</tr></table>"));
+			
 		}
+		trackGuiCallback();
 		activateTippy();
 	  }
 	}
@@ -1001,8 +981,6 @@ class DelugeDoc {
 
 };
 
-
-
 function setFocusDoc(toDoc) {
 	focusDoc = toDoc;
 }
@@ -1016,4 +994,9 @@ function makeDelugeDoc(fname, text, newKitFlag, simple)
 	return new DelugeDoc(fname, text, newKitFlag, simple);
 }
 
-export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson};
+function registerCallbacks(callback, template) {
+	if (callback) trackGuiCallback = callback;
+	if (template) trackHeaderTemplate = template;
+}
+
+export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson, registerCallbacks};
