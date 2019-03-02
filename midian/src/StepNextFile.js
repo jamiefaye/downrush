@@ -26,7 +26,7 @@ function getFilesOnly(fl) {
 }
 
 // Get file list
-  function stepNextFile(filePath, dir, callb) {
+  function stepNextFile(filePath, dir, okexts, callb) {
 	let parts = filePath.split('/');
 	let namePart = parts.pop(); // Get rid of file name at the end.
 	let path = parts.join('/');
@@ -55,12 +55,25 @@ function getFilesOnly(fl) {
 			break;
 		}
 	}
+	let maxPass = fileList.length;
 	if (fx >= 0) {
 		let nextx = fx + dir;
-		if (nextx < 0) nextx = fileList.length - 1;
-		if (nextx >= fileList.length) nextx = 0;
-		let nextF = path + "/" + fileList[nextx]["fname"];
-		callb(nextF);
+		while (maxPass > 0) {
+			if (nextx < 0) nextx = fileList.length - 1;
+			if (nextx >= fileList.length) nextx = 0;
+
+			let ext = fileList[nextx]["ext"];
+			let found = okexts.find((element)=>{return element === ext});
+			if (found !== undefined) {
+				let nextF = path + "/" + fileList[nextx]["fname"];
+				callb(nextF);
+				return;
+			}
+			nextx += dir;
+			if (nextx < 0) nextx = fileList.length - 1;
+			if (nextx >= fileList.length) nextx = 0;
+			maxPass--; 
+		}
 	}
 	}).fail(function(jqXHR, textStatus, errorThrown){
 		// Failure: Display error contents

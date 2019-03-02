@@ -2,6 +2,8 @@ import React from 'react';
 import ReactDOM from "react-dom";
 import $ from'./js/jquery-3.2.1.min.js';
 import {Midi} from "./Midi/Midi.js";
+import {encode} from "./Midi/Encode.js";
+
 import {WedgeIndicator, PushButton, CopyToClipButton} from './GUIstuff.jsx';
 import {MidiConversion} from "./MidiConversion.js";
 
@@ -355,6 +357,12 @@ function exportMPC(asText, trackNum, song) {
 	render() {
 		this.midiDoc = React.createElement(MidiDocView, this.context);
 		ReactDOM.render(this.midiDoc, this.jqElem);
+	}
+
+	generateMid() {
+		if(this.midi) {
+			return encode(this.midi);
+		}
 	}
 
 } // End class

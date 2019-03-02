@@ -214,7 +214,7 @@ function delugeToMidiArranged(song) {
 
 function addTrackToMidi(midiDoc, song, trackNum) {
 	let delTrackTab = forceArray(song.tracks.track);
-	let delTrack = delTrackTab[trackNum - 1];
+	let delTrack = delTrackTab[delTrackTab.length - trackNum];
 	let trackLen = Number(delTrack.trackLength);
 	let toMidi = 0;
 	if (delTrack.midiChannel) {
