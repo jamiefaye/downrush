@@ -3,6 +3,7 @@ import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setCl
 
 require('file-loader?name=[name].[ext]!../html/midian.htm');
 require('file-loader?name=index.html!../html/index_web.html');
+require('file-loader?name=index.htm!../html/index_mpc.html');
 require('file-loader?name=[name].[ext]!../css/midian.css');
 require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
 require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
@@ -16,7 +17,7 @@ import {FileManager} from "./FileManager.js";
 "use strict";
 
 // Flag to enable local execution (not via the FlashAir web server)
-var local_exec = document.URL.indexOf('file:') == 0 || standAlone;
+var local_exec = document.URL.indexOf('file:') == 0 || buildType !='flashair';
 
 var focusMidiView;
 
@@ -26,10 +27,10 @@ class MidiViewer {
   }
 
 //Save
- openOnBuffer(data) {
+ openOnBuffer(data, fname) {
 	if(!this.midiDoc) {
 		let midiPlace = $('#midiview');
-		this.midiDoc = openMidiDoc(midiPlace[0]);
+		this.midiDoc = openMidiDoc(midiPlace[0], fname);
 	}
 	this.midiDoc.openOnBuffer(data);
  }
@@ -49,7 +50,7 @@ function onLoad()
 			let homeViewer = new MidiViewer('midiview');
 			focusMidiView = homeViewer;
 			manager.homeDoc = homeViewer;
-			homeViewer.openOnBuffer(theData);
+			homeViewer.openOnBuffer(theData, fname);
 			$('#midiview').append(homeViewer.html);
 			
 		},
@@ -86,11 +87,12 @@ function onLoad()
 		fileExtensions: ["XML", "xml"],
 		content_type: "text/xml;charset=utf-8",
 	});
-
-	let data = empty_song_template();
-	let homeSong = makeDelugeDoc("SONG.XML", data, false, true);
-	songManager.homeDoc = homeSong;
-	setFocusDoc(homeSong);
+	if (buildType !== 'mpc') {
+		let data = empty_song_template();
+		let homeSong = makeDelugeDoc("SONG.XML", data, false, true);
+		songManager.homeDoc = homeSong;
+		setFocusDoc(homeSong);
+	}
 }
 
  function addToDocFunction(jsonTrack) {
@@ -107,9 +109,11 @@ function onLoad()
 	});
 }
 
-setAddToDocFunction(addToDocFunction);
+if (buildType !== 'mpc') {
+	setAddToDocFunction(addToDocFunction);
+}
 registerCallbacks(registerDelugeTrackGUI, deluge_track_header_template);
-setMpcEnabled(false);
-setClipboardEnabled(true);
+setMpcEnabled(buildType === 'mpc');
+setClipboardEnabled(buildType !== 'mpc');
 
 window.onload = onLoad;

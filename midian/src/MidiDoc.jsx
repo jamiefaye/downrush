@@ -286,15 +286,15 @@ class MidiTrack extends React.Component {
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
 	let converted = converter.convertTrackToMPC(trackNum, start, end, converter.lowTicks, false);
-	exportMPC(converted, trackNum, this.props.song);
+	exportMPC(converted, trackNum, this.props.song, this.props.fname);
   }
 };
 
-function exportMPC(asText, trackNum, song) {
+function exportMPC(asText, trackNum, song, fname) {
 	let asLinux = eol.lf(asText);
 	var blob = new Blob([asLinux], {type: "text/json"});
 
-	let fromDocPath = focusMidiView.fname;
+	let fromDocPath = fname;
 	if (fromDocPath['name']) {
 		fromDocPath = fromDocPath.name;
 	}
@@ -308,7 +308,7 @@ function exportMPC(asText, trackNum, song) {
 	// get file name from end.
 	let nameOnly = namePart.split('.')[0]; // get rid of extension
 	let saveName = nameOnly + "_Track_" + trackNum + ".mpcpattern";
-	
+
 	FileSaver.saveAs(blob, saveName);
 }
 
@@ -318,15 +318,16 @@ function exportMPC(asText, trackNum, song) {
 // 		<pre>{this.props.midiText}</pre>
   render() {
 	let midi = this.props.midi;
-	if (!midi) return null;
 	
+	if (!midi) return null;
+	let fname = this.props.fname;
 	this.midiConversion = new MidiConversion(midi);
 	let mc = this.midiConversion;
 	mc.calcTimeBounds();
 	docCounter+= 100000;
 	return (<React.Fragment><MidiHeader header={midi.header} text={this.props.midiText}/>
 		{midi.tracks.map((track, ix) =>{
-			return <MidiTrack trackNum={ix + 1} track={track} key={docCounter + ix} song={midi} converter={mc}/>
+			return <MidiTrack trackNum={ix + 1} track={track} key={docCounter + ix} song={midi} fname={fname} converter={mc}/>
 		})}
 		<hr/>
 		</React.Fragment>);
@@ -337,6 +338,7 @@ function exportMPC(asText, trackNum, song) {
    constructor(context) {
 		this.context = context;
 		this.jqElem = context.jqElem;
+		this.fname = context.fname;
   }
 
 	openOnBuffer(data) {
@@ -349,6 +351,7 @@ function exportMPC(asText, trackNum, song) {
 			me.midiText = JSON.stringify(me.midi, undefined, 2);
 			me.context.midiText = me.midiText;
 			me.context.midi = me.midi;
+			me.context.fname = me.fname;
 			me.render();
 		};
 		fileReader.readAsArrayBuffer(data);
@@ -367,9 +370,10 @@ function exportMPC(asText, trackNum, song) {
 
 } // End class
 
-function openMidiDoc(where, params) {
+function openMidiDoc(where, fname) {
 	let context = {};
 	context.jqElem =  where;
+	context.fname = fname;
 	let midiDoc = new MidiDoc(context);
 	midiDoc.render();
 	return midiDoc;
