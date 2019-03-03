@@ -11,12 +11,12 @@ class FileManager {
 	let props = propsIn;
 	this.props = props;
 	this.prefix = props.prefix;
-	this.defaultName = props.fname;
+	this.defaultName = props.defaultName;
 	this.defaultDir = props.defaultDir;
 	this.loadCallback = props.load;
 	this.saveCallback = props.save;
 	this.newCallback = props.new;
-	this.fname = props.fname;
+	this.fname = props.defaultName;
 	this.homeDoc = props.homeDoc;
 	this.dataType = props.dataType;
 	this.fileExtensions = props.fileExtensions;
@@ -89,6 +89,7 @@ class FileManager {
 	var minutes = dt.getMinutes() << 5;
 	var seconds = Math.floor(dt.getSeconds() / 2);
 	var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
+	let me = this;
 	var urlDateSet = '/upload.cgi?FTIME=' + timestring + "&TIME="+(Date.now());;
 	$.get(urlDateSet, function() {
 		$.ajax(filepath, {
@@ -157,15 +158,14 @@ class FileManager {
 	saveFileBrowser({
 		initialPath:  me.fname,
 		saver: function(name) {
-			let saveData = this.saveCallback(this, doc);
-			me.saveFile(fname, saveData);
+			let saveData = me.saveCallback(me, doc);
+			me.saveFile(name, saveData);
+			me.fname = name;
 		}
 	});
 }
 
-
 // Local stuff
-
   openFileLocal(evt) {
  	let me = this;
 	var files = evt.target.files;
@@ -178,17 +178,18 @@ class FileManager {
 			return function(e) {
 				let t = e.target.result;
 				me.loadCallback(t, theFile, me, me.homeDoc);
+				me.fname = theFile;
 				me.prefixId("status").text(fname + " loaded.");
 			};
 		})(f);
 	} else {
 		reader.onloadend = (function(theFileBlob) {
 			me.loadCallback(theFileBlob, fname, me, me.homeDoc);
+			me.fname = f.name;
 		})(f);
 	}
 	reader.readAsBinaryString(f);
  }
-
 
  downloader(evt) {
  	if (!this.homeDoc) return;
@@ -198,13 +199,12 @@ class FileManager {
 	if (local_exec) {
 		saveName = this.fname.name;
 	} else {
+		if (!this.fname) this.fname = this.defaultName;
 		saveName = this.fname.split('/').pop();
 	}
-	if (!saveName) saveName = this.defaultName;
 	console.log(saveName);
 	FileSaver.saveAs(blob, saveName);
 }
-
 
  setupGUI() {
  	let me = this;

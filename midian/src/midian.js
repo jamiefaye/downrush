@@ -1,5 +1,5 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled} from './MidiDoc.jsx';
+import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled, makeEmptyMidiFile} from './MidiDoc.jsx';
 
 require('file-loader?name=[name].[ext]!../html/midian.htm');
 require('file-loader?name=index.html!../html/index_web.html');
@@ -38,18 +38,20 @@ class MidiViewer {
 }; // ** End of class
 
 
+
 function onLoad()
 {
-	let homeDoc = new MidiViewer('midiview');
-	let fileManager = new FileManager({
+	let midiViewDoc = new MidiViewer('midiview');
+	focusMidiView = midiViewDoc;
+	let midiFileManager = new FileManager({
 		prefix:  "midi",
 		defaultName: "Untitled.mid",
 		defaultDir: "/",
 		dataType: "blob",
-		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.homeDoc);
+		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.midiViewDoc);
 			let homeViewer = new MidiViewer('midiview');
 			focusMidiView = homeViewer;
-			manager.homeDoc = homeViewer;
+			manager.midiViewDoc = homeViewer;
 			homeViewer.openOnBuffer(theData, fname);
 			$('#midiview').append(homeViewer.html);
 			
@@ -64,10 +66,17 @@ function onLoad()
 
 	if(!local_exec) {
 		var urlarg = location.search.substring(1);
-		let fname = decodeURI(urlarg);
-		fileManager.initialLoad(fname);
-	} 
+		if (urlarg && urlarg.toLowerCase().indexOf('.mid') >0) {
+			let fname = decodeURI(urlarg);
+			midiFileManager.initialLoad(fname);
+		} else {
+			midiViewDoc.midiDoc = makeEmptyMidiFile($('#midiview')[0]);
+		}
+	} else {
+		midiViewDoc.midiDoc = makeEmptyMidiFile($('#midiview')[0]);
+	}
 
+	midiFileManager.homeDoc = midiViewDoc;
 	let songManager = new FileManager({
 		prefix:  "song",
 		defaultName: "SONG.XML",

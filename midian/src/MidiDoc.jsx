@@ -6,6 +6,7 @@ import {encode} from "./Midi/Encode.js";
 
 import {WedgeIndicator, PushButton, CopyToClipButton} from './GUIstuff.jsx';
 import {MidiConversion} from "./MidiConversion.js";
+import {makeEmptyFile} from "./DelugeToMidi.js";
 
 import eol from "eol";
 
@@ -362,6 +363,12 @@ function exportMPC(asText, trackNum, song, fname) {
 		ReactDOM.render(this.midiDoc, this.jqElem);
 	}
 
+	makeEmpty() {
+		this.midi = makeEmptyFile();
+		this.context.midi = this.midi;
+		this.context.fname = "Untitled.mid";
+	}
+
 	generateMid() {
 		if(this.midi) {
 			return encode(this.midi);
@@ -395,4 +402,14 @@ function setClipboardEnabled(flag) {
 	clipboardEnabled = flag;
 }
 
-export {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled};
+function makeEmptyMidiFile(where) {
+	let context = {};
+	context.jqElem =  where;
+	context.fname = "Untitled";
+	let midiDoc = new MidiDoc(context);
+	midiDoc.makeEmpty();
+	midiDoc.render();
+	return midiDoc;
+}
+
+export {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled, makeEmptyMidiFile};

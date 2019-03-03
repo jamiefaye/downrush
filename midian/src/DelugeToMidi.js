@@ -168,37 +168,32 @@ function addMetadataTrack(song, midi) {
 	let json = {
 		"name": songName,
 		tempos: [{ticks : 0, bpm : tempo}],
-		timpeSingatures: [{ticks : 0, timeSignature : [4, 4]}],
+		timeSignatures: [{ticks : 0, timeSignature : [4, 4]}],
 		meta: [],
 		ppq:  48
 	};
 
-	let metaD = [
-		{
-			meta: 		true,
-			type: 		"timeSignature",
-			absoluteTime: json.timpeSingatures[0].ticks,
-			numerator: 	json.timpeSingatures[0].timeSignature[0],
-			denominator:  json.timpeSingatures[0].timeSignature[1]
-		},
-		{
-			meta: 		true,
-			type:		"setTempo",
-			absoluteTime: json.tempo[0].ticks,
-			microsecondsPerBeat: json.tempo[0].bpm / 60000000
-		},
-		{
-			meta: 		true,
-			type:		"trackName",
-			absoluteTime: 0,
-			text: 		json.songName
-		}
-	];
+	let head = midi.header;
+	head.fromJSON(json);
+};
+
+
+function makeEmptyFile() {
+	let tempo = 120;
+	let	songName = "";
+	let midi = new Midi(null);
+	let json = {
+		"name": songName,
+		tempos: [{ticks : 0, bpm : tempo}],
+		timeSignatures: [{ticks : 0, timeSignature : [4, 4]}],
+		meta: [],
+		ppq:  48
+	};
 
 	let head = midi.header;
-	let metaTrack = new Track(metaD, head);
-	midi.tracks.push(track);
 	head.fromJSON(json);
+
+	return midi;
 };
 
 function delugeToMidiArranged(song) {
@@ -227,4 +222,5 @@ function addTrackToMidi(midiDoc, song, trackNum) {
 	midiTrack.notes.sort((a,b)=>{ return a.ticks - b.ticks});
 }
 
-export {delugeToMidiArranged, addTrackToMidi};
+
+export {delugeToMidiArranged, addTrackToMidi, makeEmptyFile};
