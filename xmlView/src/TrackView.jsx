@@ -115,11 +115,12 @@ function plotKit13(track, reftrack) {
 		}
 	}
 	let totH = ((ymax - ymin) + 1) * kitItemH;
+	let totW = trackW + xPlotOffset;
 	if (!reftrack.kit.soundSources) {
 		let meow = 2;
 	}
 	let kitList = forceArray(reftrack.kit.soundSources);
-	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+	parentDiv.css({height: totH + 'px', width: totW + 'px'});
 	if (kitList) {
 		for (var rx = 0; rx < rowList.length; ++rx) {
 			let row = rowList[rx];
@@ -154,7 +155,7 @@ function plotKit13(track, reftrack) {
 			}
 		}
 	}
-	return parentDiv;
+	return {parentDiv: parentDiv, height: totH, width: totW};
 }
 
 function findKitInstrument(track, list) {
@@ -249,7 +250,7 @@ function plotKit14(track, reftrack, song) {
 	let rowList = forceArray(track.noteRows.noteRow);
 
 	let parentDiv = $("<div class='kitgrid'/>");
-	if (rowList.length === 0) return parentDiv;
+	if (rowList.length === 0) return {parentDiv: parentDiv, height: 0, width: 0};;
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
 		let y = rowYfilter(row);
@@ -259,9 +260,10 @@ function plotKit14(track, reftrack, song) {
 		}
 	}
 	let totH = ((ymax - ymin) + 1) * kitItemH;
+	let totW = trackW + xPlotOffset;
 	let kitList = findKitList(reftrack, song);
 
-	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+	parentDiv.css({height: totH + 'px', width: totW + 'px'});
 	if (kitList) {
 		for (var rx = 0; rx < rowList.length; ++rx) {
 			let row = rowList[rx];
@@ -306,7 +308,7 @@ function plotKit14(track, reftrack, song) {
 			}
 		}
 	}
-	return parentDiv;
+	return {parentDiv: parentDiv, height: totH, width: totW};
 }
 
 
@@ -326,9 +328,8 @@ function plotTrack13(track, song) {
 		}
 	}
 	let totH = ((ymax - ymin) + 2) * 4;
-
-	parentDiv.css({height: totH + 'px'});
-	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+	let totW = trackW + xPlotOffset;
+	parentDiv.css({height: totH + 'px', width: totW + 'px'});
 
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
@@ -356,7 +357,7 @@ function plotTrack13(track, song) {
 	if (ymin !== ymax) {
 		plotNoteName(ymax, {top: '0px'}, parentDiv);
 	}
-	return parentDiv;
+	return {parentDiv: parentDiv, height: totH, width: totW};
 }
 
 
@@ -367,7 +368,9 @@ function plotTrack14(track, song) {
 	let ymax = -1000000;
 	let rowList = forceArray(track.noteRows.noteRow);
 	let parentDiv = $("<div class='trgrid'/>");
-	if (rowList.length === 0) return parentDiv;
+	if (rowList.length === 0) {
+		return {parentDiv: parentDiv, height: 0, width: 0};
+	}
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
 		let y = rowYfilter(row);
@@ -377,9 +380,9 @@ function plotTrack14(track, song) {
 		}
 	}
 	let totH = ((ymax - ymin) + 2) * 4;
+	let totW = trackW + xPlotOffset;
 
-	parentDiv.css({height: totH + 'px'});
-	parentDiv.css({height: totH + 'px', width: (trackW + xPlotOffset) + 'px'});
+	parentDiv.css({height: totH + 'px', width: totW + 'px'});
 
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
@@ -408,8 +411,7 @@ function plotTrack14(track, song) {
 	if (ymin !== ymax) {
 		plotNoteName(ymax, {top: '0px'}, parentDiv);
 	}
-	return parentDiv;
-
+	return {parentDiv: parentDiv, height: totH, width: totW};
 }
 
 
@@ -607,7 +609,6 @@ class NotePlot extends React.Component {
 	this.start = 0;
 	this.end = 0;
 	this.duration = 0;
-
   }
 
   symbolize() {
@@ -623,26 +624,29 @@ class NotePlot extends React.Component {
 		refTrack = trax[fromID];
 	}
 
-	let parentDiv;
+
+	let divInfo;
 	if(tKind === 'kit') {
 		if(newNotes) {
-			parentDiv = plotKit14(track, refTrack, jsong);
+			divInfo = plotKit14(track, refTrack, jsong);
 		} else {
-			parentDiv = plotKit13(track, refTrack);
+			divInfo = plotKit13(track, refTrack);
 		}
 	} else {
 		if(newNotes) {
-			parentDiv = plotTrack14(track, jsong);
+			divInfo = plotTrack14(track, jsong);
 		} else {
-			parentDiv = plotTrack13(track, jsong);
+			divInfo = plotTrack13(track, jsong);
 		}
 	}
-	plotParams(track, refTrack, this.props.song, parentDiv)
+	let {parentDiv, width, height} = divInfo;
+
 	this.selection = $("<div class='selbox'/>");
 	parentDiv.append(this.selection);
 	$(this.el).append(parentDiv);
-	
+	plotParams(track, refTrack, this.props.song, $(this.el));
 
+	this.height = height;
   }
 
   changeSel(t0, t1) {
@@ -651,7 +655,7 @@ class NotePlot extends React.Component {
 	this.start = t0;
 	this.end = t1;
 
-	// console.log("start: " + start + " end: " + end);
+//	console.log("start: " + startX + " end: " + endX);
 	this.selection.css({left: startX + 'px', width: (endX - startX) + 'px', top: 0 + 'px', height: this.height + 'px' });
   }
 

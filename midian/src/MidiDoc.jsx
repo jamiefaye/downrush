@@ -266,7 +266,7 @@ class MidiTrack extends React.Component {
 	let converter = this.props.converter;
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
-	let converted = converter.convertTrackToDeluge(trackNum, start, end, converter.lowTicks, false);
+	let converted = converter.convertTrackToDeluge(trackNum, start, end, 0, false);
 	let asText = JSON.stringify(converted, null, 1);
 	return asText;
   }
@@ -276,17 +276,16 @@ class MidiTrack extends React.Component {
 	let converter = this.props.converter;
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
-	let converted = converter.convertTrackToDeluge(trackNum, start, end, converter.lowTicks, false);
+	let converted = converter.convertTrackToDeluge(trackNum, start, end, 0, false);
 	addToDocFunction(converted);
   }
-  
 
   getMPC() {
 	let toCopy = this.props.track;
 	let converter = this.props.converter;
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
-	let converted = converter.convertTrackToMPC(trackNum, start, end, converter.lowTicks, false);
+	let converted = converter.convertTrackToMPC(trackNum, start, end, 0, false);
 	exportMPC(converted, trackNum, this.props.song, this.props.fname);
   }
 };

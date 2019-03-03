@@ -96,11 +96,13 @@ div.trnote {
 div.kitlab {
 	position: absolute;
 	font-size: 7pt;
+	user-select: none;
 }
 
 div.notelab {
 	position: absolute;
 	font-size: 9pt;
+	user-select: none;
 }
 
 div.notelabsimp {
@@ -531,3 +533,8 @@ td.simpleplot {
 }
 
 
+div.selbox {
+	background-color: gray;
+	position: absolute;
+	opacity: 0.2;
+}
