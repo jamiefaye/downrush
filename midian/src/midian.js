@@ -10,7 +10,7 @@ require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
 
 import empty_song_template from "./templates/empty_song.handlebars";
 import deluge_track_header_template from "./templates/deluge_track_header_template.handlebars";
-import {addTrackToMidi} from "./DelugeToMidi.js";
+import {addTrackToMidi, converter} from "./DelugeToMidi.js";
 import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson, registerCallbacks} from "../../xmlView/src/SongViewLib.js";
 import {FileManager} from "./FileManager.js";
 
@@ -79,7 +79,7 @@ function onLoad()
 	midiFileManager.homeDoc = midiViewDoc;
 	let songManager = new FileManager({
 		prefix:  "song",
-		defaultName: "SONG.XML",
+		defaultName: "/SONGS/SONG.XML",
 		defaultDir: "/SONGS/",
 		dataType: "text",
 		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.homeDoc); constructor(fname, text, newKitFlag, simple) 
@@ -102,6 +102,13 @@ function onLoad()
 		songManager.homeDoc = homeSong;
 		setFocusDoc(homeSong);
 	}
+
+	$('#songconvert').click((e)=>{
+		// function delugeToMidiArranged(midiDoc, song) {
+		let fromSong = getFocusDoc();
+		converter(focusMidiView.midiDoc, fromSong.jsonDocument.song);
+		focusMidiView.midiDoc.render();
+	});
 }
 
  function addToDocFunction(jsonTrack) {

@@ -119,15 +119,15 @@ function encodeAsMidi(track, start, len, chan, head) {
 	}
 }
 
-function encodeInstrumentAsMidiTrack(inst, chan, head)
+function encodeInstrumentAsMidiTrack(inst, chan, song, head)
  {
 	let instString = inst.trackInstances;
 	if (!instString) return;
+	let trackTab = forceArray(song.tracks.track);
 	let maxTrack = trackTab.length;
 	let midiOut = [];
 	let highTime =  0;
-	let song = this.props.song;
-	let trackTab = forceArray(song.tracks.track);
+
 	let arrangeOnlyTab = [];
 	if (song.arrangementOnlyTracks) {
 		arrangeOnlyTab = forceArray(song.arrangementOnlyTracks.track);
@@ -145,7 +145,7 @@ function encodeInstrumentAsMidiTrack(inst, chan, head)
 			track = (arrangeOnlyTab.length - trk & 0x7FFFFFFF)
 		}
 		if (track) {
-			midiOut.push(encodeAsMidi(track, start, len, chan, head));
+			midiOut = midiOut.concat(encodeAsMidi(track, start, len, chan, head));
 		}
 	}
 	midiOut.sort((a,b)=>{ return a.ticks - b.ticks});
@@ -196,13 +196,23 @@ function makeEmptyFile() {
 	return midi;
 };
 
-function delugeToMidiArranged(song) {
+function doesSongHaveArrangement(song) {
 	let instruments = forceArray(song.instruments);
-	let midi = new Midi(null);
-	addMetadataTrack(song, midi);
+	let has = instruments.reverse().find((inst) =>{
+		let tiString = inst.trackInstances;
+		if (!tiString) return false;
+		if (tiString.length > 0) return true;
+		return false;
+	});
+	return has !== undefined;
+}
+
+
+function delugeToMidiArranged(midi, song) {
+	let instruments = forceArray(song.instruments);
 	instruments.reverse().map((inst, ix) =>{
 		let midiTrack = midi.addTrack();
-		let noteData = encodeInstrumentAsMidiTrack(inst, ix, midi.header);
+		let noteData = encodeInstrumentAsMidiTrack(inst, ix, song, midi.header);
 		midiTrack.notes = noteData;
 	});
 }
@@ -222,5 +232,20 @@ function addTrackToMidi(midiDoc, song, trackNum) {
 	midiTrack.notes.sort((a,b)=>{ return a.ticks - b.ticks});
 }
 
+function convertAllTracks(midi, song) {
+	let delTrackTab = forceArray(song.tracks.track);
+//	for (let i = delTrackTab.length; i >= 1; i--) {
+	for (let i = 1; i <= delTrackTab.length; ++i) {
+		addTrackToMidi(midi, song, i);
+	}
+}
 
-export {delugeToMidiArranged, addTrackToMidi, makeEmptyFile};
+function converter(midiDoc, song) {
+	if(doesSongHaveArrangement(song)) {
+		delugeToMidiArranged(midiDoc.midi, song);
+	} else {
+		convertAllTracks(midiDoc, song);
+	}
+}
+
+export {converter, addTrackToMidi, makeEmptyFile};
