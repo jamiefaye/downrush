@@ -29,7 +29,7 @@ import sample_range_prefix from "./templates/sample_range_prefix.handlebars";
 import sound_template from "./templates/sound_template.handlebars";
 import song_template from "./templates/song_template.handlebars";
 
-import {placeTrackObj, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
+import {placeTrackObj, placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
 
 "use strict";
 
@@ -39,7 +39,6 @@ var gIdCounter = 0;
 
 var focusDoc;
 
-var trackGuiCallback = function() {};
 var trackHeaderTemplate = track_head_template;
 
 /* Plotters
@@ -676,7 +675,6 @@ function formatSong(jdoc, obj) {
 			trackHeader(track, jdoc.newSynthNames, i, sectionTab, trackHeaderTemplate, obj);
 			placeTrackObj(obj, track, jsong);
 		}
-		trackGuiCallback();
 		activateTippy();
 	  }
 	}
@@ -699,7 +697,7 @@ function formatSong(jdoc, obj) {
 	});
 }
 
-function formatSongSimple(jdoc, obj) {
+function formatSongSimple(jdoc, obj, transTrack) {
 	let jsong = jdoc.jsonDocument.song;
 	let newNoteFormat = jdoc.newNoteFormat;
 	obj.append($("<p class='tinygap'>"));
@@ -725,22 +723,11 @@ function formatSongSimple(jdoc, obj) {
 	  if (trax) {
 		for(var i = 0; i < trax.length; ++i) {
 			let track = trax[trax.length - i - 1];
-			obj.append($("<table class='simplehead'><tr class=''>"));
-			trackHeader(track, jdoc.newSynthNames, i, sectionTab, trackHeaderTemplate, obj);
-			let ploto = $("<td class='simpleplot'/>");
-
-			placeTrackObj(ploto, track, jsong);
-			obj.append(ploto);
-			obj.append($("</tr></table>"));
-			
+			placeTrack(obj, track, i,  jsong, transTrack);
 		}
-		trackGuiCallback();
 		activateTippy();
 	  }
 	}
-	$(".soundviewbtn").on('click', function(e) {
-		viewSound(e, jsong);
-	});
 }
 
 /*******************************************************************************
@@ -751,12 +738,13 @@ function formatSongSimple(jdoc, obj) {
 */
 
 class DelugeDoc {
-  constructor(fname, text, newKitFlag, simple) {
+  constructor(fname, text, newKitFlag, simple, transTrack) {
   	this.idNumber = gIdCounter++;
 	this.idString = "" + this.idNumber;
 	this.fname = fname;
 	this.simple = simple;
 	let songhead = song_template({idsuffix: this.idString});
+	this.transTrack = transTrack;
 	// docspot
 	$('#docspot').empty();
 	$('#docspot').append(songhead);
@@ -811,7 +799,7 @@ class DelugeDoc {
 	this.jsonDocument = asJSON;
 	let jtabid = this.idFor('jtab');
 	$(jtabid).empty();
-	this.jsonToTopTable(this, $(jtabid), simple);
+	this.jsonToTopTable(this, $(jtabid), simple, transTrack);
   }
 
   idFor(root) {
@@ -823,16 +811,16 @@ class DelugeDoc {
   triggerRedraw() {
   	let jtabid = this.idFor('jtab');
 	$(jtabid).empty();
-	this.jsonToTopTable(this, $(jtabid), this.simple);
+	this.jsonToTopTable(this, $(jtabid), this.simple, this.transTrack);
 }
 
-  jsonToTopTable(jdoc, obj, simple)
+  jsonToTopTable(jdoc, obj, simple, transTrack)
 {
 	$(this.idFor('fileTitle')).html(this.fname);
 	let json = jdoc.jsonDocument;
 	if(json['song']) {
 		if (simple) {
-			formatSongSimple(jdoc, obj);
+			formatSongSimple(jdoc, obj, transTrack);
 		} else {
 			formatSong(jdoc, obj);
 		}
@@ -989,14 +977,9 @@ function getFocusDoc() {
 	return focusDoc;
 }
 
-function makeDelugeDoc(fname, text, newKitFlag, simple)
+function makeDelugeDoc(fname, text, newKitFlag, simple, transTrack)
 {
-	return new DelugeDoc(fname, text, newKitFlag, simple);
+	return new DelugeDoc(fname, text, newKitFlag, simple, transTrack);
 }
 
-function registerCallbacks(callback, template) {
-	if (callback) trackGuiCallback = callback;
-	if (template) trackHeaderTemplate = template;
-}
-
-export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson, registerCallbacks};
+export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson};

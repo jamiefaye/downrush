@@ -9,17 +9,14 @@ require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
 require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
 
 import empty_song_template from "./templates/empty_song.handlebars";
-import deluge_track_header_template from "./templates/deluge_track_header_template.handlebars";
 import {addTrackToMidi, converter} from "./DelugeToMidi.js";
-import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson, registerCallbacks} from "../../xmlView/src/SongViewLib.js";
+import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson} from "../../xmlView/src/SongViewLib.js";
 import {FileManager} from "./FileManager.js";
 
 "use strict";
 
 // Flag to enable local execution (not via the FlashAir web server)
 var local_exec = document.URL.indexOf('file:') == 0 || buildType !='flashair';
-
-var focusMidiView;
 
 class MidiViewer {
   constructor(name) {
@@ -38,11 +35,10 @@ class MidiViewer {
 }; // ** End of class
 
 
-
 function onLoad()
 {
 	let midiViewDoc = new MidiViewer('midiview');
-	focusMidiView = midiViewDoc;
+
 	let midiFileManager = new FileManager({
 		prefix:  "midi",
 		defaultName: "Untitled.mid",
@@ -50,8 +46,7 @@ function onLoad()
 		dataType: "blob",
 		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.midiViewDoc);
 			let homeViewer = new MidiViewer('midiview');
-			focusMidiView = homeViewer;
-			manager.midiViewDoc = homeViewer;
+			manager.homeDoc = homeViewer;
 			homeViewer.openOnBuffer(theData, fname);
 			$('#midiview').append(homeViewer.html);
 			
@@ -77,13 +72,26 @@ function onLoad()
 	}
 
 	midiFileManager.homeDoc = midiViewDoc;
+
+	function transTrackToMidi(song, trackNum, selt0, selt1) {
+		if(selt0 >= selt1) {
+			selt0 = 0;
+			selt1 = 0;
+		}
+
+		console.log("t0: " + selt0 + " t1: " + selt1);
+		let mDoc = midiFileManager.homeDoc.midiDoc;
+		addTrackToMidi(mDoc, song, trackNum + 1, -selt0, selt0, selt1);
+		mDoc.render();
+	}
+
 	let songManager = new FileManager({
 		prefix:  "song",
 		defaultName: "/SONGS/SONG.XML",
 		defaultDir: "/SONGS/",
 		dataType: "text",
 		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.homeDoc); constructor(fname, text, newKitFlag, simple) 
-			let homeViewer = makeDelugeDoc(fname, theData, false, true);
+			let homeViewer = makeDelugeDoc(fname, theData, false, true, transTrackToMidi);
 			setFocusDoc(homeViewer);
 			manager.homeDoc = homeViewer;
 			$('#songview').append(homeViewer.html);
@@ -98,7 +106,7 @@ function onLoad()
 	});
 	if (buildType !== 'mpc') {
 		let data = empty_song_template();
-		let homeSong = makeDelugeDoc("SONG.XML", data, false, true);
+		let homeSong = makeDelugeDoc("SONG.XML", data, false, true, transTrackToMidi);
 		songManager.homeDoc = homeSong;
 		setFocusDoc(homeSong);
 	}
@@ -106,8 +114,9 @@ function onLoad()
 	$('#songconvert').click((e)=>{
 		// function delugeToMidiArranged(midiDoc, song) {
 		let fromSong = getFocusDoc();
-		converter(focusMidiView.midiDoc, fromSong.jsonDocument.song);
-		focusMidiView.midiDoc.render();
+		let mDoc = midiFileManager.homeDoc.midiDoc;
+		converter(mDoc, fromSong.jsonDocument.song);
+		mDoc.render();
 	});
 }
 
@@ -115,20 +124,12 @@ function onLoad()
  	pasteTrackJson(jsonTrack, getFocusDoc());
  }
 
- function registerDelugeTrackGUI() {
-	$(".add2midi").click((e)=>{
-		let el =  $(e.target).closest('.add2midi')[0];
-		let trackNum = Number(el.dataset.tracknum);
-		let fromSong = getFocusDoc();
-		addTrackToMidi(focusMidiView.midiDoc, fromSong.jsonDocument.song, trackNum);
-		focusMidiView.midiDoc.render();
-	});
-}
+ function registerDelugeTrackGUI() { }
 
 if (buildType !== 'mpc') {
 	setAddToDocFunction(addToDocFunction);
 }
-registerCallbacks(registerDelugeTrackGUI, deluge_track_header_template);
+
 setMpcEnabled(buildType === 'mpc');
 setClipboardEnabled(buildType !== 'mpc');
 

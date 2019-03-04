@@ -7,7 +7,8 @@ import tippy from "./js/tippy.all.min.js";
 import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 import note_tip_template from "./templates/note_tip_template.handlebars";
-import {trackKind, yToNoteName} from "./SongUtils.js";
+import {trackKind, yToNoteName, patchInfo} from "./SongUtils.js";
+import {colorForGroup} from "./Arranger.jsx";
 
 "use strict";
 
@@ -116,9 +117,6 @@ function plotKit13(track, reftrack) {
 	}
 	let totH = ((ymax - ymin) + 1) * kitItemH;
 	let totW = trackW + xPlotOffset;
-	if (!reftrack.kit.soundSources) {
-		let meow = 2;
-	}
 	let kitList = forceArray(reftrack.kit.soundSources);
 	parentDiv.css({height: totH + 'px', width: totW + 'px'});
 	if (kitList) {
@@ -577,6 +575,22 @@ function plotKnobLevelParams(knobs, track, trackW, elem)
 	}
 }
 
+function plotMidiParams(track, trackW, elem)
+{
+	let midiParams = forceArray(track.midiParams.param);
+	if (midiParams.length === 0) return;
+
+	for (var i = 0; i < midiParams.length; ++i) {
+		// if(typeof v === "string"&& v.startsWith('0x') && v.length > 10)
+		let aParam = midiParams[i];
+		let v = aParam.value;
+		if (typeof v === "string"&& v.startsWith('0x') && v.length > 10) {
+			let prefix = "CC: " + aParam.cc;
+			plotParamChanges('', v, trackW, prefix, elem);
+		}
+	}
+}
+
 function plotParams(track, refTrack, song, elem) {
 	let trackType = trackKind(track);
 	let trackW = Number(track.trackLength);
@@ -590,9 +604,16 @@ function plotParams(track, refTrack, song, elem) {
 			plotNoteLevelParams(track.noteRows.noteRow, refTrack, trackW, song, elem);
 		}
 	}
+	
+	if (trackType == 'midi' && track.midiParams) {
+		plotMidiParams(track, trackW, elem);
+	}
+
 	if (trackType == 'midi' && track.modKnobs) {
 		plotKnobLevelParams(forceArray(track.modKnobs.modKnob), track, trackW, song, elem);
 	}
+
+
 }
 
 
@@ -654,6 +675,10 @@ class NotePlot extends React.Component {
 	let endX = this.timeToX(t1);
 	this.start = t0;
 	this.end = t1;
+	
+	if (this.props.notifier) {
+		this.props.notifier(t0, t1);
+	}
 
 //	console.log("start: " + startX + " end: " + endX);
 	this.selection.css({left: startX + 'px', width: (endX - startX) + 'px', top: 0 + 'px', height: this.height + 'px' });
@@ -701,7 +726,7 @@ class NoteGrid extends React.Component {
 
   render() {
   	return <div onMouseDown={(e)=>{this.begin_drag(e)}}>
-		<NotePlot ref={el => this.plot = el} track={this.props.track} song={this.props.song} />
+		<NotePlot ref={el => this.plot = el} track={this.props.track} song={this.props.song} notifier={this.props.notifier} />
   		</div>
   }
 
@@ -763,21 +788,17 @@ class NoteGrid extends React.Component {
   }
 }
 
-
  class TrackView extends React.Component {
     constructor(context) {
       	super(context);
 		this.context = context;
 		this.jqElem = context.jqElem;
   	}
- 
+
  	render() {
  		let props = this.props;
  		let track = props.track;
-
- 		
  		return <NoteGrid track={track} song={props.song} />
- 	
  	}
  }
 
@@ -809,4 +830,105 @@ function placeTrackObj(where, trackJ, song) {
 	return trackObj;
 }
 
-export {placeTrackObj, activateTippy, findKitList, findKitInstrument, findSoundInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}
+// **********************************************************************
+
+class TinyButton extends React.Component {
+  constructor(props) {
+	super(props);
+		this.handleClick = this.handleClick.bind(this);
+  }
+
+  handleClick(e) {
+	//	this.buttonEl.blur();
+		this.props.click(e);
+  }
+
+  render() {
+	return (
+		<button className='tinybutn' title={this.props.title} ref={(el) => { this.buttonEl = el}}>
+			<div onClick={this.handleClick} ><img src='img/menu-up.png'/></div>
+		</button>);
+	}
+}
+
+class SimpleTrackHeader extends React.Component {
+	render() {
+		let props = this.props;
+		let track = props.track;
+		let trackNum = props.trackNum;
+		let section = Number(track.section);
+		let sectionColor = colorForGroup(section);
+		let info = patchInfo(track, true);
+		let popText = info.kindName + " " + info.patch;
+		if (info.patchName) popText += " (" +  info.patchName + ")";
+		if (info.info) popText += " " + info.info;
+		return (<td className='simplechan npop' style={{backgroundColor: sectionColor}} data-text={popText}>
+			{trackNum + 1}
+			<TinyButton click = {props.transTrig}/>
+		</td>)
+	}
+}
+
+ class NewTrackView extends React.Component {
+    constructor(context) {
+		super(context);
+		
+		this.selt0 = 0;
+		this.selt1 = 0;
+	}
+
+ 	render() {
+		let props = this.props;
+		let track = props.track;
+
+ 		return (
+ 		<table className='simplehead'><tbody><tr>
+ 			<SimpleTrackHeader track={track} trackNum={props.trackNum} song={props.song} transTrig = {
+ 			(e)=>{
+ 				if (props.transTrack) {
+ 					props.transTrack(props.song, props.trackNum, this.selt0, this.selt1);
+ 				}
+ 			}}/>
+			<td><NoteGrid track={track} song={props.song} notifier={(t0, t1)=>{
+				this.selt0 = t0;
+				this.selt1 = t1;
+			}} /></td>
+			</tr>
+			</tbody>
+		</table>)
+ 	}
+ }
+
+
+class NewTrackObj {
+   constructor(context) {
+		this.context = context;
+		this.jqElem = context.jqElem;
+  	}
+
+	render() {
+		let jqElem = this.jqElem;
+		this.trackObj = React.createElement(NewTrackView, this.context);
+		ReactDOM.render(this.trackObj, jqElem);
+	}
+
+} // End class
+
+function placeTrack(where, trackJ, trackNum, song, transTrack) {
+	
+	let context = {};
+	// React wants to be given a DOM object to replace, so we make one up
+	where.append("<div/>");
+	let obj = where[0].lastChild
+	context.jqElem = obj
+	context.track = trackJ;
+	context.song = song;
+	context.trackNum = trackNum;
+	context.transTrack = transTrack;
+	let trackObj = new NewTrackObj(context);
+	trackObj.render();
+	return trackObj;
+}
+
+
+export {placeTrackObj, placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}

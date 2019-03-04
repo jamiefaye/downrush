@@ -15,7 +15,6 @@ import FileSaver from 'file-saver';
 var clipboardEnabled = false;
 var mpcEnabled = false;
 
-var focusMidiView;
 var addToDocFunction;
 var docCounter = 0;
 
@@ -71,8 +70,6 @@ class MidiPlot extends React.Component {
 
 	let parentDiv = $("<div class='midigrid'/>");
 	let itemClass = 'midiitem';
-
-	console.log("Min time: " + lowTime + " " + firstTime);
 
 	for (let i = 0; i < noteCount; ++i) {
 		let n = notes[i];
@@ -266,7 +263,7 @@ class MidiTrack extends React.Component {
 	let converter = this.props.converter;
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
-	let converted = converter.convertTrackToDeluge(trackNum, start, end, 0, false);
+	let converted = converter.convertTrackToDeluge(trackNum, start, end, converter.lowTicks, false);
 	let asText = JSON.stringify(converted, null, 1);
 	return asText;
   }
@@ -276,7 +273,7 @@ class MidiTrack extends React.Component {
 	let converter = this.props.converter;
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
-	let converted = converter.convertTrackToDeluge(trackNum, start, end, 0, false);
+	let converted = converter.convertTrackToDeluge(trackNum, start, end, converter.lowTicks, false);
 	addToDocFunction(converted);
   }
 
@@ -285,7 +282,7 @@ class MidiTrack extends React.Component {
 	let converter = this.props.converter;
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
-	let converted = converter.convertTrackToMPC(trackNum, start, end, 0, false);
+	let converted = converter.convertTrackToMPC(trackNum, start, end, converter.lowTicks, false);
 	exportMPC(converted, trackNum, this.props.song, this.props.fname);
   }
 };
@@ -385,10 +382,6 @@ function openMidiDoc(where, fname) {
 	return midiDoc;
 }
 
-function setFocusMidiView(toMidi) {
-	focusMidiView = toMidi;
-}
-
 function setAddToDocFunction(toAdder) {
 	addToDocFunction = toAdder;
 }
@@ -411,4 +404,4 @@ function makeEmptyMidiFile(where) {
 	return midiDoc;
 }
 
-export {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled, makeEmptyMidiFile};
+export {openMidiDoc, setAddToDocFunction, setMpcEnabled, setClipboardEnabled, makeEmptyMidiFile};
