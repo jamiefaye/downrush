@@ -26,7 +26,7 @@ function rowYfilter(row) {
 	return y;
 }
 
-function clipNote(midi, ticks, velocity, timeoff, channel, dur, clipS, clipE, head) {
+function clipNote(midi, ticks, velocity, dur, channel, timeoff, clipS, clipE, head) {
 	let tS = ticks;
 	let tE = ticks + dur;
 
@@ -40,12 +40,25 @@ function clipNote(midi, ticks, velocity, timeoff, channel, dur, clipS, clipE, he
 	let tX = Math.round((tS + timeoff) * head.ppq / delugePPQ);
 	let tOff = Math.round((tE + timeoff) * head.ppq / delugePPQ);
 	console.log("ticks: " + ticks + " ts: " + tS + " tx: " + tX + " toff: " + tOff);
+	
 	let note = new Note({midi: midi, ticks: tX, velocity: velocity, channel: channel},{ticks: tOff, velocity: 0, channel: channel}, head);
 	return note;
 }
 
+function clipNoteN(y, t, vel, dur, chan, timeoff, clipS, clipE, head) {
+	
+	let ppq = head.ppq;
+	let onTimeC = Math.round(t * ppq / delugePPQ);
+	let scaledDur = Math.round(dur * ppq / delugePPQ);
+	let offTimeC = onTimeC + scaledDur;
+	let note = new Note({midi: y, ticks: onTimeC, velocity: vel, channel: chan},{ticks: offTimeC, velocity: 0, channel: chan}, head);
+
+	return note;
+}
+
+
 // Encode a particular Deluge track as a Midi sequence
-function encodeAsMidi14(track, start, len, timeoff, clipS, clipE, chan, head) {
+function encodeAsMidi14(track, start, len, chan, timeoff, clipS, clipE, head) {
 	let endT = start + len;
 	let midiOut = [];
 	let baseT = start;
@@ -67,7 +80,7 @@ function encodeAsMidi14(track, start, len, timeoff, clipS, clipE, chan, head) {
 //				let cond = parseInt(notehex.substring(18, 20), 16);
 
 				let velN = vel / 127;
-				let note = clipNote(y, x + baseT, vel, timeoff, chan, dur, clipS, clipE, head);
+				let note = clipNote(y, x + baseT, velN, dur, chan, timeoff, clipS, clipE, head);
 				if (note) {
 					midiOut.push(note);
 				}
@@ -81,7 +94,50 @@ function encodeAsMidi14(track, start, len, timeoff, clipS, clipE, chan, head) {
 	return midiOut;
 }
 
-function encodeAsMidi13(track, start, len, timeoff, clipS, clipE, chan, head) {
+/*
+
+// Encode a particular Deluge track as a Midi sequence
+function encodeAsMidi14Old(track, start, len, chan, timeoff, clipS, clipE, head) {
+	let midiPPQ = head.ppq;
+	let endT = start + len;
+	let midiOut = [];
+	let baseT = start;
+	let trackLen = Number(track.trackLength);
+	if (!trackLen) return [];
+	while (baseT < endT) {
+		let rowList = forceArray(track.noteRows.noteRow);
+		for (var rx = 0; rx < rowList.length; ++rx) {
+			let row = rowList[rx];
+			var noteData = row.noteData;
+			let y = rowYfilter(row);
+			if (y < 0) continue;
+			for (var nx = 2; nx < noteData.length; nx += 20) {
+				let notehex = noteData.substring(nx, nx + 20);
+				let x = parseInt(notehex.substring(0, 8), 16);
+				let dur =  parseInt(notehex.substring(8, 16), 16);
+				let vel = parseInt(notehex.substring(16, 18), 16);
+//				let cond = parseInt(notehex.substring(18, 20), 16);
+				let tX = Math.round((x + baseT) * midiPPQ / delugePPQ);
+				let tDur = Math.round(dur * midiPPQ / delugePPQ);
+				let velN = vel / 127;
+				let onTime = tX;
+				let offTime = onTime + tDur;
+
+				let note = new Note({midi: y, ticks: onTime, velocity: velN, channel: chan},{ticks: offTime, velocity: 0, channel: chan}, head);
+
+				midiOut.push(note);
+			}
+		}
+		baseT+= trackLen;
+	}
+	midiOut.sort((a,b)=>{ return a.ticks - b.ticks});
+
+	return midiOut;
+}
+
+*/
+
+function encodeAsMidi13(track, start, len, chan, timeoff, clipS, clipE, head) {
 // first walk the track and find min and max y positions
 	let trackLen = Number(track.trackLength);
 	if (!trackLen) return [];
@@ -99,9 +155,9 @@ function encodeAsMidi13(track, start, len, timeoff, clipS, clipE, chan, head) {
 			for (var nx = 0; nx < noteList.length; ++nx) {
 				let n = noteList[nx];
 				let x = Number(n.pos);
-				let dur = n.length;
-				let vel = n.velocity / 127;
-				let note = clipNote(y, x + baseT, vel, timeoff, chan, dur, clipS, clipE, head);
+				let dur = Number(n.length);
+				let vel = Number(n.velocity) / 127;
+				let note = clipNote(y, x + baseT, vel, dur, chan, timeoff, clipS, clipE, head);
 				if (note) {
 					midiOut.push(note);
 				}
@@ -114,6 +170,45 @@ function encodeAsMidi13(track, start, len, timeoff, clipS, clipE, chan, head) {
 	return midiOut;
 }
 
+/* 
+function encodeAsMidi13OLD(track, start, len, chan, timeoff, clipS, clipE, head){
+// first walk the track and find min and max y positions
+	let midiPPQ = head.ppq;
+	let trackLen = Number(track.trackLength);
+	if (!trackLen) return [];
+	let endT = start + len;
+	let midiOut = [];
+	let baseT = start;
+
+	let rowList = forceArray(track.noteRows.noteRow);
+	while (baseT < endT) {
+		for (var rx = 0; rx < rowList.length; ++rx) {
+			let row = rowList[rx];
+			var noteList = forceArray(row.notes.note);
+			let y = rowYfilter(row);
+			if (y < 0) continue;
+			for (var nx = 0; nx < noteList.length; ++nx) {
+				let n = noteList[nx];
+				let x = Number(n.pos);
+				let dur = n.length;
+				let vel = n.velocity / 127;
+				let tX = Math.round((x + baseT) * midiPPQ / delugePPQ);
+				let tDur = Math.round(dur * midiPPQ / delugePPQ);
+				let onTime = tX;
+				let offTime = onTime + tDur;
+				let note = new Note({midi: y, ticks: onTime, velocity: vel, channel: chan},{ticks: offTime, velocity: 0, channel: chan}, head);
+				midiOut.push(note); 
+			}
+		}
+		baseT+= trackLen;
+	}
+	midiOut.sort((a,b)=>{ return a.ticks - b.ticks});
+	return midiOut;
+}
+
+*/
+
+
 function usesNewNoteFormat(track) {
 	let rowList = forceArray(track.noteRows.noteRow);
 	if (rowList.length === 0) return true;
@@ -125,15 +220,15 @@ function usesNewNoteFormat(track) {
 	return false;
 }
 
-function encodeAsMidi(track, start, len,timeoff, clipS, clipE, chan, head) {
+function encodeAsMidi(track, start, len, chan, timeoff, clipS, clipE,  head) {
 	if(usesNewNoteFormat(track)) {
-		return encodeAsMidi14(track, start, len, timeoff, clipS, clipE, chan, head);
+		return encodeAsMidi14(track, start, len, chan, timeoff, clipS, clipE, head);
 	} else {
-		return encodeAsMidi13(track, start, len, timeoff, clipS, clipE, chan, head);
+		return encodeAsMidi13(track, start, len, chan, timeoff, clipS, clipE, head);
 	}
 }
 
-function encodeInstrumentAsMidiTrack(inst, chan, song, head, timeoff)
+function encodeInstrumentAsMidiTrack(inst, chan, song, timeoff, head)
  {
 	let instString = inst.trackInstances;
 	if (!instString) return [];
@@ -224,7 +319,7 @@ function delugeToMidiArranged(midi, song) {
 	let instruments = forceArray(song.instruments);
 	instruments.reverse().map((inst, ix) =>{
 		let midiTrack = midi.addTrack();
-		let noteData = encodeInstrumentAsMidiTrack(inst, ix, song, midi.header, 0);
+		let noteData = encodeInstrumentAsMidiTrack(inst, ix, song, 0, midi.header);
 		midiTrack.notes = noteData;
 	});
 }
@@ -239,7 +334,7 @@ function addTrackToMidi(midiDoc, song, trackNum, timeoff, clipS, clipE) {
 	}
 	let midiTrack = midiDoc.midi.addTrack();
 	midiTrack.channel = toMidiChan;
-	let notes = encodeAsMidi(delTrack, 0, trackLen, timeoff, clipS, clipE, toMidiChan, midiDoc.midi.header);
+	let notes = encodeAsMidi(delTrack, 0, trackLen, toMidiChan, timeoff, clipS, clipE, midiDoc.midi.header);
 	midiTrack.notes = midiTrack.notes.concat(notes);
 	midiTrack.notes.sort((a,b)=>{ return a.ticks - b.ticks});
 }
