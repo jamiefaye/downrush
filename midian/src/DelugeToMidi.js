@@ -228,7 +228,7 @@ function encodeAsMidi(track, start, len, chan, timeoff, clipS, clipE,  head) {
 	}
 }
 
-function encodeInstrumentAsMidiTrack(inst, chan, song, timeoff, head)
+function encodeInstrumentAsMidiTrack(inst, lane, song, timeoff, head)
  {
 	let instString = inst.trackInstances;
 	if (!instString) return [];
@@ -254,7 +254,11 @@ function encodeInstrumentAsMidiTrack(inst, chan, song, timeoff, head)
 			track = (arrangeOnlyTab.length - trk & 0x7FFFFFFF)
 		}
 		if (track) {
-			midiOut = midiOut.concat(encodeAsMidi(track, start, len, timeoff, 0, 0, chan, head));
+			let toMidiChan = lane % 16;
+			if (track.midiChannel) {
+				toMidiChan = Number(track.midiChannel);
+			}
+			midiOut = midiOut.concat(encodeAsMidi(track, start, len, toMidiChan, timeoff, 0, 0, head));
 		}
 	}
 	midiOut.sort((a,b)=>{ return a.ticks - b.ticks});
@@ -317,7 +321,7 @@ function doesSongHaveArrangement(song) {
 
 function delugeToMidiArranged(midi, song) {
 	let instruments = forceArray(song.instruments);
-	instruments.reverse().map((inst, ix) =>{
+	instruments.map((inst, ix) =>{
 		let midiTrack = midi.addTrack();
 		let noteData = encodeInstrumentAsMidiTrack(inst, ix, song, 0, midi.header);
 		midiTrack.notes = noteData;

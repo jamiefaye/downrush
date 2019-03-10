@@ -22,13 +22,15 @@ var buildType = 'web';
 <link rel="stylesheet" href="midian.css">
 </head>
 <body>
-This program lets you import Midi-format files into Synthstrom Deluge SONG.XML files.
+This program converts Midi-format files into Synthstrom Deluge SONG.XML files.<p>
+This beta version also allows you to convert SONG.XML files into Midi-format files.
 <p>
-To use this program, press the "Choose File" button and select a Midi file to work with. You will then see one or more Midi tracks displayed graphically. To add a track, click on the "+ Song" button and the track will be converted and appended.
+To use this program, press the "Choose File" button and select a Midi file to work with. You will then see one or more Midi tracks displayed graphically. To add a track, click on the "+ Song" button and the track will be converted and appended. The "+ Midi" button does the opposite.<p>
+
 		<div id='filegroupplace'>
 			<table class='nobord'><tr>
-			<td>Midi File to Import:</td>
-			<td><input id='midiopenlocal' name="file" type="file" accept=".mid,.MID"/></td>
+			<td>Midi File:</td>
+			<td><input id='midiopenlocal' name="file" type="file" accept=".mid,.MID,.midi"/></td>
 			<td><input id='mididownload' type="button" value="Download" style="width:55pt" ></td>
 			</tr>
 			</table>
@@ -47,7 +49,7 @@ To use this program, press the "Choose File" button and select a Midi file to wo
 			<td>Song File:</td>
 			<td><input id='songopenlocal' name="file" type="file" accept=".xml,.XML" value='Open Song'/></td>
 			<td><input id='songdownload' type="button" value="Download" style="width:55pt" ></td>
-			<td><input id='convertarrangement' type="button" value="Convert Arrangement" style="width:55pt" ></td>
+			<td><input id='songconvert' type="button" value="Convert" style="width:55pt" ></td>
 		</tr></table>
 	</div>
 	<div id='docspot'>
@@ -55,8 +57,10 @@ To use this program, press the "Choose File" button and select a Midi file to wo
 <hr>
 	<ul>
 		<li>Download the updated song by clicking on the Download button at the bottom.</li>
-		<li>To add to an existing song, open it with the "Choose File" button.</li>
+		<li>Download the updated Midi file by clicking on the Download button at the top.</li>
+		<li>To add to an existing song or midi document, open it with the "Choose File" button.</li>
 		<li>Select a subset of a track to extract by clicking and dragging.</li>
+		<li>The "Convert" button converts the entire arrangement into a group of Midi tracks. If there isn't an arrangement, it converts each track individually.
 		<li>The "&rarr; Clip" button puts the midi track data on the clipboard. You can then paste it into the <a href="../xmlView/index.html">main XML viewer program.</a></li> 
 		<li>At present, the program only converts Note On/Note Off events.</li>
 		<li>The Midi file you choose and the SONG.XML file are processed entirely on your own computer. No information about it is sent anywhere else.</li>

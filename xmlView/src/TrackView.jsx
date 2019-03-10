@@ -491,6 +491,15 @@ function usesNewNoteFormat(track) {
 	return false;
 }
 
+function convertToCCVal(v) {
+	// Convert to signed 32 bit.
+	if (v & 0x80000000) {
+		v -= 0x100000000;
+	}
+	// Midi CC params range from 0 to 127
+	let res = Math.round( (v + 0x80000000) * 127 / 0x100000000);
+	return res;
+}
 
 function plotParamChanges(k, ps, tracklen, prefix, elem)
 {
@@ -499,6 +508,7 @@ function plotParamChanges(k, ps, tracklen, prefix, elem)
 	let cursor = 10;
 	let xpos = 0;
 	let textH = 8;
+	
 
 	var runVal = convertHexTo50(ps.substring(2,10));
 
@@ -581,10 +591,17 @@ function plotMidiParams(track, trackW, elem)
 	if (midiParams.length === 0) return;
 
 	for (var i = 0; i < midiParams.length; ++i) {
-		// if(typeof v === "string"&& v.startsWith('0x') && v.length > 10)
 		let aParam = midiParams[i];
 		let v = aParam.value;
-		if (typeof v === "string"&& v.startsWith('0x') && v.length > 10) {
+		if (typeof v === "string"&& v.startsWith('0x') && v.length >= 10) {
+			if (v.length === 10) {
+				let asInt= parseInt(v.substring(2, 10), 16);
+				let asCCV = convertToCCVal(asInt);
+				let ndiv = $("<div class='paramconst'>CC: " + aParam.cc + " = " + asCCV + "</div>");
+				ndiv.css({width: (trackW + xPlotOffset) + 'px'});
+				elem.append(ndiv);
+				continue;
+			}
 			let prefix = "CC: " + aParam.cc;
 			plotParamChanges('', v, trackW, prefix, elem);
 		}
@@ -846,7 +863,7 @@ class TinyButton extends React.Component {
   render() {
 	return (
 		<button className='tinybutn' title={this.props.title} ref={(el) => { this.buttonEl = el}}>
-			<div onClick={this.handleClick} ><img src='img/menu-up.png'/></div>
+			<div onClick={this.handleClick} >+ Midi</div>
 		</button>);
 	}
 }
@@ -863,7 +880,7 @@ class SimpleTrackHeader extends React.Component {
 		if (info.patchName) popText += " (" +  info.patchName + ")";
 		if (info.info) popText += " " + info.info;
 		return (<td className='simplechan npop' style={{backgroundColor: sectionColor}} data-text={popText}>
-			{trackNum + 1}
+			<b>{trackNum + 1}</b><span className="simplepatch">:{info.patch}</span>
 			<TinyButton click = {props.transTrig}/>
 		</td>)
 	}

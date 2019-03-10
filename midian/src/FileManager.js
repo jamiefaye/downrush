@@ -3,7 +3,7 @@ import {stepNextFile} from "./StepNextFile.js";
 import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser.js';
 import FileSaver from 'file-saver';
 
-var local_exec = document.URL.indexOf('file:') == 0;
+var local_exec = document.URL.indexOf('file:') == 0 || buildType !='flashair';
 
 class FileManager {
 

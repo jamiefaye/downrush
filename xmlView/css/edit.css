@@ -118,6 +118,7 @@ div.parmlab {
 	left: 2px;
 }
 
+
 div.trkitnote {
 	position: absolute;
 	height: 8px;
@@ -173,6 +174,12 @@ div.paramrun {
 	position: absolute;
 	height: 1px;
 	background-color:#202020;
+}
+
+div.paramconst {
+	position: relative;
+	background-color:#fffff0;
+	font-size: 7pt;
 }
 
 .plotspot, .parmplot {
@@ -503,7 +510,7 @@ min-height: 28px;
 
 
 td.simplechan {
-	width: 20px;
+	width: 40px;
 	text-align: left;
 	font-size: 18px;
 
@@ -519,6 +526,13 @@ table.simplehead {
   text-align: left;
   table-layout: fixed;
   width: 12px;
+  border: none;
+  	border: 1px;
+}
+
+span.simplepatch {
+  text-align: left;
+  font-size: 14px;
   border: none;
   	border: 1px;
 }

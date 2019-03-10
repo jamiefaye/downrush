@@ -1,4 +1,5 @@
 import { Note } from './Note'
+import { ChannelEvent } from './ChannelEvent'
 import { ControlChange } from './ControlChange'
 import { insert } from './BinarySearch'
 import { Instrument } from './Instrument'
@@ -52,6 +53,8 @@ export class Track {
 		/** @type {number} */
 		this.channel = 0
 
+		this.channelEvents = [];
+
 		/** @type {Object<string,Array<ControlChange>>} */
 		this.controlChanges = ControlChanges()
 
@@ -85,8 +88,11 @@ export class Track {
 				})
 			})
 
+			const channelChanges = trackData.filter(event => event.type === 'noteAftertouch' || event.type === 'programChange' || event.type === 'pitchBend' || event.type === 'channelAftertouch');
+			channelChanges.forEach(event => {
+				this.addChannelEvent(event);
+			})
 		}
-		
 	}
 
 	/**
@@ -148,6 +154,14 @@ export class Track {
 			this.controlChanges[cc.number] = []
 		}
 		insert(this.controlChanges[cc.number], cc, 'ticks')
+		return this
+	}
+
+	// Add a channel event (not otherwise specified) to the overall channel event list.
+	addChannelEvent(props) {
+		const header = privateHeaderMap.get(this)
+		const ce = new ChannelEvent(props, header)
+		insert(this.channelEvents, ce, 'ticks');
 		return this
 	}
 
