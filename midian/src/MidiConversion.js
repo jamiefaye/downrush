@@ -452,18 +452,21 @@ class MidiConversion {
 	let notesOut = [];
 	
 	let clipMax = 0;
-
+	let goodNotes = [];
 	for (let i = 0; i < noteCount; ++i) {
 		let n = notes[i];
-		let m = n.midi;
 		let t = n.time;
 		let tend = t + n.duration;
 		if (t >= endTime || tend <= startTime) continue;
-
+		goodNotes.push(n)
+	}
+	let goodCount = goodNotes.length;
+	for (let i = 0; i < goodCount; ++i) {
+		let n = goodNotes[i];
+		let m = n.midi;
 		let tMstart = n.ticks - tickOffset;
 		let tMdur = n.durationTicks;
 		let tMend = tMstart + tMdur;
-		
 		let tDstart = Math.round(tMstart * forcePPQ / midiPPQ);
 		let tDdur = Math.round(tMdur * forcePPQ / midiPPQ);
 		let tDnoteEnd = tDstart + tDdur;
@@ -479,11 +482,11 @@ class MidiConversion {
 			"3": 		0,
 			"mod": 		0,
 			"modVal": 	0.5,
-			"isNotLast": i < (noteCount - 1),
+			"isNotLast": i < (goodCount - 1),
 		};
 		notesOut.push(nj);
 	}
-	
+
 	let context = {events: notesOut};
 	let mpcOut = mpcpattern_file_tamplate(context);
 	return mpcOut;
