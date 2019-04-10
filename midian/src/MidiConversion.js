@@ -244,17 +244,17 @@ class MidiConversion {
 		this.convertTrackCCsToDeluge(trout, track, ccMap, (n)=>hexLZ32(Math.round(normTo32Fn(n.value))), context);
 	}
 
-	const bendList = track.channelEvents.filter(event => event.type === 'pitchBend');
-	if (bendList.length > 0) {
+	const bendList = track.channelEvents['pitchBend'];
+	if (bendList !== undefined && bendList.length > 0) {
 		let bendMap = {'bend': bendList};
 		this.convertTrackCCsToDeluge(trout, track, bendMap, (n)=>{
 			return hexLZ32(Math.round(range4kTo32Fn(n.value)))
 		}, context);
 	}
 
-	const chanAfterList =  track.channelEvents.filter(event => event.type === 'channelAftertouch');
-	if (chanAfterList.length > 0) {
-		let afterMap = {'aftertouch': bendList};
+	const chanAfterList =  track.channelEvents['channelAftertouch'];
+	if (chanAfterList !== undefined && chanAfterList.length > 0) {
+		let afterMap = {'aftertouch': chanAfterList};
 		this.convertTrackCCsToDeluge(trout, track, afterMap, (n)=>hexLZ32(Math.round(map0to127to32Fn(n.amount))), context);
 	}
 
@@ -276,7 +276,7 @@ class MidiConversion {
 	for (let key in ccMap) {
 		let ccChan = key; // Number(key);
 		let ccArray = ccMap[key];
-		if (ccArray.length === 0) continue;
+		if (!ccArray || ccArray.length === 0) continue;
 		let cchex = "0x";
 		let bleedInEvent = undefined;
 		let filteredList = [];

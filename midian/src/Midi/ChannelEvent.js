@@ -46,7 +46,7 @@ export class ChannelEvent {
 	}
 
 	toJSON(){
-		let json = {type: type };
+		let json = {type: this.type };
 		json.value = this.value;
 		json.ticks = this.ticks;
 		json.amount = this.amount;
