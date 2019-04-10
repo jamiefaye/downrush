@@ -9,6 +9,8 @@ require('file-loader?name=img/[name].[ext]!../img/glyphicons-175-pause.png');
 require('file-loader?name=img/[name].[ext]!../img/glyphicons-182-download-alt.png');
 require('file-loader?name=img/[name].[ext]!../img/glyphicons-237-zoom-in.png');
 require('file-loader?name=img/[name].[ext]!../img/glyphicons-238-zoom-out.png');
+require('file-loader?name=img/[name].[ext]!../img/menu-down.png');
+require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
 require('file-loader?name=img/[name].[ext]!../img/glyphicons-594-voice.png');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
 import {formatKit} from "./KitList.jsx";

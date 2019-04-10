@@ -14,6 +14,8 @@ window.onerror = function(msg, url, line, col, error) {
    alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
    return true;
 };
+
+var buildType='mpc';
 </script>
 <link rel="stylesheet" href="filewidget.css">
 <link rel="stylesheet" href="edit.css">
@@ -26,7 +28,7 @@ This program converts Midi-format files into mpcpattern files for the Akai Force
 To use this program, press the "Choose File" button and select a Midi file to work with. You will then see one or more Midi tracks displayed graphically. To convert a track into a mpcpattern, click on the "+ MPC" button and the track will be converted and downloaded.
 <p>
 <table class='nobord'><tr>
-<td><input id='opener' name="file" type="file" accept=".mid,.MID"/></td>
+<td><input id='midiopenlocal' name="file" type="file" accept=".mid,.MID,.midi"/></td>
 </tr>
 </table>
 		</div>
@@ -47,6 +49,6 @@ To use this program, press the "Choose File" button and select a Midi file to wo
 		<li>The program is experimental and no liability is assumed for bugs, crashes, etc. by Catnip or Akai Professional.
 	</ul>
 © 2019 Catnip/Jamie Faye Fenton.
-<script src="midianmpc.js"></script>
+<script src="midian.js"></script>
 </body>
 </html>

@@ -52,8 +52,7 @@ function patchInfo(track, newSynthNames) {
 	if (kind === 'kit' || kind === 'sound') {
 		patchStr = patch;
 		let subpatch = Number(track.instrumentPresetSubSlot);
-		if (subpatch >= 0) {
-			patchStr += ' ';
+		if (track.instrumentPresetSubSlot !== undefined && subpatch >= 0) {
 			patchStr += String.fromCharCode(subpatch + 65); // 0 = a, 1 = b, …
 		}
 	}

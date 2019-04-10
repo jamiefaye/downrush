@@ -15,7 +15,7 @@ window.onerror = function(msg, url, line, col, error) {
    return true;
 };
 -->
-
+var buildType = 'flashair';
 </script>
 <link rel="stylesheet" href="filewidget.css">
 <link rel="stylesheet" href="edit.css">
@@ -25,10 +25,12 @@ window.onerror = function(msg, url, line, col, error) {
 	<body>
 		<div id='filegroupplace'>
 			<table id='filegroup' class='nobord'><tr>
-				<td><button id="openmidibutn" class="butn openmidibutn" title="openmidi">Open Midi</button></td>
-				<td><button id="upbut" class="butn upbut" title="upbutn">&#x2191;</button></td>
-				<td><button id="downbut" class="butn downbut" title="dnbutn">&#x2193;</button></td>
-				<td><div id="statind" style='font-size: 9pt'></div></td>
+				<td><button id="midiopen" class="butn openmidibutn" title="openmidi">Open Midi</button></td>
+				<td><button id="midiupbut" class="butn upbut" title="upbutn">&#x2191;</button></td>
+				<td><button id="mididwnbut" class="butn downbut" title="dnbutn">&#x2193;</button></td>
+				<td><button id="midisave" class="butn savebut" title="save">Save Midi</button></td>
+				<td><button id='mididownload' class='butn downlbut' title="download">Download Midi</button></td>
+				<td><div id="midistatus" style='font-size: 9pt'></div></td>
 				</tr>
 			</table>
 		</div>
@@ -36,22 +38,24 @@ window.onerror = function(msg, url, line, col, error) {
 		<p class='tinygap'/>
 	<div id='midiview'>
 	</div>
+
+	<p class='tinygap'/>
+
 	
-	<div id='docspot'>
-	</div>
-	<div id='midiantab'>
-	</div>
 	<div id='filegroupsong'>
-		<table id='filegroup2' class='nobord'><tr>
-			<td><button id="opensongbutn" class="butn opensongbutn" title="open">Open Song</button></td>
-			<td><button id="savebut" class="butn savebut" title="save">Save Song</button></td>
-			<td><button id='downloadbut' class='butn downlbut' title="download">Download Song</button></td>
-			<td><div id="statind2" style='font-size: 9pt'></div></td>
-		</tr>
-		</table>
-	</div>
-<div id='songiew'>
-</div>
+			<table id='filegroup2' class='nobord'><tr>
+				<td><button id="songopen" class="butn opensongbutn" title="opensong">Open Song</button></td>
+				<td><button id="songupbut" class="butn upbut" title="upbutn">&#x2191;</button></td>
+				<td><button id="songdwnbut" class="butn downbut" title="dnbutn">&#x2193;</button></td>
+				<td><button id="songsave" class="butn savebut" title="save">Save song</button></td>
+				<td><button id='songdownload' class='butn downlbut' title="download">Download Song</button></td>
+				<td><button id='songconvert' class='butn' title="Convert All">Convert</td>
+				<td><div id="songstatus" style='font-size: 9pt'></div></td>
+				</tr>
+			</table>
+		</div>
+	<div id='docspot'>
+
 <script src="midian.js"></script>
 </body>
 </html>

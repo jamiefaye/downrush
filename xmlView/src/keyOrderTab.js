@@ -112,6 +112,7 @@
 "instrumentPresetSubSlot",
 "arpeggiator",
 "midiChannel",
+"midiParams",
 "modKnobs",
 "section",
 "sound",

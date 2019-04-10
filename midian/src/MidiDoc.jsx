@@ -2,8 +2,11 @@ import React from 'react';
 import ReactDOM from "react-dom";
 import $ from'./js/jquery-3.2.1.min.js';
 import {Midi} from "./Midi/Midi.js";
+import {encode} from "./Midi/Encode.js";
+
 import {WedgeIndicator, PushButton, CopyToClipButton} from './GUIstuff.jsx';
 import {MidiConversion} from "./MidiConversion.js";
+import {makeEmptyFile} from "./DelugeToMidi.js";
 
 import eol from "eol";
 
@@ -12,7 +15,6 @@ import FileSaver from 'file-saver';
 var clipboardEnabled = false;
 var mpcEnabled = false;
 
-var focusMidiView;
 var addToDocFunction;
 var docCounter = 0;
 
@@ -68,8 +70,6 @@ class MidiPlot extends React.Component {
 
 	let parentDiv = $("<div class='midigrid'/>");
 	let itemClass = 'midiitem';
-
-	console.log("Min time: " + lowTime + " " + firstTime);
 
 	for (let i = 0; i < noteCount; ++i) {
 		let n = notes[i];
@@ -263,7 +263,7 @@ class MidiTrack extends React.Component {
 	let converter = this.props.converter;
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
-	let converted = converter.convertTrackToDeluge(trackNum, start, end, converter.lowTicks, false);
+	let converted = converter.convertTrackToDeluge(trackNum, start, end, 0);
 	let asText = JSON.stringify(converted, null, 1);
 	return asText;
   }
@@ -273,26 +273,25 @@ class MidiTrack extends React.Component {
 	let converter = this.props.converter;
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
-	let converted = converter.convertTrackToDeluge(trackNum, start, end, converter.lowTicks, false);
+	let converted = converter.convertTrackToDeluge(trackNum, start, end, 0);
 	addToDocFunction(converted);
   }
-  
 
   getMPC() {
 	let toCopy = this.props.track;
 	let converter = this.props.converter;
 	let trackNum = this.props.trackNum;
 	let {start, end} = this.grid.getSelectedTimes();
-	let converted = converter.convertTrackToMPC(trackNum, start, end, converter.lowTicks, false);
-	exportMPC(converted, trackNum, this.props.song);
+	let converted = converter.convertTrackToMPC(trackNum, start, end, 0);
+	exportMPC(converted, trackNum, this.props.song, this.props.fname);
   }
 };
 
-function exportMPC(asText, trackNum, song) {
+function exportMPC(asText, trackNum, song, fname) {
 	let asLinux = eol.lf(asText);
 	var blob = new Blob([asLinux], {type: "text/json"});
 
-	let fromDocPath = focusMidiView.fname;
+	let fromDocPath = fname;
 	if (fromDocPath['name']) {
 		fromDocPath = fromDocPath.name;
 	}
@@ -306,7 +305,7 @@ function exportMPC(asText, trackNum, song) {
 	// get file name from end.
 	let nameOnly = namePart.split('.')[0]; // get rid of extension
 	let saveName = nameOnly + "_Track_" + trackNum + ".mpcpattern";
-	
+
 	FileSaver.saveAs(blob, saveName);
 }
 
@@ -316,15 +315,16 @@ function exportMPC(asText, trackNum, song) {
 // 		<pre>{this.props.midiText}</pre>
   render() {
 	let midi = this.props.midi;
-	if (!midi) return null;
 	
+	if (!midi) return null;
+	let fname = this.props.fname;
 	this.midiConversion = new MidiConversion(midi);
 	let mc = this.midiConversion;
 	mc.calcTimeBounds();
 	docCounter+= 100000;
 	return (<React.Fragment><MidiHeader header={midi.header} text={this.props.midiText}/>
 		{midi.tracks.map((track, ix) =>{
-			return <MidiTrack trackNum={ix + 1} track={track} key={docCounter + ix} song={midi} converter={mc}/>
+			return <MidiTrack trackNum={ix + 1} track={track} key={docCounter + ix} song={midi} fname={fname} converter={mc}/>
 		})}
 		<hr/>
 		</React.Fragment>);
@@ -335,6 +335,7 @@ function exportMPC(asText, trackNum, song) {
    constructor(context) {
 		this.context = context;
 		this.jqElem = context.jqElem;
+		this.fname = context.fname;
   }
 
 	openOnBuffer(data) {
@@ -347,6 +348,7 @@ function exportMPC(asText, trackNum, song) {
 			me.midiText = JSON.stringify(me.midi, undefined, 2);
 			me.context.midiText = me.midiText;
 			me.context.midi = me.midi;
+			me.context.fname = me.fname;
 			me.render();
 		};
 		fileReader.readAsArrayBuffer(data);
@@ -357,18 +359,27 @@ function exportMPC(asText, trackNum, song) {
 		ReactDOM.render(this.midiDoc, this.jqElem);
 	}
 
+	makeEmpty() {
+		this.midi = makeEmptyFile();
+		this.context.midi = this.midi;
+		this.context.fname = "Untitled.mid";
+	}
+
+	generateMid() {
+		if(this.midi) {
+			return encode(this.midi);
+		}
+	}
+
 } // End class
 
-function openMidiDoc(where, params) {
+function openMidiDoc(where, fname) {
 	let context = {};
 	context.jqElem =  where;
+	context.fname = fname;
 	let midiDoc = new MidiDoc(context);
 	midiDoc.render();
 	return midiDoc;
-}
-
-function setFocusMidiView(toMidi) {
-	focusMidiView = toMidi;
 }
 
 function setAddToDocFunction(toAdder) {
@@ -383,4 +394,14 @@ function setClipboardEnabled(flag) {
 	clipboardEnabled = flag;
 }
 
-export {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled};
+function makeEmptyMidiFile(where) {
+	let context = {};
+	context.jqElem =  where;
+	context.fname = "Untitled";
+	let midiDoc = new MidiDoc(context);
+	midiDoc.makeEmpty();
+	midiDoc.render();
+	return midiDoc;
+}
+
+export {openMidiDoc, setAddToDocFunction, setMpcEnabled, setClipboardEnabled, makeEmptyMidiFile};

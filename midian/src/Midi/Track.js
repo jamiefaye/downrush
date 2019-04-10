@@ -1,4 +1,5 @@
 import { Note } from './Note'
+import { ChannelEvent } from './ChannelEvent'
 import { ControlChange } from './ControlChange'
 import { insert } from './BinarySearch'
 import { Instrument } from './Instrument'
@@ -52,6 +53,8 @@ export class Track {
 		/** @type {number} */
 		this.channel = 0
 
+		this.channelEvents = {};
+
 		/** @type {Object<string,Array<ControlChange>>} */
 		this.controlChanges = ControlChanges()
 
@@ -85,8 +88,11 @@ export class Track {
 				})
 			})
 
+			const channelChanges = trackData.filter(event => event.type === 'noteAftertouch' || event.type === 'programChange' || event.type === 'pitchBend' || event.type === 'channelAftertouch');
+			channelChanges.forEach(event => {
+				this.addChannelEvent(event);
+			})
 		}
-		
 	}
 
 	/**
@@ -151,6 +157,17 @@ export class Track {
 		return this
 	}
 
+	// Add a channel event (not otherwise specified) to the overall channel event list.
+	addChannelEvent(props) {
+		const header = privateHeaderMap.get(this)
+		const ce = new ChannelEvent(props, header)
+		if (!Array.isArray(this.channelEvents[ce.type])){
+			this.channelEvents[ce.type] = [];
+		}
+		insert(this.channelEvents[ce.type], ce, 'ticks');
+		return this
+	}
+
 	/**
 	 * The end time of the last event in the track
 	 * @type {number}
@@ -196,6 +213,11 @@ export class Track {
 				})
 			})
 		}
+		for (let k in json.channelEvents) {
+			json.channelEvents[k].forEach(e => {
+				this.addChannelEvent(e);
+			})
+		}
 		json.notes.forEach(n => {
 			this.addNote({
 				ticks : n.ticks,
@@ -218,12 +240,19 @@ export class Track {
 				controlChanges[i] = this.controlChanges[i].map(c => c.toJSON())
 			}
 		}
+		const channelEvents = {}
+		for (let k in this.channelEvents) {
+			if (this.channelEvents.hasOwnProperty(k)){
+				channelEvents[k] = this.channelEvents[k].map(e => e.toJSON());
+			}
+		}
 		return {
 			name : this.name,
 			channel : this.channel,
 			instrument : this.instrument.toJSON(),
 			notes : this.notes.map(n => n.toJSON()),
-			controlChanges, 
+			controlChanges,
+			channelEvents,
 		}
 	}
 }

@@ -109,6 +109,11 @@ export class Note {
 		this.ticks = noteOn.ticks
 
 		/**
+		 * The midi channel number 0-15
+		 * @type {number}
+		 */
+		this.channel = noteOn.channel;
+		/**
 		 * The duration in ticks
 		 * @type {number}
 		 */

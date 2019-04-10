@@ -91,14 +91,14 @@ export function encode(midi){
 						return [
 							{
 								type : 'noteOn',
-								channel : track.channel,
+								channel : note.channel ? note.channel : track.channel,
 								noteNumber : note.midi,
 								ticks : note.ticks,
 								velocity : Math.floor(note.velocity * 127)
 							},
 							{
 								type : 'noteOff',
-								channel : track.channel,
+								channel : note.channel ? note.channel : track.channel,
 								noteNumber : note.midi,
 								ticks : note.ticks + note.durationTicks,
 								velocity : Math.floor(note.noteOffVelocity * 127)
