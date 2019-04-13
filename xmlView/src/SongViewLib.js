@@ -707,6 +707,10 @@ function formatSong(jdoc, obj) {
 function formatSongSimple(jdoc, obj, transTrack) {
 	let jsong = jdoc.jsonDocument.song;
 	let newNoteFormat = jdoc.newNoteFormat;
+	if (jsong.preview) {
+		let ctab = genColorTab(jsong.preview);
+		obj.append(ctab);
+	}
 	obj.append($("<p class='tinygap'>"));
 	obj.append("Tempo = " + convertTempo(jsong) + " bpm");
 	let swing = Number(jsong.swingAmount);

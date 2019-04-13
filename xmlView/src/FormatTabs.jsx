@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import React from 'react';
-import {formatMidi} from "./SongViewLib.js";
+import {formatMidi, genColorTab} from "./SongViewLib.js";
 
 class FormatMidi extends React.Component {
 
@@ -18,4 +18,17 @@ class FormatMidi extends React.Component {
   }
 };
 
-export {FormatMidi};
+class PreviewGrid extends React.Component {
+// 	let ctab = genColorTab(jsong.preview);
+// 	obj.append(ctab);
+  componentDidMount() {
+  	let ptab = genColorTab(this.props.preview);
+  	$(this.el).append(ptab);
+  }
+
+  render() {
+	return <div  ref={el => this.el = el}> </div>
+  }
+};
+
+export {FormatMidi, PreviewGrid};
