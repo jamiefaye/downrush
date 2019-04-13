@@ -9,6 +9,14 @@ import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 import note_tip_template from "./templates/note_tip_template.handlebars";
 import {trackKind, yToNoteName, patchInfo} from "./SongUtils.js";
 import {colorForGroup} from "./Arranger.jsx";
+import {KitListView} from './KitList.jsx';
+import {WedgeIndicator, CopyToClipButton} from "./GUIstuff.jsx";
+import {SoundTab} from './SoundTab.jsx';
+import {FormatMidi} from './FormatTabs.jsx';
+import {getTrackText} from "./SongViewLib.js";
+
+
+const copy = require('clipboard-copy')
 
 "use strict";
 
@@ -863,10 +871,11 @@ class TinyButton extends React.Component {
   render() {
 	return (
 		<button className='tinybutn' title={this.props.title} ref={(el) => { this.buttonEl = el}}>
-			<div onClick={this.handleClick} >+ Midi</div>
+			<div onClick={this.handleClick} >{this.props.title}</div>
 		</button>);
 	}
 }
+
 
 class SimpleTrackHeader extends React.Component {
 	render() {
@@ -877,14 +886,40 @@ class SimpleTrackHeader extends React.Component {
 		let sectionColor = colorForGroup(section);
 		let info = patchInfo(track, true);
 		let popText = info.kindName + " " + info.patch;
+		let clipboardEnabled = true;
+		let toMidiEnabled = props.transTrig;
 		if (info.patchName) popText += " (" +  info.patchName + ")";
 		if (info.info) popText += " " + info.info;
 		return (<td className='simplechan npop' style={{backgroundColor: sectionColor}} data-text={popText}>
 			<b>{trackNum + 1}</b><span className="simplepatch">:{info.patch}</span>
-			<TinyButton click = {props.transTrig}/>
+			{toMidiEnabled? <TinyButton title='+ Midi' click = {props.transTrig}/> : null}
+			{clipboardEnabled ? <TinyButton title='&rarr; Clip' click={props.copySel} /> : null} 
+			<WedgeIndicator opened={this.props.showTab} toggler={props.toggleTab} />
 		</td>)
 	}
 }
+
+class SoundDetails extends React.Component {
+
+ 	render() {
+ 		let track = this.props.track;
+ 		let trackType = trackKind(track);
+ 		if (trackType === 'sound') {
+ 			return 	<SoundTab sound={this.props.track}/>;
+ 		} else if (trackType === 'kit') {
+			let kitroot = track.kit;
+			if (track['soundSources']) {
+				kitroot = track.soundSources.sound;
+			} else {
+				kitroot = findKitList(track, this.props.song);
+			}
+ 			return <KitListView kitList={kitroot} />;
+ 		} else if (trackType === 'midi') {
+ 			return <FormatMidi midi={track} />;
+ 		}
+ 	}
+}
+
 
  class NewTrackView extends React.Component {
     constructor(context) {
@@ -892,28 +927,46 @@ class SimpleTrackHeader extends React.Component {
 		
 		this.selt0 = 0;
 		this.selt1 = 0;
+		this.state = {showTab: false};
+		this.toggleTab = this.toggleTab.bind(this);
+		this.copySel = this.copySel.bind(this);
+		this.transTrig = this.transTrig.bind(this);
 	}
 
  	render() {
 		let props = this.props;
 		let track = props.track;
-
+		let state = this.state;
+		let trigFunc = props.transTrack ? this.transTrig : undefined;
  		return (
+ 	  <div>
  		<table className='simplehead'><tbody><tr>
- 			<SimpleTrackHeader track={track} trackNum={props.trackNum} song={props.song} transTrig = {
- 			(e)=>{
- 				if (props.transTrack) {
- 					props.transTrack(props.song, props.trackNum, this.selt0, this.selt1);
- 				}
- 			}}/>
+ 			<SimpleTrackHeader track={track} trackNum={props.trackNum} song={props.song} showTab={state.showTab} copySel={this.copySel} toggleTab={this.toggleTab} transTrig = {trigFunc} />
 			<td><NoteGrid track={track} song={props.song} notifier={(t0, t1)=>{
 				this.selt0 = t0;
 				this.selt1 = t1;
 			}} /></td>
 			</tr>
 			</tbody>
-		</table>)
+		</table>
+		{state.showTab ? <tr><SoundDetails track={track} song={props.song} /></tr> : null}
+	  </div>)
  	}
+
+  toggleTab() {
+	this.setState({showTab: !this.state.showTab});
+  }
+
+  copySel() {
+	let props = this.props;
+	let trackText = getTrackText(props.track, props.song);
+	copy(trackText);
+  }
+
+  transTrig(e) {
+	let props = this.props;
+ 	props.transTrack(props.song, props.trackNum, this.selt0, this.selt1);
+  }
  }
 
 

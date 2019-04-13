@@ -432,7 +432,7 @@ function viewSound(e, songJ) {
 			}
 
 			if(kitroot) {
-				formatKit(kitroot, trackD.kitParams, where[0]);
+				formatKit(kitroot, where[0]);
 			}
 		} else if(trackType === 'midi') {
 			formatMidi(where, trackD);
@@ -469,13 +469,20 @@ function trackHeader(track, newSynthNames, inx, repeatTab, template, obj) {
 	obj.append(trtab);
 }
 
-function getTrackText(trackNum, songJ)
+function getTrackTextNum(trackNum, songJ)
 {
 	if (!songJ) return;
 
 	let trackA = forceArray(songJ.tracks.track);
 	let trackIX = trackA.length - trackNum - 1;
 	let trackJ = trackA[trackIX];
+	return getTrackText(trackJ, songJ);
+}
+
+function getTrackText(trackJ, songJ)
+{
+	if (!songJ) return;
+
 	// Dereference referToTrackId if needed.
 	let	trackD = {...trackJ}; // working copy
 	if (trackJ.instrument && trackJ.instrument.referToTrackId !== undefined) {
@@ -688,7 +695,7 @@ function formatSong(jdoc, obj) {
 	let clippers = jdoc.docTopElement[0].getElementsByClassName('clipbtn');
 	new Clipboard(clippers, {
 	   text: function(trigger) {
-		let asText = getTrackText(trigger.getAttribute('trackno'), jsong);
+		let asText = getTrackTextNum(trigger.getAttribute('trackno'), jsong);
 		return asText;
 	}
 	});
@@ -728,6 +735,10 @@ function formatSongSimple(jdoc, obj, transTrack) {
 		activateTippy();
 	  }
 	}
+
+	trackPasteField(obj, jdoc);
+	obj.append($("<div class='samprepplace'></div>"));
+	genSampleReport(jsong, obj);	
 }
 
 /*******************************************************************************
@@ -829,7 +840,7 @@ class DelugeDoc {
 	} else if(json['kit']) {
 		let wherePut = $(this.idFor('jtab'))[0];
 		let kitList = json.kit.soundSources;
-		formatKit(kitList, json.kitParams, wherePut);
+		formatKit(kitList, wherePut);
 	} else {
 		jsonToTable(json, obj);
 	}
@@ -982,4 +993,4 @@ function makeDelugeDoc(fname, text, newKitFlag, simple, transTrack)
 	return new DelugeDoc(fname, text, newKitFlag, simple, transTrack);
 }
 
-export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson};
+export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson, getTrackText, formatMidi};

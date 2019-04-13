@@ -13,7 +13,7 @@ require('file-loader?name=img/[name].[ext]!../img/menu-down.png');
 require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
 require('file-loader?name=img/[name].[ext]!../img/glyphicons-594-voice.png');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
-import {formatKit} from "./KitList.jsx";
+
 import React from 'react';
 import ReactDOM from "react-dom";
 import FileSaver from 'file-saver';
@@ -159,7 +159,7 @@ function newKitDoc(e) {
 //editor
 function setEditText(fname, text)
 {
-	focusDoc = makeDelugeDoc(fname, text, false, false);
+	focusDoc = makeDelugeDoc(fname, text, false, true); // *** JFF
 	setFocusDoc(focusDoc);
 }
 
