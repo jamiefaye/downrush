@@ -905,7 +905,8 @@ class SoundDetails extends React.Component {
  		let track = this.props.track;
  		let trackType = trackKind(track);
  		if (trackType === 'sound') {
- 			return 	<SoundTab sound={this.props.track}/>;
+ 			let soundData = findSoundData(track, this.props.song);
+ 			return 	<SoundTab sound={soundData} />;
  		} else if (trackType === 'kit') {
 			let kitroot = track.kit;
 			if (track['soundSources']) {
