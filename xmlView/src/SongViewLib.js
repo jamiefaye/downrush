@@ -306,15 +306,6 @@ function pasteTrackText(text, songDoc) {
 
 /*******************************************************************************
 
-		VIEW/CONTROLLERS
-		
- *******************************************************************************
-*/
-
-
-
-/*******************************************************************************
-
 		SOUND & MIDI
 		
  *******************************************************************************
@@ -387,6 +378,7 @@ function formatMidi(obj)
 	}
 }
 
+/*
 function viewSound(e, songJ) {
 	let target = e.target;
 	let trn =  Number(target.getAttribute('trackno'));
@@ -440,6 +432,7 @@ function viewSound(e, songJ) {
 	 }
 }
 
+*/
 
 /*******************************************************************************
 
@@ -576,10 +569,11 @@ function trackPasteField(obj, jDoc) {
 	}
 }
 
-
+/*
 function songTail(jsong, obj) {
 	formatSound(obj, jsong, jsong.songParams, jsong.defaultParams, jsong.soundParams);
 }
+*/
 
 // Return song tempo calculated from timePerTimerTick and timerTickFraction
 function convertTempo(jsong)
@@ -641,6 +635,7 @@ function genSampleReport(jsong,jdoc)
 	});
 }
 
+/*
 function formatSong(jdoc, obj) {
 	let jsong = jdoc.jsonDocument.song;
 	let newNoteFormat = jdoc.newNoteFormat;
@@ -703,47 +698,8 @@ function formatSong(jdoc, obj) {
 		viewSound(e, jsong);
 	});
 }
+*/
 
-function formatSongSimple(jdoc, obj, transTrack) {
-	let jsong = jdoc.jsonDocument.song;
-	let newNoteFormat = jdoc.newNoteFormat;
-	if (jsong.preview) {
-		let ctab = genColorTab(jsong.preview);
-		obj.append(ctab);
-	}
-	obj.append($("<p class='tinygap'>"));
-	obj.append("Tempo = " + convertTempo(jsong) + " bpm");
-	let swing = Number(jsong.swingAmount);
-	if(swing !== 0) {
-		swing += 50;
-		let sync = Number(jsong.swingInterval);
-		obj.append(", Swing = " + swing + "% on " + fmtsync[sync]);
-	}
-	
-	obj.append(", Key = " + scaleString(jsong));
-	obj.append($("<p class='tinygap'>"));
-	
-	showArranger(jsong, jdoc.newSynthNames, obj);
-
-	obj.append($("<p class='tinygap'>"));
-
-	let sectionTab = forceArray(jsong.sections.section);
-
-	if(jsong.tracks) {
-	  let trax = forceArray(jsong.tracks.track);
-	  if (trax) {
-		for(var i = 0; i < trax.length; ++i) {
-			let track = trax[trax.length - i - 1];
-			placeTrack(obj, track, i,  jsong, transTrack);
-		}
-		activateTippy();
-	  }
-	}
-
-	trackPasteField(obj, jdoc);
-	obj.append($("<div class='samprepplace'></div>"));
-	genSampleReport(jsong, obj);	
-}
 
 /*******************************************************************************
 
@@ -753,13 +709,12 @@ function formatSongSimple(jdoc, obj, transTrack) {
 */
 
 class DelugeDoc {
-  constructor(fname, text, newKitFlag, simple, transTrack) {
+  constructor(fname, text, options) {
   	this.idNumber = gIdCounter++;
 	this.idString = "" + this.idNumber;
 	this.fname = fname;
-	this.simple = simple;
 	let songhead = song_template({idsuffix: this.idString});
-	this.transTrack = transTrack;
+	this.options = options;
 	// docspot
 	$('#docspot').empty();
 	$('#docspot').append(songhead);
@@ -808,37 +763,75 @@ class DelugeDoc {
 	// Uncomment following to generate ordering table based on a real-world example.
 	// enOrderTab(asDOM);
 	var asJSON = xmlToJson(asDOM);
-	if (newKitFlag) {
+	if (options.newKit) {
 		asJSON.kit.soundSources = [];
 	}
 	this.jsonDocument = asJSON;
 	let jtabid = this.idFor('jtab');
 	$(jtabid).empty();
-	this.jsonToTopTable(this, $(jtabid), simple, transTrack);
+	this.jsonToTopTable(this, $(jtabid));
   }
 
   idFor(root) {
 	return '#' + root + this.idString;
   }
 
+  formatSongSimple(jdoc, obj) {
+	let jsong = jdoc.jsonDocument.song;
+	let newNoteFormat = jdoc.newNoteFormat;
+	if (jsong.preview) {
+		let ctab = genColorTab(jsong.preview);
+		obj.append(ctab);
+	}
+	obj.append($("<p class='tinygap'>"));
+	obj.append("Tempo = " + convertTempo(jsong) + " bpm");
+	let swing = Number(jsong.swingAmount);
+	if(swing !== 0) {
+		swing += 50;
+		let sync = Number(jsong.swingInterval);
+		obj.append(", Swing = " + swing + "% on " + fmtsync[sync]);
+	}
+	
+	obj.append(", Key = " + scaleString(jsong));
+	obj.append($("<p class='tinygap'>"));
+	
+	showArranger(jsong, jdoc.newSynthNames, obj);
+
+	obj.append($("<p class='tinygap'>"));
+
+	let sectionTab = forceArray(jsong.sections.section);
+
+	if(jsong.tracks) {
+	  let trax = forceArray(jsong.tracks.track);
+	  if (trax) {
+		for(var i = 0; i < trax.length; ++i) {
+			let track = trax[trax.length - i - 1];
+			placeTrack(obj, track, i,  jsong, this.options.transTrack);
+		}
+		activateTippy();
+	  }
+	}
+
+	trackPasteField(obj, jdoc);
+	obj.append($("<div class='samprepplace'></div>"));
+	genSampleReport(jsong, obj);	
+}
+
+
 	
 // Trigger redraw of displayed object(s).
   triggerRedraw() {
   	let jtabid = this.idFor('jtab');
 	$(jtabid).empty();
-	this.jsonToTopTable(this, $(jtabid), this.simple, this.transTrack);
+	this.jsonToTopTable(this, $(jtabid));
 }
 
-  jsonToTopTable(jdoc, obj, simple, transTrack)
+  jsonToTopTable(jdoc, obj)
 {
 	$(this.idFor('fileTitle')).html(this.fname);
 	let json = jdoc.jsonDocument;
 	if(json['song']) {
-		if (simple) {
-			formatSongSimple(jdoc, obj, transTrack);
-		} else {
-			formatSong(jdoc, obj);
-		}
+		this.formatSongSimple(jdoc, obj);
 	} else if(json['sound']) {
 		formatSound(obj, json.sound, json.sound.defaultParams, json.sound.soundParams);
 	} else if(json['kit']) {
@@ -965,7 +958,7 @@ class DelugeDoc {
 				},
 			})
 		},
-		
+
 		xhr: function() {
 			var xhr = new window.XMLHttpRequest();
 		  	xhr.upload.addEventListener("progress", function(evt){
@@ -982,7 +975,7 @@ class DelugeDoc {
 	});
 }
 
-};
+}; // End of DelugeDoc class.
 
 function setFocusDoc(toDoc) {
 	focusDoc = toDoc;
@@ -992,9 +985,9 @@ function getFocusDoc() {
 	return focusDoc;
 }
 
-function makeDelugeDoc(fname, text, newKitFlag, simple, transTrack)
+function makeDelugeDoc(fname, text, options)
 {
-	return new DelugeDoc(fname, text, newKitFlag, simple, transTrack);
+	return new DelugeDoc(fname, text, options);
 }
 
 export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson, getTrackText, formatMidi};

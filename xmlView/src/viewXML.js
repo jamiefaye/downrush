@@ -150,7 +150,7 @@ window.onload = onLoad;
 
 function newKitDoc(e) {
 	let filledKitT = empty_kit_template();
-	focusDoc = makeDelugeDoc("/KITS/KIT0.XML", filledKitT, true);
+	focusDoc = makeDelugeDoc("/KITS/KIT0.XML", filledKitT, {newKit: true});
 	setFocusDoc(focusDoc);
 	// this.forceUpdate();
   }
@@ -159,7 +159,7 @@ function newKitDoc(e) {
 //editor
 function setEditText(fname, text)
 {
-	focusDoc = makeDelugeDoc(fname, text, false, true); // *** JFF
+	focusDoc = makeDelugeDoc(fname, text, {});
 	setFocusDoc(focusDoc);
 }
 

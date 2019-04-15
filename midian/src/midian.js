@@ -91,7 +91,7 @@ function onLoad()
 		defaultDir: "/SONGS/",
 		dataType: "text",
 		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.homeDoc); constructor(fname, text, newKitFlag, simple) 
-			let homeViewer = makeDelugeDoc(fname, theData, false, true, transTrackToMidi);
+			let homeViewer = makeDelugeDoc(fname, theData, {transTrack: transTrackToMidi});
 			setFocusDoc(homeViewer);
 			manager.homeDoc = homeViewer;
 			$('#songview').append(homeViewer.html);
@@ -106,7 +106,7 @@ function onLoad()
 	});
 	if (buildType !== 'mpc') {
 		let data = empty_song_template();
-		let homeSong = makeDelugeDoc("SONG.XML", data, false, true, transTrackToMidi);
+		let homeSong = makeDelugeDoc("SONG.XML", data, {transTrack: transTrackToMidi});
 		songManager.homeDoc = homeSong;
 		setFocusDoc(homeSong);
 	}
