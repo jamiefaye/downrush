@@ -106,7 +106,7 @@ function onLoad()
 	});
 	if (buildType !== 'mpc') {
 		let data = empty_song_template();
-		let homeSong = makeDelugeDoc("SONG.XML", data, {transTrack: transTrackToMidi});
+		let homeSong = makeDelugeDoc("SONG.XML", data, {transTrack: transTrackToMidi, viewer: 'midian'});
 		songManager.homeDoc = homeSong;
 		setFocusDoc(homeSong);
 	}

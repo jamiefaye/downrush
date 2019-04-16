@@ -878,15 +878,17 @@ class TinyButton extends React.Component {
 
 
 class SimpleTrackHeader extends React.Component {
+
 	render() {
 		let props = this.props;
+		let fullHeader = props.options.viewer !== 'midian';
 		let track = props.track;
 		let trackNum = props.trackNum;
 		let section = Number(track.section);
 		let sectionColor = colorForGroup(section);
 		let info = patchInfo(track, true);
 		let popText = info.kindName + " " + info.patch;
-		let clipboardEnabled = true;
+		let clipboardEnabled = fullHeader;
 		let toMidiEnabled = props.transTrig;
 		if (info.patchName) popText += " (" +  info.patchName + ")";
 		if (info.info) popText += " " + info.info;
@@ -894,7 +896,7 @@ class SimpleTrackHeader extends React.Component {
 			<b>{trackNum + 1}</b><span className="simplepatch">:{info.patch}</span>
 			{toMidiEnabled? <TinyButton title='+ Midi' click = {props.transTrig}/> : null}
 			{clipboardEnabled ? <TinyButton title='&rarr; Clip' click={props.copySel} /> : null} 
-			<WedgeIndicator opened={this.props.showTab} toggler={props.toggleTab} />
+			{fullHeader ? <WedgeIndicator opened={this.props.showTab} toggler={props.toggleTab} /> : null}
 		</td>)
 	}
 }
@@ -938,11 +940,12 @@ class SoundDetails extends React.Component {
 		let props = this.props;
 		let track = props.track;
 		let state = this.state;
-		let trigFunc = props.transTrack ? this.transTrig : undefined;
+		let trigFunc = props.options.transTrack ? this.transTrig : undefined;
  		return (
  	  <div>
  		<table className='simplehead'><tbody><tr>
- 			<SimpleTrackHeader track={track} trackNum={props.trackNum} song={props.song} showTab={state.showTab} copySel={this.copySel} toggleTab={this.toggleTab} transTrig = {trigFunc} />
+ 			<SimpleTrackHeader track={track} trackNum={props.trackNum} song={props.song} showTab={state.showTab}
+ 				copySel={this.copySel} toggleTab={this.toggleTab} transTrig = {trigFunc} options = {props.options}/>
 			<td><NoteGrid track={track} song={props.song} notifier={(t0, t1)=>{
 				this.selt0 = t0;
 				this.selt1 = t1;
@@ -966,7 +969,7 @@ class SoundDetails extends React.Component {
 
   transTrig(e) {
 	let props = this.props;
- 	props.transTrack(props.song, props.trackNum, this.selt0, this.selt1);
+ 	props.options.transTrack(props.song, props.trackNum, this.selt0, this.selt1);
   }
  }
 
@@ -985,7 +988,7 @@ class NewTrackObj {
 
 } // End class
 
-function placeTrack(where, trackJ, trackNum, song, transTrack) {
+function placeTrack(where, trackJ, trackNum, song, options) {
 	
 	let context = {};
 	// React wants to be given a DOM object to replace, so we make one up
@@ -995,7 +998,7 @@ function placeTrack(where, trackJ, trackNum, song, transTrack) {
 	context.track = trackJ;
 	context.song = song;
 	context.trackNum = trackNum;
-	context.transTrack = transTrack;
+	context.options = options;
 	let trackObj = new NewTrackObj(context);
 	trackObj.render();
 	return trackObj;

@@ -779,7 +779,8 @@ class DelugeDoc {
   formatSongSimple(jdoc, obj) {
 	let jsong = jdoc.jsonDocument.song;
 	let newNoteFormat = jdoc.newNoteFormat;
-	if (jsong.preview) {
+	let fullFormat = this.options.viewer !== 'midian';
+	if (jsong.preview && fullFormat) {
 		let ctab = genColorTab(jsong.preview);
 		obj.append(ctab);
 	}
@@ -806,15 +807,17 @@ class DelugeDoc {
 	  if (trax) {
 		for(var i = 0; i < trax.length; ++i) {
 			let track = trax[trax.length - i - 1];
-			placeTrack(obj, track, i,  jsong, this.options.transTrack);
+			placeTrack(obj, track, i,  jsong, this.options);
 		}
 		activateTippy();
 	  }
 	}
 
-	trackPasteField(obj, jdoc);
-	obj.append($("<div class='samprepplace'></div>"));
-	genSampleReport(jsong, obj);	
+	if (fullFormat) {
+		trackPasteField(obj, jdoc);
+		obj.append($("<div class='samprepplace'></div>"));
+		genSampleReport(jsong, obj);
+	}
 }
 
 
