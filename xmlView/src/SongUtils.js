@@ -121,6 +121,35 @@ function scaleString(jsong) {
 	return str + "Chromatic";
 }
 
+function makeScaleTab(jsong) {
+	let modeTab = jsong.modeNotes.modeNote;
+	let root = Number(jsong.rootNote) % 12;
+	let chromeToScaleTab = [];
+
+	let ctx = 0;
+	let scaleVal = 0;
+	let prevMNote = Number(modeTab[0]);
+	for (let i = 0; i < 7; ++i) {
+		let nextModeNote;
+		if (i == 6) {nextModeNote = 12} else {nextModeNote = Number(modeTab[i + 1])};
+		let deltaModeNote = nextModeNote - prevMNote;
+		prevMNote = nextModeNote;
+		chromeToScaleTab[ctx++] = scaleVal;
+		if (deltaModeNote === 2) chromeToScaleTab[ctx++] = scaleVal + 0.5;
+		scaleVal++;
+	}
+	chromeToScaleTab.rootNote = root;
+	return chromeToScaleTab;
+}
 
 
-export {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString};
+function noteToYOffsetInScale(n, chromeToScaleTab) {
+	let root = chromeToScaleTab.rootNote;
+	let oct = (n - root) / 12;
+	let noff = (n - root) % 12;
+	let yoff = chromeToScaleTab[noff] + oct * 7;
+	return yoff;
+}
+
+
+export {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString, makeScaleTab, noteToYOffsetInScale};

@@ -7,7 +7,7 @@ import tippy from "./js/tippy.all.min.js";
 import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 import note_tip_template from "./templates/note_tip_template.handlebars";
-import {trackKind, yToNoteName, patchInfo} from "./SongUtils.js";
+import {trackKind, yToNoteName, patchInfo, makeScaleTab, noteToYOffsetInScale} from "./SongUtils.js";
 import {colorForGroup} from "./Arranger.jsx";
 import {KitListView} from './KitList.jsx';
 import {WedgeIndicator, CopyToClipButton} from "./GUIstuff.jsx";
@@ -333,7 +333,15 @@ function plotTrack13(track, song) {
 			if (y > ymax) ymax = y;
 		}
 	}
-	let totH = ((ymax - ymin) + 2) * 4;
+	let yminS = ymin;
+	let ymaxS = ymax;
+	let keymap;
+	if (track.inKeyMode) {
+		keymap = makeScaleTab(song);
+		yminS = noteToYOffsetInScale(ymin, keymap);
+		ymaxS = noteToYOffsetInScale(ymax, keymap);
+	}
+	let totH = ((ymaxS - yminS) + 2) * 4;
 	let totW = trackW + xPlotOffset;
 	parentDiv.css({height: totH + 'px', width: totW + 'px'});
 
@@ -341,7 +349,11 @@ function plotTrack13(track, song) {
 		let row = rowList[rx];
 		var noteList = forceArray(row.notes.note);
 		let y = rowYfilter(row);
+		let yS = y;
 		let labName = yToNoteName(y);
+		if (track.inKeyMode) {
+			yS = noteToYOffsetInScale(y, keymap);
+		}
 		if (y < 0) continue;
 		for (var nx = 0; nx < noteList.length; ++nx) {
 			let n = noteList[nx];
@@ -353,7 +365,7 @@ function plotTrack13(track, song) {
 
 			let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
 			let ndiv = $("<div class='trnote npop' data-note='" + noteInfo + "'/>");
-			let ypos = (y- ymin) * 4 + 2;
+			let ypos = (yS- yminS) * 4 + 2;
 			ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
 			parentDiv.append(ndiv);
 		}
@@ -385,7 +397,16 @@ function plotTrack14(track, song) {
 			if (y > ymax) ymax = y;
 		}
 	}
-	let totH = ((ymax - ymin) + 2) * 4;
+	
+	let yminS = ymin;
+	let ymaxS = ymax;
+	let keymap;
+	if (track.inKeyMode) {
+		keymap = makeScaleTab(song);
+		yminS = noteToYOffsetInScale(ymin, keymap);
+		ymaxS = noteToYOffsetInScale(ymax, keymap);
+	}
+	let totH = ((ymaxS - yminS) + 2) * 4;
 	let totW = trackW + xPlotOffset;
 
 	parentDiv.css({height: totH + 'px', width: totW + 'px'});
@@ -396,6 +417,10 @@ function plotTrack14(track, song) {
 		let y = rowYfilter(row);
 		if (y < 0) continue;
 		let labName = yToNoteName(y);
+		let yS = y;
+		if (track.inKeyMode) {
+			yS = noteToYOffsetInScale(y, keymap);
+		}
 		for (var nx = 2; nx < noteData.length; nx += 20) {
 			let notehex = noteData.substring(nx, nx + 20);
 			let x = parseInt(notehex.substring(0, 8), 16);
@@ -407,7 +432,7 @@ function plotTrack14(track, song) {
 			if (dur > 1) dur--;
 			let ndiv = $("<div class='trnsn npop' data-note='" + noteInfo + "'/>");
 
-			let ypos = (y- ymin) * 4 + 2;
+			let ypos = (yS- yminS) * 4 + 2;
 			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
 			parentDiv.append(ndiv);
 		}
