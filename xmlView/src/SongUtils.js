@@ -91,7 +91,7 @@ var noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'
 // Convert Midi note number into note name + octave, with 0 meaning C minus 2
 function yToNoteName(note)
 {
-	let oct = Math.round(note / 12) - 2;
+	let oct = Math.floor(note / 12) - 2;
 	let tone = note % 12;
 	return noteNames[tone] + oct;
 }
@@ -145,7 +145,7 @@ function makeScaleTab(jsong) {
 
 function noteToYOffsetInScale(n, chromeToScaleTab) {
 	let root = chromeToScaleTab.rootNote;
-	let oct = (n - root) / 12;
+	let oct = Math.floor((n - root) / 12);
 	let noff = (n - root) % 12;
 	let yoff = chromeToScaleTab[noff] + oct * 7;
 	return yoff;

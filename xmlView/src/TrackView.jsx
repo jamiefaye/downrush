@@ -336,7 +336,8 @@ function plotTrack13(track, song) {
 	let yminS = ymin;
 	let ymaxS = ymax;
 	let keymap;
-	if (track.inKeyMode) {
+	let inKey = Number(track.inKeyMode);
+	if (inKey) {
 		keymap = makeScaleTab(song);
 		yminS = noteToYOffsetInScale(ymin, keymap);
 		ymaxS = noteToYOffsetInScale(ymax, keymap);
@@ -351,7 +352,7 @@ function plotTrack13(track, song) {
 		let y = rowYfilter(row);
 		let yS = y;
 		let labName = yToNoteName(y);
-		if (track.inKeyMode) {
+		if (inKey) {
 			yS = noteToYOffsetInScale(y, keymap);
 		}
 		if (y < 0) continue;
@@ -397,11 +398,12 @@ function plotTrack14(track, song) {
 			if (y > ymax) ymax = y;
 		}
 	}
-	
+
 	let yminS = ymin;
 	let ymaxS = ymax;
 	let keymap;
-	if (track.inKeyMode) {
+	let inKey = Number(track.inKeyMode);
+	if (inKey) {
 		keymap = makeScaleTab(song);
 		yminS = noteToYOffsetInScale(ymin, keymap);
 		ymaxS = noteToYOffsetInScale(ymax, keymap);
@@ -418,7 +420,7 @@ function plotTrack14(track, song) {
 		if (y < 0) continue;
 		let labName = yToNoteName(y);
 		let yS = y;
-		if (track.inKeyMode) {
+		if (inKey) {
 			yS = noteToYOffsetInScale(y, keymap);
 		}
 		for (var nx = 2; nx < noteData.length; nx += 20) {
