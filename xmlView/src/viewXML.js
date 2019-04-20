@@ -13,7 +13,7 @@ require('file-loader?name=img/[name].[ext]!../img/menu-down.png');
 require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
 require('file-loader?name=img/[name].[ext]!../img/glyphicons-594-voice.png');
 import {openFileBrowser, saveFileBrowser} from './FileBrowser.js';
-import {formatKit} from "./KitList.jsx";
+
 import React from 'react';
 import ReactDOM from "react-dom";
 import FileSaver from 'file-saver';
@@ -150,7 +150,7 @@ window.onload = onLoad;
 
 function newKitDoc(e) {
 	let filledKitT = empty_kit_template();
-	focusDoc = makeDelugeDoc("/KITS/KIT0.XML", filledKitT, true);
+	focusDoc = makeDelugeDoc("/KITS/KIT0.XML", filledKitT, {newKit: true});
 	setFocusDoc(focusDoc);
 	// this.forceUpdate();
   }
@@ -159,7 +159,7 @@ function newKitDoc(e) {
 //editor
 function setEditText(fname, text)
 {
-	focusDoc = makeDelugeDoc(fname, text, false, false);
+	focusDoc = makeDelugeDoc(fname, text, {});
 	setFocusDoc(focusDoc);
 }
 

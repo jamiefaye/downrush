@@ -7,8 +7,16 @@ import tippy from "./js/tippy.all.min.js";
 import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 import note_tip_template from "./templates/note_tip_template.handlebars";
-import {trackKind, yToNoteName, patchInfo} from "./SongUtils.js";
+import {trackKind, yToNoteName, patchInfo, makeScaleTab, noteToYOffsetInScale} from "./SongUtils.js";
 import {colorForGroup} from "./Arranger.jsx";
+import {KitListView} from './KitList.jsx';
+import {WedgeIndicator, CopyToClipButton} from "./GUIstuff.jsx";
+import {SoundTab} from './SoundTab.jsx';
+import {FormatMidi} from './FormatTabs.jsx';
+import {getTrackText} from "./SongViewLib.js";
+
+
+const copy = require('clipboard-copy')
 
 "use strict";
 
@@ -325,7 +333,16 @@ function plotTrack13(track, song) {
 			if (y > ymax) ymax = y;
 		}
 	}
-	let totH = ((ymax - ymin) + 2) * 4;
+	let yminS = ymin;
+	let ymaxS = ymax;
+	let keymap;
+	let inKey = Number(track.inKeyMode);
+	if (inKey) {
+		keymap = makeScaleTab(song);
+		yminS = noteToYOffsetInScale(ymin, keymap);
+		ymaxS = noteToYOffsetInScale(ymax, keymap);
+	}
+	let totH = ((ymaxS - yminS) + 2) * 4;
 	let totW = trackW + xPlotOffset;
 	parentDiv.css({height: totH + 'px', width: totW + 'px'});
 
@@ -333,7 +350,11 @@ function plotTrack13(track, song) {
 		let row = rowList[rx];
 		var noteList = forceArray(row.notes.note);
 		let y = rowYfilter(row);
+		let yS = y;
 		let labName = yToNoteName(y);
+		if (inKey) {
+			yS = noteToYOffsetInScale(y, keymap);
+		}
 		if (y < 0) continue;
 		for (var nx = 0; nx < noteList.length; ++nx) {
 			let n = noteList[nx];
@@ -345,7 +366,7 @@ function plotTrack13(track, song) {
 
 			let noteInfo = encodeNoteInfo(labName, x, n.length, vel, 0x14);
 			let ndiv = $("<div class='trnote npop' data-note='" + noteInfo + "'/>");
-			let ypos = (y- ymin) * 4 + 2;
+			let ypos = (yS- yminS) * 4 + 2;
 			ndiv.css({left: dx + 'px', bottom: ypos + 'px', width: dur + 'px'});
 			parentDiv.append(ndiv);
 		}
@@ -377,7 +398,17 @@ function plotTrack14(track, song) {
 			if (y > ymax) ymax = y;
 		}
 	}
-	let totH = ((ymax - ymin) + 2) * 4;
+
+	let yminS = ymin;
+	let ymaxS = ymax;
+	let keymap;
+	let inKey = Number(track.inKeyMode);
+	if (inKey) {
+		keymap = makeScaleTab(song);
+		yminS = noteToYOffsetInScale(ymin, keymap);
+		ymaxS = noteToYOffsetInScale(ymax, keymap);
+	}
+	let totH = ((ymaxS - yminS) + 2) * 4;
 	let totW = trackW + xPlotOffset;
 
 	parentDiv.css({height: totH + 'px', width: totW + 'px'});
@@ -388,6 +419,10 @@ function plotTrack14(track, song) {
 		let y = rowYfilter(row);
 		if (y < 0) continue;
 		let labName = yToNoteName(y);
+		let yS = y;
+		if (inKey) {
+			yS = noteToYOffsetInScale(y, keymap);
+		}
 		for (var nx = 2; nx < noteData.length; nx += 20) {
 			let notehex = noteData.substring(nx, nx + 20);
 			let x = parseInt(notehex.substring(0, 8), 16);
@@ -399,7 +434,7 @@ function plotTrack14(track, song) {
 			if (dur > 1) dur--;
 			let ndiv = $("<div class='trnsn npop' data-note='" + noteInfo + "'/>");
 
-			let ypos = (y- ymin) * 4 + 2;
+			let ypos = (yS- yminS) * 4 + 2;
 			ndiv.css({left: x + 'px', bottom: ypos + 'px', width: dur + 'px', "background-color": colorEncodeNote(vel, cond)});
 			parentDiv.append(ndiv);
 		}
@@ -863,28 +898,58 @@ class TinyButton extends React.Component {
   render() {
 	return (
 		<button className='tinybutn' title={this.props.title} ref={(el) => { this.buttonEl = el}}>
-			<div onClick={this.handleClick} >+ Midi</div>
+			<div onClick={this.handleClick} >{this.props.title}</div>
 		</button>);
 	}
 }
 
+
 class SimpleTrackHeader extends React.Component {
+
 	render() {
 		let props = this.props;
+		let fullHeader = props.options.viewer !== 'midian';
 		let track = props.track;
 		let trackNum = props.trackNum;
 		let section = Number(track.section);
 		let sectionColor = colorForGroup(section);
 		let info = patchInfo(track, true);
 		let popText = info.kindName + " " + info.patch;
+		let clipboardEnabled = fullHeader;
+		let toMidiEnabled = props.transTrig;
 		if (info.patchName) popText += " (" +  info.patchName + ")";
 		if (info.info) popText += " " + info.info;
 		return (<td className='simplechan npop' style={{backgroundColor: sectionColor}} data-text={popText}>
 			<b>{trackNum + 1}</b><span className="simplepatch">:{info.patch}</span>
-			<TinyButton click = {props.transTrig}/>
+			{toMidiEnabled? <TinyButton title='+ Midi' click = {props.transTrig}/> : null}
+			{clipboardEnabled ? <TinyButton title='&rarr; Clip' click={props.copySel} /> : null} 
+			{fullHeader ? <WedgeIndicator opened={this.props.showTab} toggler={props.toggleTab} /> : null}
 		</td>)
 	}
 }
+
+class SoundDetails extends React.Component {
+
+ 	render() {
+ 		let track = this.props.track;
+ 		let trackType = trackKind(track);
+ 		if (trackType === 'sound') {
+ 			let soundData = findSoundData(track, this.props.song);
+ 			return 	<SoundTab sound={soundData} />;
+ 		} else if (trackType === 'kit') {
+			let kitroot = track.kit;
+			if (track['soundSources']) {
+				kitroot = track.soundSources.sound;
+			} else {
+				kitroot = findKitList(track, this.props.song);
+			}
+ 			return <KitListView kitList={kitroot} />;
+ 		} else if (trackType === 'midi') {
+ 			return <FormatMidi midi={track} />;
+ 		}
+ 	}
+}
+
 
  class NewTrackView extends React.Component {
     constructor(context) {
@@ -892,28 +957,47 @@ class SimpleTrackHeader extends React.Component {
 		
 		this.selt0 = 0;
 		this.selt1 = 0;
+		this.state = {showTab: false};
+		this.toggleTab = this.toggleTab.bind(this);
+		this.copySel = this.copySel.bind(this);
+		this.transTrig = this.transTrig.bind(this);
 	}
 
  	render() {
 		let props = this.props;
 		let track = props.track;
-
+		let state = this.state;
+		let trigFunc = props.options.transTrack ? this.transTrig : undefined;
  		return (
+ 	  <div>
  		<table className='simplehead'><tbody><tr>
- 			<SimpleTrackHeader track={track} trackNum={props.trackNum} song={props.song} transTrig = {
- 			(e)=>{
- 				if (props.transTrack) {
- 					props.transTrack(props.song, props.trackNum, this.selt0, this.selt1);
- 				}
- 			}}/>
+ 			<SimpleTrackHeader track={track} trackNum={props.trackNum} song={props.song} showTab={state.showTab}
+ 				copySel={this.copySel} toggleTab={this.toggleTab} transTrig = {trigFunc} options = {props.options}/>
 			<td><NoteGrid track={track} song={props.song} notifier={(t0, t1)=>{
 				this.selt0 = t0;
 				this.selt1 = t1;
 			}} /></td>
 			</tr>
 			</tbody>
-		</table>)
+		</table>
+		{state.showTab ? <tr><SoundDetails track={track} song={props.song} /></tr> : null}
+	  </div>)
  	}
+
+  toggleTab() {
+	this.setState({showTab: !this.state.showTab});
+  }
+
+  copySel() {
+	let props = this.props;
+	let trackText = getTrackText(props.track, props.song);
+	copy(trackText);
+  }
+
+  transTrig(e) {
+	let props = this.props;
+ 	props.options.transTrack(props.song, props.trackNum, this.selt0, this.selt1);
+  }
  }
 
 
@@ -931,7 +1015,7 @@ class NewTrackObj {
 
 } // End class
 
-function placeTrack(where, trackJ, trackNum, song, transTrack) {
+function placeTrack(where, trackJ, trackNum, song, options) {
 	
 	let context = {};
 	// React wants to be given a DOM object to replace, so we make one up
@@ -941,7 +1025,7 @@ function placeTrack(where, trackJ, trackNum, song, transTrack) {
 	context.track = trackJ;
 	context.song = song;
 	context.trackNum = trackNum;
-	context.transTrack = transTrack;
+	context.options = options;
 	let trackObj = new NewTrackObj(context);
 	trackObj.render();
 	return trackObj;

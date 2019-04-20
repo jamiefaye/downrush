@@ -91,7 +91,7 @@ var noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'
 // Convert Midi note number into note name + octave, with 0 meaning C minus 2
 function yToNoteName(note)
 {
-	let oct = Math.round(note / 12) - 2;
+	let oct = Math.floor(note / 12) - 2;
 	let tone = note % 12;
 	return noteNames[tone] + oct;
 }
@@ -121,6 +121,35 @@ function scaleString(jsong) {
 	return str + "Chromatic";
 }
 
+function makeScaleTab(jsong) {
+	let modeTab = jsong.modeNotes.modeNote;
+	let root = Number(jsong.rootNote) % 12;
+	let chromeToScaleTab = [];
+
+	let ctx = 0;
+	let scaleVal = 0;
+	let prevMNote = Number(modeTab[0]);
+	for (let i = 0; i < 7; ++i) {
+		let nextModeNote;
+		if (i == 6) {nextModeNote = 12} else {nextModeNote = Number(modeTab[i + 1])};
+		let deltaModeNote = nextModeNote - prevMNote;
+		prevMNote = nextModeNote;
+		chromeToScaleTab[ctx++] = scaleVal;
+		if (deltaModeNote === 2) chromeToScaleTab[ctx++] = scaleVal + 0.5;
+		scaleVal++;
+	}
+	chromeToScaleTab.rootNote = root;
+	return chromeToScaleTab;
+}
 
 
-export {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString};
+function noteToYOffsetInScale(n, chromeToScaleTab) {
+	let root = chromeToScaleTab.rootNote;
+	let oct = Math.floor((n - root) / 12);
+	let noff = (n - root) % 12;
+	let yoff = chromeToScaleTab[noff] + oct * 7;
+	return yoff;
+}
+
+
+export {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString, makeScaleTab, noteToYOffsetInScale};

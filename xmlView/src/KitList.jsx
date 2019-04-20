@@ -423,6 +423,30 @@ class KitList extends React.Component {
 
 const SortableKitList = SortableContainer(KitList);
 
+
+class KitListView extends React.Component {
+  constructor(props) {
+  	super(props);
+  	this.onSortEnd = this.onSortEnd.bind(this);
+  }
+
+ onSortEnd(move, evt) {
+  	let {oldIndex, newIndex} = move;
+  	let kitList = this.props.kitList;
+	if (oldIndex !== newIndex) {
+		// console.log("Moving: " + oldIndex + " to: " + newIndex);
+		let movee = kitList[oldIndex];
+		kitList.splice(oldIndex, 1);
+		kitList.splice(newIndex, 0, movee);
+		this.forceUpdate();
+	}
+  }
+
+  render() {
+  	return <SortableKitList kitList={this.props.kitList} sample_path_prefix = {getSamplePathPrefix()} onSortEnd={this.onSortEnd} useDragHandle={true} />
+  }
+}
+
 class KitView {
   constructor(context) {
 		this.context = context;
@@ -448,7 +472,9 @@ class KitView {
   }
 };
 
-function formatKit(kitList, kitParams, where) {
+
+
+function formatKit(kitList, where) {
 	if (!kitList) return;
 	let context = {};
 	context.kitList = kitList;
@@ -459,4 +485,4 @@ function formatKit(kitList, kitParams, where) {
 	kitView.render();
 }
 
-export {KitList, formatKit};
+export {KitList, formatKit, KitListView};
