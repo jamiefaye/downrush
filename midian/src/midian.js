@@ -5,7 +5,8 @@ import {openXpjDoc} from "./XpjDoc.jsx";
 require('file-loader?name=[name].[ext]!../html/midian.htm');
 require('file-loader?name=index.html!../html/index_web.html');
 require('file-loader?name=index.htm!../html/index_mpc.html');
-require('file-loader?name=index_xpj.html!../html/index_xpj.html');
+require('file-loader?name=xpj2midi.html!../html/xpj2midi.html');
+require('file-loader?name=xpj2json.html!../html/xpj2json.html');
 require('file-loader?name=[name].[ext]!../css/midian.css');
 require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
 require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
@@ -166,7 +167,7 @@ function onLoadXpj()
 
 	if(!local_exec) {
 		var urlarg = location.search.substring(1);
-		if (urlarg && urlarg.toLowerCase().indexOf('.mid') >0) {
+		if (urlarg && urlarg.toLowerCase().indexOf('.xpj') >0) {
 			let fname = decodeURI(urlarg);
 			xpjFileManager.initialLoad(fname);
 		} else {
@@ -192,7 +193,7 @@ if (buildType !== 'mpc') {
 setMpcEnabled(buildType === 'mpc');
 setClipboardEnabled(buildType !== 'mpc');
 
-if (buildType === 'xpj') {
+if (buildType === 'xpj2midi' || buildType === 'xpj2json') {
 	window.onload = onLoadXpj;
 } else {
 	window.onload = onLoad;

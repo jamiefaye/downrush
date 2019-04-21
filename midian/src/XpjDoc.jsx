@@ -2,12 +2,31 @@ import React from 'react';
 import ReactDOM from "react-dom";
 import $ from'./js/jquery-3.2.1.min.js';
 var pako = require('pako');
+import jsonViewer from "./js/jquery.json-viewer.js";
 import {Xpj} from "./Xpj.js";
 
-class XpjDocView extends React.Component {
+class XpjJsonView extends React.Component {
+  componentDidMount() {
+	this.symbolize();
+  }
+
+  symbolize() {
+  	if (this.props.xpj) {
+  		$(this.el).jsonViewer(this.props.xpj.xjson, {collapsed: true, rootCollapsable: false});
+  	}
+  }
 
 	render() {
-		return <b>Meow!</b>;
+		this.symbolize();
+		return <div ref={(el) => { this.el = el}}> </div>;
+	}
+}
+
+class XpjView extends React.Component {
+
+
+	render() {
+		return <pre><XpjJsonView xpj = {this.props.xpj} /></pre>;
 	}
 }
 
@@ -57,12 +76,12 @@ class XpjDoc {
 					maxS = decStr;
 				}
 
-				console.log(decStr);
+				// console.log(decStr);
 			}
 
 			me.xpj = new Xpj(maxS);
 			//me.xpjText = JSON.stringify(me.xpj, undefined, 2);
-			me.context.xpjText = maxS;
+			//me.context.xpjText = maxS;
 			me.context.xpj = me.xpj;
 			me.context.fname = me.fname;
 			me.render();
@@ -76,7 +95,7 @@ class XpjDoc {
 
 
 	render() {
-		this.xpjDoc = React.createElement(XpjDocView, this.context);
+		this.xpjDoc = React.createElement(XpjView, this.context);
 		ReactDOM.render(this.xpjDoc, this.jqElem);
 	}
 

@@ -47,7 +47,7 @@ function isDirectoryEntry(name, xlsd)
 	return false;
 }
 
-var editWhiteList = ['xml', 'js', 'json', 'htm', 'html', 'css', 'lua', 'wav', 'mid'];
+var editWhiteList = ['xml', 'js', 'json', 'htm', 'html', 'css', 'lua', 'wav', 'mid', 'xpj'];
 var editWhiteListSet = new Set(editWhiteList);
 
 export default class FileBrowser {
@@ -314,7 +314,7 @@ case 2:
 	if (boxPath !== '/') boxPath += '/';
 	let boxList = this.getCheckedList(boxPath);
 	if (boxList.length === 0) {
-		alert("Please select a file to rename or move using the checkbox");
+		alert("Please select a file to fename or move using the checkbox");
 		return;
 	}
 	if (boxList.length !== 1) {
@@ -344,6 +344,8 @@ case 2:
 		window.open("/DR/waverly/viewWAV.htm?"+file);
 	} else if (ext === 'mid') {
 		window.open("/DR/midian/midian.htm?"+file);
+	} else if (ext === 'xpj') {
+		window.open("/DR/midian/xpj2midi.html?"+file);
 	} else if (editWhiteListSet.has(ext)) {
 		window.open("/DR/edit.htm?"+file);
 	}
