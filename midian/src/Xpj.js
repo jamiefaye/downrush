@@ -1,0 +1,6 @@
+class Xpj {
+	
+	
+}
+
+export {Xpj};

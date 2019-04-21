@@ -18,6 +18,7 @@
     "handlebars": "^4.0.12",
     "handlebars-loader": "^1.7.0",
     "midi-file": "^1.1.1",
+    "pako": "^1.0.10",
     "react": "^16.8.2",
     "react-dom": "^16.8.2",
     "webpack": "^4.10.2"

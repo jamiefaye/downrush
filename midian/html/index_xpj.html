@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1, maximum-scale=1, user-scalable=no">
+		<meta charset="UTF-8">
+		<title>Midian</title>
+<!-- https://stackoverflow.com/questions/951791/javascript-global-error-handling -->
+<div id="npoptemp" style="display: none;"></div>
+<script type="text/javascript">
+
+window.onerror = function(msg, url, line, col, error) {
+   var extra = !col ? '' : '\ncolumn: ' + col;
+   extra += !error ? '' : '\nerror: ' + error;
+   alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
+   return true;
+};
+
+var buildType='xpj';
+</script>
+<link rel="stylesheet" href="filewidget.css">
+<link rel="stylesheet" href="edit.css">
+<link rel="stylesheet" href="midian.css">
+
+	</head>
+	<body>
+This program converts MPC .xpj-format files into Midi files.
+<p>
+To use this program, press the "Choose File" button and select a xpj file to work with. You will then see one or more MPC tracks displayed graphically.
+<p>
+<table class='nobord'><tr>
+<td><input id='midiopenlocal' name="file" type="file" accept=".xpj,.XPJ"/></td>
+</tr>
+</table>
+		</div>
+		<div id='popupspot'></div>
+		<p class='tinygap'/>
+	<div id='midiview'>
+	</div>
+	
+	<div id='docspot'>
+	</div>
+	<div id='midiantab'>
+	</div>
+© 2019 Catnip/Jamie Faye Fenton.
+<script src="midian.js"></script>
+</body>
+</html>

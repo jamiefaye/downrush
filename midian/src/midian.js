@@ -1,9 +1,11 @@
 import $ from'./js/jquery-3.2.1.min.js';
 import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled, makeEmptyMidiFile} from './MidiDoc.jsx';
+import {openXpjDoc} from "./XpjDoc.jsx";
 
 require('file-loader?name=[name].[ext]!../html/midian.htm');
 require('file-loader?name=index.html!../html/index_web.html');
 require('file-loader?name=index.htm!../html/index_mpc.html');
+require('file-loader?name=index_xpj.html!../html/index_xpj.html');
 require('file-loader?name=[name].[ext]!../css/midian.css');
 require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
 require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
@@ -23,7 +25,7 @@ class MidiViewer {
 	this.html = "";
   }
 
-//Save
+
  openOnBuffer(data, fname) {
 	if(!this.midiDoc) {
 		let midiPlace = $('#midiview');
@@ -34,10 +36,27 @@ class MidiViewer {
 
 }; // ** End of class
 
+class XpjViewer {
+  constructor(name) {
+	this.html = "";
+  }
+
+
+ openOnBuffer(data, fname) {
+	if(!this.midiDoc) {
+		let midiPlace = $('#midiview');
+		this.midiDoc = openXpjDoc(midiPlace[0], fname);
+	}
+	this.midiDoc.openOnBuffer(data);
+ }
+
+}; // ** End of class
+
 
 function onLoad()
 {
 	let midiViewDoc = new MidiViewer('midiview');
+
 
 	let midiFileManager = new FileManager({
 		prefix:  "midi",
@@ -120,6 +139,46 @@ function onLoad()
 	});
 }
 
+
+function onLoadXpj()
+{
+	let xpjViewDoc = new XpjViewer('midiview');
+
+	let xpjFileManager = new FileManager({
+		prefix:  "midi",
+		defaultName: "Untitled.xpj",
+		defaultDir: "/",
+		dataType: "blob",
+		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.xpjViewDoc);
+			let homeViewer = new XpjViewer('midiview');
+			manager.homeDoc = homeViewer;
+			homeViewer.openOnBuffer(theData, fname);
+			$('#midiview').append(homeViewer.html);
+			
+		},
+		save:  function(manager, fromViewer) {
+			return fromViewer.midiDoc.generateMid();
+		},
+		newCallback: 	null,
+		fileExtensions: ["XPJ", "xpj"],
+		content_type: "application/zip",
+	});
+
+	if(!local_exec) {
+		var urlarg = location.search.substring(1);
+		if (urlarg && urlarg.toLowerCase().indexOf('.mid') >0) {
+			let fname = decodeURI(urlarg);
+			xpjFileManager.initialLoad(fname);
+		} else {
+			xpjViewDoc.midiDoc = makeEmptyMidiFile($('#midiview')[0]);
+		}
+	} else {
+		xpjViewDoc.midiDoc = makeEmptyMidiFile($('#midiview')[0]);
+	}
+
+	xpjFileManager.homeDoc = xpjViewDoc;
+}
+
  function addToDocFunction(jsonTrack) {
  	pasteTrackJson(jsonTrack, getFocusDoc());
  }
@@ -133,4 +192,8 @@ if (buildType !== 'mpc') {
 setMpcEnabled(buildType === 'mpc');
 setClipboardEnabled(buildType !== 'mpc');
 
-window.onload = onLoad;
+if (buildType === 'xpj') {
+	window.onload = onLoadXpj;
+} else {
+	window.onload = onLoad;
+}
