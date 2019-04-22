@@ -1,41 +1,21 @@
 import React from 'react';
 import ReactDOM from "react-dom";
-import $ from'./js/jquery-3.2.1.min.js';
 var pako = require('pako');
-import jsonViewer from "./js/jquery.json-viewer.js";
 import {Xpj} from "./Xpj.js";
+import {JsonView} from "./JsonView.jsx";
 
-class XpjJsonView extends React.Component {
-  componentDidMount() {
-	this.symbolize();
-  }
-
-  symbolize() {
-  	if (this.props.xpj) {
-  		$(this.el).jsonViewer(this.props.xpj.xjson, {collapsed: true, rootCollapsable: false});
-  	}
-  }
-
-	render() {
-		this.symbolize();
-		return <div ref={(el) => { this.el = el}}> </div>;
-	}
-}
 
 class XpjView extends React.Component {
-
-
-	render() {
-		return <pre><XpjJsonView xpj = {this.props.xpj} /></pre>;
-	}
+  render() {
+		return <JsonView json = {this.props.xpj} />;
+  }
 }
-
 
 class XpjDoc {
    constructor(context) {
-		this.context = context;
-		this.jqElem = context.jqElem;
-		this.fname = context.fname;
+	this.context = context;
+	this.jqElem = context.jqElem;
+	this.fname = context.fname;
   }
 
 	openOnBuffer(data) {
@@ -89,10 +69,6 @@ class XpjDoc {
 		};
 		fileReader.readAsArrayBuffer(data);
 	}
-
-
-
-
 
 	render() {
 		this.xpjDoc = React.createElement(XpjView, this.context);
