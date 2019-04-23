@@ -19,7 +19,7 @@ import {FileManager} from "./FileManager.js";
 "use strict";
 
 // Flag to enable local execution (not via the FlashAir web server)
-var local_exec = document.URL.indexOf('file:') == 0 || buildType !='flashair';
+var local_exec = document.URL.indexOf('file:') == 0 || (buildType !='flashair' && buildType !='xpj2json'  && buildType !='xpj2midi');
 
 class MidiViewer {
   constructor(name) {

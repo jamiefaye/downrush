@@ -5,9 +5,13 @@ import jsonViewer from "./js/jquery.json-viewer.js";
 
 class JsonViewInside extends React.Component {
 
+	componentDidMount() {
+		this.symbolize();
+	}
+	
   symbolize() {
   	if (this.props.json) {
-  		$(this.el).jsonViewer(this.props.json, {collapsed: true, rootCollapsable: true});
+  		$(this.el).jsonViewer(this.props.json, {collapsed: true, rootCollapsable: false});
   	}
   }
 
@@ -18,8 +22,14 @@ class JsonViewInside extends React.Component {
 }
 
  class JsonView extends React.Component {
+   constructor(props) {
+    super(props);
+    this.state = {show: false};
+  }
+ 
   render() {
-		return <pre><JsonViewInside json = {this.props.json} /></pre>;
+		return (this.state.show ? <pre><JsonViewInside json = {this.props.json} /></pre>
+								: <button onClick={e=>{this.setState({show: true})}} >{this.props.label ? this.props.label : "Show"}</button>)
   }
 }
 

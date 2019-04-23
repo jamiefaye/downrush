@@ -5,9 +5,45 @@ import {Xpj} from "./Xpj.js";
 import {JsonView} from "./JsonView.jsx";
 
 
+
+
+class XplTrackCanvas extends React.Component {
+  constructor(props) {
+    super(props);
+    this.canvasRef = React.createRef();
+  }
+  componentDidUpdate() {
+    // Draws a square in the middle of the canvas rotated
+    // around the centre by this.props.angle
+    const { angle } = this.props;
+    const canvas = this.canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    ctx.save();
+    ctx.beginPath();
+    ctx.clearRect(0, 0, width, height);
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate((angle * Math.PI) / 180);
+    ctx.fillStyle = '#4397AC';
+    ctx.fillRect(-width / 4, -height / 4, width / 2, height / 2);
+    ctx.restore();
+  }
+  render() {
+    return <canvas width="300" height="300" ref={this.canvasRef} />;
+  }
+}
+
+
+
+
+
 class XpjView extends React.Component {
   render() {
-		return <JsonView json = {this.props.xpj} />;
+		return <div>
+			<XplTrackCanvas angle={33}/><br/>
+			<JsonView label='xpj Json' json = {this.props.xpj} />
+			</div>
   }
 }
 
