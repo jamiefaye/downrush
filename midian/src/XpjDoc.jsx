@@ -14,6 +14,7 @@ class XplTrackCanvas extends React.Component {
   componentDidMount() {
     // Draws a square in the middle of the canvas rotated
   	let props = this.props;
+
     let clip = props.clip;
     let trans = props.transform;
     let scale = trans.scale;
@@ -21,6 +22,9 @@ class XplTrackCanvas extends React.Component {
     let maxN = clip.maxN;
     let w = props.width;
     let h = props.height;
+    
+    let nameTab = trans.xpj.nameToTrack;
+    let color = nameTab[clip.key].colour;
 
 
     const canvas = this.canvasRef.current;
@@ -31,9 +35,11 @@ class XplTrackCanvas extends React.Component {
     ctx.save();
     ctx.beginPath();
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = '#F8F8C0';
+    ctx.fillStyle = '#' + color.toString(16); // '#400000';
+
     ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = '#400000';
+    ctx.fillStyle = '#000000';
+
     for (let i = 0; i < clip.events.length; ++i) {
     	let n = clip.events[i];
     	
@@ -74,7 +80,7 @@ class XpjClipView extends React.Component {
 class XpjView extends React.Component {
   constructor(props) {
 	super(props);
-	this.transform = {scale: 1/10, noteHeight: 4};
+	this.transform = {scale: 1/48, noteHeight: 4};
 	this.ingest();
   }
 
@@ -83,6 +89,8 @@ class XpjView extends React.Component {
 	this.tracks = this.xpj.tracks;
 	this.sequence = this.xpj.sequence;
 	this.clipMaps = this.xpj.clips;
+	this.transform.tracks = this.tracks;
+	this.transform.xpj = this.xpj;
   }
 
   render() {

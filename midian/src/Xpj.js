@@ -9,7 +9,9 @@ class Xpj {
 		this.tracks = xData.tracks;
 		this.sequences = xData.sequences;
 		this.sequence = this.sequences[0];
-
+		this.nameToTrack = {};
+		this.nameToColumn = {};
+		this.columnToName = [];
 		this.ingest();
 		
 	}
@@ -22,14 +24,31 @@ class Xpj {
 		this.minN = Number.MAX_SAFE_INTEGER;
 		this.maxN = Number.MIN_SAFE_INTEGER;
 
+		let tracks = this.tracks;
+		for(let tx = 0; tx < tracks.length; ++tx) {
+			let t = tracks[tx];
+			let n = t.name;
+			this.nameToTrack[n] = t;
+			this.nameToColumn[n] = tx;
+			this.columnToName[tx] = n;
+		}
+
 		let trackArrays = this.sequence.value.trackClipMaps;
 		for(let rowx = 0; rowx < trackArrays.length; ++rowx) {
 			let rows = trackArrays[rowx];
 			for (let colx = 0; colx < rows.length; ++colx) {
 				let clip = rows[colx];
-				this.scanClip(clip);
+				let info = this.scanClip(clip);
+				if (info) {
+					info.row = rowx;
+				//let nm = clip.
+					let col = this.nameToColumn[clip.key];
+					info.col = col;
+					this.clips.push(info);
+				}
 			}
 		}
+		
 	}
 	// JSON.parse(text);
 	
@@ -54,17 +73,17 @@ class Xpj {
 			}
 		}
 
-		if (minT === Number.MAX_SAFE_INTEGER || minN === Number.MAX_SAFE_INTEGER) return false;
+		if (minT === Number.MAX_SAFE_INTEGER || minN === Number.MAX_SAFE_INTEGER) return null;
 
 		if (minT < this.minT) this.minT = minT;
 		if (minN < this.minN) this.minN = minN;
 		if (maxT > this.maxT) this.maxT = maxT;
 		if (maxN > this.maxN) this.maxN = maxN;
 
-		let clipInfo = {minT: minT, maxT: maxT, minN: minN, maxN: maxN, events: events, key: clip.key, clip: clip};
+		let clipInfo = {minT: minT, maxT: maxT, minN: minN, maxN: maxN,
+						events: events, key: clip.key, clip: clip};
 
-		this.clips.push(clipInfo);
-		return true;
+		return clipInfo;
 	}
 }
 
