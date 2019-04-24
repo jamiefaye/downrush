@@ -12,6 +12,7 @@ class Xpj {
 		this.nameToTrack = {};
 		this.nameToColumn = {};
 		this.columnToName = [];
+		this.matrix = [];
 		this.ingest();
 		
 	}
@@ -33,6 +34,11 @@ class Xpj {
 			this.columnToName[tx] = n;
 		}
 
+		this.minRow = Number.MAX_SAFE_INTEGER;
+		this.maxRow = Number.MIN_SAFE_INTEGER;
+		this.minCol = Number.MAX_SAFE_INTEGER;
+		this.maxCol = Number.MIN_SAFE_INTEGER;
+
 		let trackArrays = this.sequence.value.trackClipMaps;
 		for(let rowx = 0; rowx < trackArrays.length; ++rowx) {
 			let rows = trackArrays[rowx];
@@ -45,13 +51,19 @@ class Xpj {
 					let col = this.nameToColumn[clip.key];
 					info.col = col;
 					this.clips.push(info);
+					if (info.row < this.minRow) this.minRow = info.row;
+					if (info.col < this.minCol) this.minCol = info.col;
+					if (info.row > this.maxRow) this.maxRow = info.row;
+					if (info.col > this.maxCol) this.maxCol = info.col;
+
+					if (!this.matrix[info.row]) this.matrix[info.row] = [];
+					this.matrix[info.row][info.col] = info;
 				}
 			}
 		}
-		
 	}
 	// JSON.parse(text);
-	
+
 	scanClip(clip) {
 		let events = clip.value.eventList.events;
 		let nEvents = events.length;

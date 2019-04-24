@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 var pako = require('pako');
 import {Xpj} from "./Xpj.js";
 import {JsonView} from "./JsonView.jsx";
-
+import {gamma_correct} from "../../xmlView/src/SongUtils.js";
 
 
 class XplTrackCanvas extends React.Component {
@@ -35,14 +35,15 @@ class XplTrackCanvas extends React.Component {
     ctx.save();
     ctx.beginPath();
     ctx.clearRect(0, 0, width, height);
-    ctx.fillStyle = '#' + color.toString(16); // '#400000';
+    
+    ctx.fillStyle = '#' + gamma_correct(color.toString(16));
 
     ctx.fillRect(0, 0, width, height);
     ctx.fillStyle = '#000000';
 
     for (let i = 0; i < clip.events.length; ++i) {
     	let n = clip.events[i];
-    	
+    	if (!n.note) continue;
     	let tS = n.time;
     	let tE = n.note.length;
     	let x = tS * scale;
@@ -69,9 +70,7 @@ class XpjClipView extends React.Component {
     let noteH = trans.noteHeight;
     let w = clip.maxT *scale;
     let h =(clip.maxN - clip.minN) * noteH + 2;
-  	return <div>
-		<XplTrackCanvas clip={clip} transform={trans} width={w} height={h} clipN={this.props.clipN}/><p/><p/><p/>
-		</div>;
+  	return <XplTrackCanvas clip={clip} transform={trans} width={w} height={h} clipN={this.props.clipN}/>;
   }
 
 }
@@ -80,7 +79,7 @@ class XpjClipView extends React.Component {
 class XpjView extends React.Component {
   constructor(props) {
 	super(props);
-	this.transform = {scale: 1/48, noteHeight: 4};
+	this.transform = {scale: 1/60, noteHeight: 4};
 	this.ingest();
   }
 
@@ -93,14 +92,44 @@ class XpjView extends React.Component {
 	this.transform.xpj = this.xpj;
   }
 
+  createTable() {
+    let xpj = this.xpj;
+    let nameTab = this.xpj.nameToTrack;
+
+	let table = [];
+	for (let r = xpj.minRow; r <= xpj.maxRow; ++r) {
+		let rowA = xpj.matrix[r];
+		let children = [];
+		for (let c = xpj.minCol; c <= xpj.maxCol; ++c) {
+			let clip = rowA[c];
+			let color = this.tracks[c].colour;
+			let colorCode ='#' + gamma_correct(color.toString(16));
+			let colorStyle = {backgroundColor: colorCode};
+			if (!clip) {
+				children.push(<td className='xpjmt'> </td>);
+			} else {
+				
+				children.push(<td className='xpjtd' style={colorStyle}><XpjClipView clip={clip} transform={this.transform}/></td>);
+			}
+		}
+		table.push(<tr>{children}</tr>);
+	}
+	return table;
+  }
+
   render() {
-  		if (!this.props.xpj) return null;
+ 
+  		let xpj = this.xpj;
+  		if (!xpj) return null;
+		if (xpj.minRow === Number.MAX_SAFE_INTEGER || xpj.minCol === Number.MAX_SAFE_INTEGER) return null;
+
 		return <React.Fragment>
-		{this.clipMaps.map((clip, clipx) =>{
-			return <XpjClipView clip={clip} clipN={clipx} transform={this.transform}/>
-		})}
+		<table><tbody>
+			{this.createTable()}
+		</tbody></table>
 		<JsonView label='xpj Json' json = {this.props.xpj} />
 		</React.Fragment>
+
 
   }
 }

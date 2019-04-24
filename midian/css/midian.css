@@ -250,3 +250,13 @@ a.json-placeholder:hover {
   text-decoration: underline;
 }
 
+td.xpjtd {
+	border-style: groove;
+	border-width: medium;
+}
+
+td.xpjmt {
+	border-style: groove;
+	border-width: medium;
+	background-color: gray;
+}
