@@ -6,44 +6,94 @@ import {JsonView} from "./JsonView.jsx";
 
 
 
-
 class XplTrackCanvas extends React.Component {
   constructor(props) {
     super(props);
     this.canvasRef = React.createRef();
   }
-  componentDidUpdate() {
+  componentDidMount() {
     // Draws a square in the middle of the canvas rotated
-    // around the centre by this.props.angle
-    const { angle } = this.props;
+  	let props = this.props;
+    let clip = props.clip;
+    let trans = props.transform;
+    let scale = trans.scale;
+    let noteH = trans.noteHeight;
+    let maxN = clip.maxN;
+    let w = props.width;
+    let h = props.height;
+
+
     const canvas = this.canvasRef.current;
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
+
     ctx.save();
     ctx.beginPath();
     ctx.clearRect(0, 0, width, height);
-    ctx.translate(width / 2, height / 2);
-    ctx.rotate((angle * Math.PI) / 180);
-    ctx.fillStyle = '#4397AC';
-    ctx.fillRect(-width / 4, -height / 4, width / 2, height / 2);
+    ctx.fillStyle = '#F8F8C0';
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = '#400000';
+    for (let i = 0; i < clip.events.length; ++i) {
+    	let n = clip.events[i];
+    	
+    	let tS = n.time;
+    	let tE = n.note.length;
+    	let x = tS * scale;
+    	let w = n.note.length * scale;
+    	if (w > 2) w--;
+    	let y = (maxN - n.note.note) * noteH;
+    	ctx.fillRect(x, y, w, noteH);
+    
+    }
     ctx.restore();
   }
   render() {
-    return <canvas width="300" height="300" ref={this.canvasRef} />;
+    return <canvas width={this.props.width} height={this.props.height} ref={this.canvasRef} />;
   }
 }
 
+class XpjClipView extends React.Component {
 
+  render() {
+  	let props = this.props;
+    let clip = props.clip;
+    let trans = props.transform;
+    let scale = trans.scale;
+    let noteH = trans.noteHeight;
+    let w = clip.maxT *scale;
+    let h =(clip.maxN - clip.minN) * noteH + 2;
+  	return <div>
+		<XplTrackCanvas clip={clip} transform={trans} width={w} height={h} clipN={this.props.clipN}/><p/><p/><p/>
+		</div>;
+  }
 
+}
 
 
 class XpjView extends React.Component {
+  constructor(props) {
+	super(props);
+	this.transform = {scale: 1/10, noteHeight: 4};
+	this.ingest();
+  }
+
+  ingest() {
+  	this.xpj = this.props.xpj;
+	this.tracks = this.xpj.tracks;
+	this.sequence = this.xpj.sequence;
+	this.clipMaps = this.xpj.clips;
+  }
+
   render() {
-		return <div>
-			<XplTrackCanvas angle={33}/><br/>
-			<JsonView label='xpj Json' json = {this.props.xpj} />
-			</div>
+  		if (!this.props.xpj) return null;
+		return <React.Fragment>
+		{this.clipMaps.map((clip, clipx) =>{
+			return <XpjClipView clip={clip} clipN={clipx} transform={this.transform}/>
+		})}
+		<JsonView label='xpj Json' json = {this.props.xpj} />
+		</React.Fragment>
+
   }
 }
 
@@ -119,7 +169,7 @@ function openXpjDoc(where, fname) {
 	context.jqElem =  where;
 	context.fname = fname;
 	let xpjDoc = new XpjDoc(context);
-	xpjDoc.render();
+	// xpjDoc.render();
 	return xpjDoc;
 }
 
