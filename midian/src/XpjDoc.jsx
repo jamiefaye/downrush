@@ -22,7 +22,7 @@ class XplTrackCanvas extends React.Component {
     let maxN = clip.maxN;
     let w = props.width;
     let h = props.height;
-    
+    let yOffset = trans.yOffset;
     let nameTab = trans.xpj.nameToTrack;
     let color = nameTab[clip.key].colour;
 
@@ -48,8 +48,9 @@ class XplTrackCanvas extends React.Component {
     	let tE = n.note.length;
     	let x = tS * scale;
     	let w = n.note.length * scale;
-    	if (w > 2) w--;
-    	let y = (maxN - n.note.note) * noteH;
+    	if (w >= 2) w--;
+    	// if (w < 1) w = 1;
+    	let y = (maxN - n.note.note) * noteH + yOffset;
     	ctx.fillRect(x, y, w, noteH);
     
     }
@@ -68,8 +69,12 @@ class XpjClipView extends React.Component {
     let trans = props.transform;
     let scale = trans.scale;
     let noteH = trans.noteHeight;
-    let w = clip.maxT *scale;
-    let h =(clip.maxN - clip.minN) * noteH + 2;
+    let w = trans.width;
+    let h = trans.height;
+    
+//    let w = clip.maxT *scale;
+//   let h =(clip.maxN - clip.minN) * noteH + 2;
+
   	return <XplTrackCanvas clip={clip} transform={trans} width={w} height={h} clipN={this.props.clipN}/>;
   }
 
@@ -79,7 +84,10 @@ class XpjClipView extends React.Component {
 class XpjView extends React.Component {
   constructor(props) {
 	super(props);
-	this.transform = {scale: 1/60, noteHeight: 4};
+	this.maxWidth = 128;
+	this.maxHeight = 64;
+	this.maxScale = 1/30;
+	this.maxNoteHeight = 4;
 	this.ingest();
   }
 
@@ -88,33 +96,68 @@ class XpjView extends React.Component {
 	this.tracks = this.xpj.tracks;
 	this.sequence = this.xpj.sequence;
 	this.clipMaps = this.xpj.clips;
-	this.transform.tracks = this.tracks;
-	this.transform.xpj = this.xpj;
   }
 
+// return a transform object adjusted to map the given clip into the target rectangle
+  modXform(clip) {
+  	let trans = {width: this.maxWidth, height: this.maxHeight, tracks: this.tracks, xpj: this.xpj};
+ 	let cw = clip.maxT;
+ 	let ch = (clip.maxN - clip.minN);
+ 	let scale = this.maxWidth / cw;
+ 	if (scale > this.maxScale) scale = this.maxScale;
+ 	
+ 	let noteH = this.maxHeight / ch;
+ 	trans.yOffset = 0;
+ 	if (noteH > this.maxNoteHeight) {
+ 		noteH = this.maxNoteHeight;
+ 		trans.yOffset = (this.maxHeight - (ch * noteH)) / 2;
+ 	}
+
+ 	trans.scale = scale;
+ 	trans.noteHeight = noteH;
+ 	
+ 	return trans;
+  }
   createTable() {
     let xpj = this.xpj;
     let nameTab = this.xpj.nameToTrack;
 
 	let table = [];
+	let headers = [];
+	for (let c = xpj.minCol; c <= xpj.maxCol; ++c) {
+		let hname = this.tracks[c].name;
+		let colorStyle = this.colorStyleFor(c);
+		headers.push(<th className='xpjthdr' style={colorStyle}>{hname}</th>);
+	}
+	table.push(<tr>{headers}</tr>);
 	for (let r = xpj.minRow; r <= xpj.maxRow; ++r) {
 		let rowA = xpj.matrix[r];
 		let children = [];
 		for (let c = xpj.minCol; c <= xpj.maxCol; ++c) {
 			let clip = rowA[c];
-			let color = this.tracks[c].colour;
-			let colorCode ='#' + gamma_correct(color.toString(16));
-			let colorStyle = {backgroundColor: colorCode};
+			let colorStyle = this.colorStyleFor(c);
+
 			if (!clip) {
 				children.push(<td className='xpjmt'> </td>);
 			} else {
-				
-				children.push(<td className='xpjtd' style={colorStyle}><XpjClipView clip={clip} transform={this.transform}/></td>);
+				let clipname = clip.clip.value.name;
+				let trans = this.modXform(clip);
+				children.push(<td className='xpjtd' style={colorStyle}><table><tbody>
+					<tr><th className='xpjth'>{clipname}</th></tr>
+					<tr><td><XpjClipView clip={clip} transform={trans}/></td></tr></tbody></table>
+				</td>);
 			}
 		}
 		table.push(<tr>{children}</tr>);
 	}
 	return table;
+  }
+
+  colorStyleFor(c) {
+	let color = this.tracks[c].colour;
+	let colorCode ='#' + gamma_correct(color.toString(16));
+	let colorStyle = {backgroundColor: colorCode};
+	return colorStyle;
   }
 
   render() {

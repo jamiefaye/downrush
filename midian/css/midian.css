@@ -253,10 +253,23 @@ a.json-placeholder:hover {
 td.xpjtd {
 	border-style: groove;
 	border-width: medium;
+	height: 64px;
+	width: 128px;
+	
 }
 
 td.xpjmt {
 	border-style: groove;
 	border-width: medium;
 	background-color: gray;
+	height: 64px;
+	width: 128px;
+}
+
+th.xpjth {
+	font-size: 9px;
+}
+
+th.xpjthdr {
+	font-size: 12px;
 }
