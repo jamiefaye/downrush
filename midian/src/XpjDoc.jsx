@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 var pako = require('pako');
-import {Xpj} from "./Xpj.js";
+import {Xpj, Program_Type} from "./Xpj.js";
 import {JsonView} from "./JsonView.jsx";
 import {gamma_correct} from "../../xmlView/src/SongUtils.js";
 
@@ -64,18 +64,21 @@ class XplTrackCanvas extends React.Component {
 class XpjClipView extends React.Component {
 
   render() {
-  	let props = this.props;
-    let clip = props.clip;
-    let trans = props.transform;
-    let scale = trans.scale;
-    let noteH = trans.noteHeight;
-    let w = trans.width;
-    let h = trans.height;
-    
-//    let w = clip.maxT *scale;
-//   let h =(clip.maxN - clip.minN) * noteH + 2;
-
-  	return <XplTrackCanvas clip={clip} transform={trans} width={w} height={h} clipN={this.props.clipN}/>;
+	let props = this.props;
+	let clip = props.clip;
+	let trans = props.transform;
+	let scale = trans.scale;
+	let noteH = trans.noteHeight;
+	let w = trans.width;
+	let h = trans.height;
+	if (clip.type === Program_Type.AUDIO) {
+		let name = '';
+		if (clip.events && clip.events.length > 0 && clip.events[0] && clip.events[0].audio) {
+			name = clip.events[0].audio.name;
+		}
+		return <div className='xpjaud'>{name}</div>;
+	}
+	return <XplTrackCanvas clip={clip} transform={trans} width={w} height={h} clipN={this.props.clipN}/>;
   }
 
 }
@@ -100,24 +103,35 @@ class XpjView extends React.Component {
 
 // return a transform object adjusted to map the given clip into the target rectangle
   modXform(clip) {
-  	let trans = {width: this.maxWidth, height: this.maxHeight, tracks: this.tracks, xpj: this.xpj};
- 	let cw = clip.maxT;
- 	let ch = (clip.maxN - clip.minN);
- 	let scale = this.maxWidth / cw;
- 	if (scale > this.maxScale) scale = this.maxScale;
- 	
- 	let noteH = this.maxHeight / ch;
- 	trans.yOffset = 0;
- 	if (noteH > this.maxNoteHeight) {
- 		noteH = this.maxNoteHeight;
- 		trans.yOffset = (this.maxHeight - (ch * noteH)) / 2;
- 	}
+	let trans = {width: this.maxWidth, height: this.maxHeight, tracks: this.tracks, xpj: this.xpj};
+	let cw = clip.maxT;
+	let ch = (clip.maxN - clip.minN);
+	var scale;
+	if (cw !== 0) {
+		scale = this.maxWidth / cw;
+		if (scale > this.maxScale) scale = this.maxScale;
+	} else {
+		scale = this.maxScale;
+	}
+	
+	var noteH;
+	trans.yOffset = 0;
+	if (ch !== 0) {
+		noteH = this.maxHeight / ch;
+		if (noteH > this.maxNoteHeight) {
+			noteH = this.maxNoteHeight;
+			trans.yOffset = (this.maxHeight - (ch * noteH)) / 2;
+		}
+	} else {
+		noteH = this.maxNoteHeight
+	}
 
- 	trans.scale = scale;
- 	trans.noteHeight = noteH;
- 	
- 	return trans;
+	trans.scale = scale;
+	trans.noteHeight = noteH;
+
+	return trans;
   }
+
   createTable() {
     let xpj = this.xpj;
     let nameTab = this.xpj.nameToTrack;

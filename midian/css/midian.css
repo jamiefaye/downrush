@@ -273,3 +273,9 @@ th.xpjth {
 th.xpjthdr {
 	font-size: 12px;
 }
+
+div.xpjaud {
+	height: 64px;
+	width: 128px;
+	font-size: 12px;
+}
