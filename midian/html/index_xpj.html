@@ -15,27 +15,37 @@ window.onerror = function(msg, url, line, col, error) {
    return true;
 };
 
-var buildType='xpj2json';
+var buildType='xpj';
 </script>
 <link rel="stylesheet" href="filewidget.css">
 <link rel="stylesheet" href="edit.css">
 <link rel="stylesheet" href="midian.css">
-
 	</head>
 	<body>
-This program lets you view MPC .xpj-format using a JSON browser.
-<p>
-To use this program, press the "Choose File" button and select a xpj file to work with. You will then see a "wedge" pointing to the right. Clip on that to explore deeper. Repeat as desired.
-<p>
+		<div id='filegroupplace'>
+			<table id='filegroup' class='nobord'><tr>
+				<td><button id="xpjopen" class="butn openxpjbutn" title="openxpj">Open xpj</button></td>
+				<td><button id="xpjupbut" class="butn upbut" title="upbutn">&#x2191;</button></td>
+				<td><button id="xpjdwnbut" class="butn downbut" title="dnbutn">&#x2193;</button></td>
+				<!--
+				<td><button id="xpjsave" class="butn savebut" title="save">Save xpj</button></td>
+				<td><button id='xpjdownload' class='butn downlbut' title="download">Download xpj</button></td>
+				-->
+				<td><div id="xpjstatus" style='font-size: 9pt'></div></td>
+				</tr>
+			</table>
+		</div>
+		<div id='popupspot'></div>
+		<p class='tinygap'/>
+	<div id='xpjview'>
+	</div>
 <table class='nobord'><tr>
-<td><input id='midiopenlocal' name="file" type="file" accept=".xpj,.XPJ"/></td>
+<td><input id='xpjopenlocal' name="file" type="file" accept=".xpj,.XPJ"/></td>
 </tr>
 </table>
 		</div>
 		<div id='popupspot'></div>
 		<p class='tinygap'/>
-	<div id='midiview'>
-	</div>
 	
 	<div id='docspot'>
 	</div>

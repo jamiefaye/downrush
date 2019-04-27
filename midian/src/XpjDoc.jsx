@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 var pako = require('pako');
-import {Xpj, Program_Type} from "./Xpj.js";
+import {Xpj, Program_Type, makeMTXpj} from "./Xpj.js";
 import {JsonView} from "./JsonView.jsx";
 import {gamma_correct} from "../../xmlView/src/SongUtils.js";
-
+import $ from'./js/jquery-3.2.1.min.js';
 
 class XplTrackCanvas extends React.Component {
   constructor(props) {
@@ -12,7 +12,7 @@ class XplTrackCanvas extends React.Component {
     this.canvasRef = React.createRef();
   }
   componentDidMount() {
-    // Draws a square in the middle of the canvas rotated
+
   	let props = this.props;
 
     let clip = props.clip;
@@ -25,7 +25,6 @@ class XplTrackCanvas extends React.Component {
     let yOffset = trans.yOffset;
     let nameTab = trans.xpj.nameToTrack;
     let color = nameTab[clip.key].colour;
-
 
     const canvas = this.canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -138,16 +137,17 @@ class XpjView extends React.Component {
 
 	let table = [];
 	let headers = [];
-	for (let c = xpj.minCol; c <= xpj.maxCol; ++c) {
+
+	for (let c = xpj.minCol; c < xpj.maxCol; ++c) {
 		let hname = this.tracks[c].name;
 		let colorStyle = this.colorStyleFor(c);
 		headers.push(<th className='xpjthdr' style={colorStyle}>{hname}</th>);
 	}
 	table.push(<tr>{headers}</tr>);
-	for (let r = xpj.minRow; r <= xpj.maxRow; ++r) {
+	for (let r = xpj.minRow; r < xpj.maxRow; ++r) {
 		let rowA = xpj.matrix[r];
 		let children = [];
-		for (let c = xpj.minCol; c <= xpj.maxCol; ++c) {
+		for (let c = xpj.minCol; c < xpj.maxCol; ++c) {
 			let clip = rowA[c];
 			let colorStyle = this.colorStyleFor(c);
 
@@ -175,10 +175,9 @@ class XpjView extends React.Component {
   }
 
   render() {
- 
+		this.ingest();
   		let xpj = this.xpj;
   		if (!xpj) return null;
-		if (xpj.minRow === Number.MAX_SAFE_INTEGER || xpj.minCol === Number.MAX_SAFE_INTEGER) return null;
 
 		return <React.Fragment>
 		<table><tbody>
@@ -238,12 +237,13 @@ class XpjDoc {
 
 				// console.log(decStr);
 			}
-
-			me.xpj = new Xpj(maxS);
+			let xpjJson = JSON.parse(maxS);
+			me.xpj = new Xpj(xpjJson);
 			//me.xpjText = JSON.stringify(me.xpj, undefined, 2);
 			//me.context.xpjText = maxS;
 			me.context.xpj = me.xpj;
 			me.context.fname = me.fname;
+
 			me.render();
 
 		};
@@ -255,6 +255,11 @@ class XpjDoc {
 		ReactDOM.render(this.xpjDoc, this.jqElem);
 	}
 
+	makeEmpty() {
+		this.xpj = makeMTXpj();
+		this.context.xpj = this.xpj;
+		this.context.fname = "Untitled.xpj";
+	}
 }
 
 
@@ -263,7 +268,8 @@ function openXpjDoc(where, fname) {
 	context.jqElem =  where;
 	context.fname = fname;
 	let xpjDoc = new XpjDoc(context);
-	// xpjDoc.render();
+	xpjDoc.makeEmpty();
+	xpjDoc.render();
 	return xpjDoc;
 }
 

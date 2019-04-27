@@ -15,7 +15,7 @@ window.onerror = function(msg, url, line, col, error) {
    return true;
 };
 
-var buildType='xpj2midi';
+var buildType='xpj';
 </script>
 <link rel="stylesheet" href="filewidget.css">
 <link rel="stylesheet" href="edit.css">
@@ -23,18 +23,18 @@ var buildType='xpj2midi';
 
 	</head>
 	<body>
-This program lets you open MPC .xpj-format files for conversion to .mid (Midi) files.
+This program lets you open MPC .xpj-format files for inspection.
 <p>
 To use this program, press the "Choose File" button and select a xpj file to work with.
 <p>
 <table class='nobord'><tr>
-<td><input id='midiopenlocal' name="file" type="file" accept=".xpj,.XPJ"/></td>
+<td><input id='xpjopenlocal' name="file" type="file" accept=".xpj,.XPJ"/></td>
 </tr>
 </table>
 		</div>
 		<div id='popupspot'></div>
 		<p class='tinygap'/>
-	<div id='midiview'>
+	<div id='xpjview'>
 	</div>
 	
 	<div id='docspot'>

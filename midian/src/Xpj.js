@@ -10,8 +10,7 @@ const Program_Type = Object.freeze({
 });
 
 class Xpj {
-	constructor(xpjStr) {
-		let xpjJson = JSON.parse(xpjStr);
+	constructor(xpjJson) {
 		let xData = xpjJson.data;
 		this.xpjJson = xData;
 		this.tracks = xData.tracks;
@@ -23,8 +22,9 @@ class Xpj {
 		this.trackToKind = [];
 		this.matrix = [];
 		this.ingest();
-		
+
 	}
+
 
 	ingest() {
 		this.clips = [];
@@ -58,8 +58,8 @@ class Xpj {
 				this.clips.push(info);
 				if (info.row < this.minRow) this.minRow = info.row;
 				if (info.col < this.minCol) this.minCol = info.col;
-				if (info.row > this.maxRow) this.maxRow = info.row;
-				if (info.col > this.maxCol) this.maxCol = info.col;
+				if (info.row >= this.maxRow) this.maxRow = info.row + 1;
+				if (info.col >= this.maxCol) this.maxCol = info.col + 1;
 
 				if (!this.matrix[info.row]) this.matrix[info.row] = [];
 				this.matrix[info.row][info.col] = info;
@@ -100,4 +100,14 @@ class Xpj {
 	}
 }
 
-export {Xpj, Program_Type};
+function makeMTXpj() {
+	let s = {data: {tracks: [], sequences: [{value: {trackClipMaps: []}}]}};
+	let x = new Xpj(s);
+	x.minRow = 0;
+	x.maxRow = 0;
+	x.minCol = 0;
+	x.maxCol = 0;
+	return x;
+}
+
+export {Xpj, Program_Type, makeMTXpj};

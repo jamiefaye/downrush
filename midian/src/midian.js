@@ -2,11 +2,13 @@ import $ from'./js/jquery-3.2.1.min.js';
 import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled, makeEmptyMidiFile} from './MidiDoc.jsx';
 import {openXpjDoc} from "./XpjDoc.jsx";
 
+// The following requires cause individual files to be transferred into the build
+// directory with renaming if needed.
 require('file-loader?name=[name].[ext]!../html/midian.htm');
 require('file-loader?name=index.html!../html/index_web.html');
 require('file-loader?name=index.htm!../html/index_mpc.html');
 require('file-loader?name=xpj2midi.html!../html/xpj2midi.html');
-require('file-loader?name=xpj2json.html!../html/xpj2json.html');
+require('file-loader?name=index_xpj.html!../html/index_xpj.html');
 require('file-loader?name=[name].[ext]!../css/midian.css');
 require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
 require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
@@ -19,7 +21,11 @@ import {FileManager} from "./FileManager.js";
 "use strict";
 
 // Flag to enable local execution (not via the FlashAir web server)
-var local_exec = document.URL.indexOf('file:') == 0 || (buildType !='flashair' && buildType !='xpj2json'  && buildType !='xpj2midi');
+var local_exec = document.URL.indexOf('file:') == 0;
+
+// cloud_served flag is set if the URL does not contain /DR/, which is a crude
+// test for not coming via the FlashAir card.
+var cloud_served = document.URL.indexOf('/DR/') === -1;
 
 class MidiViewer {
   constructor(name) {
@@ -45,7 +51,7 @@ class XpjViewer {
 
  openOnBuffer(data, fname) {
 	if(!this.midiDoc) {
-		let midiPlace = $('#midiview');
+		let midiPlace = $('#xpjview');
 		this.midiDoc = openXpjDoc(midiPlace[0], fname);
 	}
 	this.midiDoc.openOnBuffer(data);
@@ -64,7 +70,7 @@ function onLoad()
 		defaultName: "Untitled.mid",
 		defaultDir: "/",
 		dataType: "blob",
-		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.midiViewDoc);
+		load:  function(theData, fname, manager, fromViewer) {
 			let homeViewer = new MidiViewer('midiview');
 			manager.homeDoc = homeViewer;
 			homeViewer.openOnBuffer(theData, fname);
@@ -79,7 +85,7 @@ function onLoad()
 		content_type: "audio/midi",
 	});
 
-	if(!local_exec) {
+	if(!local_exec && !cloud_served) {
 		var urlarg = location.search.substring(1);
 		if (urlarg && urlarg.toLowerCase().indexOf('.mid') >0) {
 			let fname = decodeURI(urlarg);
@@ -110,7 +116,7 @@ function onLoad()
 		defaultName: "/SONGS/SONG.XML",
 		defaultDir: "/SONGS/",
 		dataType: "text",
-		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.homeDoc); constructor(fname, text, newKitFlag, simple) 
+		load:  function(theData, fname, manager, fromViewer) {
 			let homeViewer = makeDelugeDoc(fname, theData, {transTrack: transTrackToMidi});
 			setFocusDoc(homeViewer);
 			manager.homeDoc = homeViewer;
@@ -143,18 +149,18 @@ function onLoad()
 
 function onLoadXpj()
 {
-	let xpjViewDoc = new XpjViewer('midiview');
+	let xpjViewDoc = new XpjViewer('xpjview');
 
 	let xpjFileManager = new FileManager({
-		prefix:  "midi",
+		prefix:  "xpj",
 		defaultName: "Untitled.xpj",
 		defaultDir: "/",
 		dataType: "blob",
-		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.xpjViewDoc);
-			let homeViewer = new XpjViewer('midiview');
+		load:  function(theData, fname, manager, fromViewer) {
+			let homeViewer = new XpjViewer('xpjview');
 			manager.homeDoc = homeViewer;
 			homeViewer.openOnBuffer(theData, fname);
-			$('#midiview').append(homeViewer.html);
+			$('#xpjview').append(homeViewer.html);
 			
 		},
 		save:  function(manager, fromViewer) {
@@ -165,16 +171,16 @@ function onLoadXpj()
 		content_type: "application/zip",
 	});
 
-	if(!local_exec) {
+	if(!local_exec && !cloud_served) {
 		var urlarg = location.search.substring(1);
 		if (urlarg && urlarg.toLowerCase().indexOf('.xpj') >0) {
 			let fname = decodeURI(urlarg);
 			xpjFileManager.initialLoad(fname);
 		} else {
-			xpjViewDoc.midiDoc = makeEmptyMidiFile($('#midiview')[0]);
+			xpjViewDoc.midiDoc = makeEmptyMidiFile($('#xpjview')[0]);
 		}
 	} else {
-		xpjViewDoc.midiDoc = makeEmptyMidiFile($('#midiview')[0]);
+		xpjViewDoc.midiDoc = makeEmptyMidiFile($('#xpjview')[0]);
 	}
 
 	xpjFileManager.homeDoc = xpjViewDoc;
@@ -191,9 +197,9 @@ if (buildType !== 'mpc') {
 }
 
 setMpcEnabled(buildType === 'mpc');
-setClipboardEnabled(buildType !== 'mpc');
+setClipboardEnabled(buildType !== 'mpc' && buildType !== 'xpj');
 
-if (buildType === 'xpj2midi' || buildType === 'xpj2json') {
+if (buildType === 'xpj') {
 	window.onload = onLoadXpj;
 } else {
 	window.onload = onLoad;

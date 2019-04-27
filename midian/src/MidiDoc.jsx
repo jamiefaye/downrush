@@ -43,8 +43,6 @@ class MidiPlot extends React.Component {
   }
 
   symbolize() {
-  
-  	console.log("Device Pixel Ratio: " + window.devicePixelRatio);
 	let track = this.props.track;
 	let firstTime = this.props.converter.lowTime;
 	let notes = track.notes;
@@ -104,23 +102,18 @@ class MidiPlot extends React.Component {
 	this.start = t0;
 	this.end = t1;
 
-	// console.log("start: " + start + " end: " + end);
 	this.selection.css({left: startX + 'px', width: (endX - startX) + 'px', top: 0 + 'px', height: this.height + 'px' });
   }
 
   timeToX(t) {
 
 	let x = Math.round(t * this.scaling) + this.insetX;
-	//if (x < 0) x = 0;
-	//if (x > this.highW) x = this.highW;
 	return x;
   }
 
   xToTime(xr) {
 
 	let xt = (xr - this.insetX) / this.scaling;
-	//if (xt < 0) xt = 0;
-	//if (xt > this.duration) xt = this.duration;
 	return xt;
   }
 
@@ -312,7 +305,6 @@ function exportMPC(asText, trackNum, song, fname) {
 
  class MidiDocView extends React.Component {
 
-// 		<pre>{this.props.midiText}</pre>
   render() {
 	let midi = this.props.midi;
 	

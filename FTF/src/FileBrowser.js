@@ -345,7 +345,7 @@ case 2:
 	} else if (ext === 'mid') {
 		window.open("/DR/midian/midian.htm?"+file);
 	} else if (ext === 'xpj') {
-		window.open("/DR/midian/xpj2midi.html?"+file);
+		window.open("/DR/midian/index_xpj.html?"+file);
 	} else if (editWhiteListSet.has(ext)) {
 		window.open("/DR/edit.htm?"+file);
 	}
@@ -505,18 +505,6 @@ case 2:
 	$('#renamebut').click(e=>{that.renameFile()});
 	$('#reloadbut').click(e=>{that.reload_list()});
 
-	// Register onClick handler for <a class="dir">
-/*
-	let that = this;
-	$(document).on("click","a.dir",function() {
-		var dirpath = this.makePath(this.text);
-		$("#header").html("dirpath");
-		$("#list").html("Loading...");
-		that.getFileList(dirpath);
-		
-		that.last_dirpath = dirpath;
-	}); 
-*/
 	this.polling();
 	setInterval(()=>{that.polling()}, 5000);
 }
