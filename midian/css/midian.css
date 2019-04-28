@@ -103,19 +103,22 @@ margin-left: 8px;
  line-height: 18px;
 }
 
-table {
+table.miditrack {
 	border-collapse: collapse;
 	text-align: center;
 }
 
-td {
+#filegroup * button, #filegroup2 * button {
 	border: solid 1px;
-	//padding: 0.5em;
+	border-color: black,
 }
 
-th {
+.miditrack * td {
 	border: solid 1px;
-	//padding: 0.5em;
+}
+
+.midihead * button {
+	border: solid 1px;
 }
 
 td.midichan {
@@ -278,4 +281,8 @@ div.xpjaud {
 	height: 64px;
 	width: 128px;
 	font-size: 12px;
+}
+
+#uploader {
+	background-color: #FFFFE0;
 }

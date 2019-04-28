@@ -9,14 +9,18 @@ require('file-loader?name=index.html!../html/index_web.html');
 require('file-loader?name=index.htm!../html/index_mpc.html');
 require('file-loader?name=xpj2midi.html!../html/xpj2midi.html');
 require('file-loader?name=index_xpj.html!../html/index_xpj.html');
+require('file-loader?name=xpjview.html!../html/xpjview.html');
 require('file-loader?name=[name].[ext]!../css/midian.css');
 require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
 require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
+
 
 import empty_song_template from "./templates/empty_song.handlebars";
 import {addTrackToMidi, converter} from "./DelugeToMidi.js";
 import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson} from "../../xmlView/src/SongViewLib.js";
 import {FileManager} from "./FileManager.js";
+import Uppie from './js/uppie.js';
+
 
 "use strict";
 
@@ -203,4 +207,14 @@ if (buildType === 'xpj') {
 	window.onload = onLoadXpj;
 } else {
 	window.onload = onLoad;
+}
+
+let uppie = new Uppie();
+let duppy = document.querySelector('#uploader');
+if (duppy) {
+	uppie(duppy, function (event, formData, files) {
+		var flist = [];
+		for (var [key, value] of formData.entries()) { if(key === 'files[]') flist.push(value); }
+		console.log(flist);
+	});
 }

@@ -51,7 +51,6 @@ class XplTrackCanvas extends React.Component {
     	// if (w < 1) w = 1;
     	let y = (maxN - n.note.note) * noteH + yOffset;
     	ctx.fillRect(x, y, w, noteH);
-    
     }
     ctx.restore();
   }
