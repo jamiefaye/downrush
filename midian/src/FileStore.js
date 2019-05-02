@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from 'jquery';
 
 // Abstract superclass for file operations with FlashAir, local, or cloud-based.
 

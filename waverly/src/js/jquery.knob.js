@@ -1,4 +1,4 @@
-var $ = require('./jquery-3.2.1.min.js');
+var $ = require('jquery');
 // *** JFF applied: https://github.com/aterrien/jQuery-Knob/pull/288/files
 /*!jQuery Knob*/
 /**
@@ -15,7 +15,7 @@ var $ = require('./jquery-3.2.1.min.js');
 (function (factory) {
     if (typeof exports === 'object') {
         // CommonJS
-        module.exports = factory(require('./jquery-3.2.1.min.js'));
+        module.exports = factory(require('jquery'));
     } else if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
         define(['jquery'], factory);

@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from'jquery';
 // A simple drop-down menu manager which uses classes instead of Ids internally
 export default class Dropdown {
 	constructor(item, contents, dropfn) {

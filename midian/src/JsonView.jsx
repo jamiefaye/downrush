@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from "react-dom";
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from 'jquery';
 import jsonViewer from "./js/jquery.json-viewer.js";
 
 class JsonViewInside extends React.Component {

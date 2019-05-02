@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from'jquery';
 import Wave from './Wave.js';
 
 require('file-loader?name=[name].[ext]!../html/viewWAV.htm');

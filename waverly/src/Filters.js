@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from'jquery';
 import filter_frame_template from'./templates/filter_frame_template.handlebars';
 import {OfflineContext} from './AudioCtx.js';
 

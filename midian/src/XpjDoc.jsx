@@ -4,7 +4,7 @@ var pako = require('pako');
 import {Xpj, Program_Type, makeMTXpj} from "./Xpj.js";
 import {JsonView} from "./JsonView.jsx";
 import {gamma_correct} from "../../xmlView/src/SongUtils.js";
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from 'jquery';
 
 class XplTrackCanvas extends React.Component {
   constructor(props) {

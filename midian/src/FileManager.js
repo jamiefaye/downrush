@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from 'jquery';
 import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser.js';
 import FileSaver from 'file-saver';
 import {FlashAirFS} from "./FileStore.js";

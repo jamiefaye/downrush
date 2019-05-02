@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from'jquery';
 import knob from'./js/jquery.knob.js';
 import {FilterBase} from './Filters.js';
 import quadfilter_template from'./templates/quadfilter_template.handlebars';

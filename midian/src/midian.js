@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from'jquery';
 import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled, makeEmptyMidiFile} from './MidiDoc.jsx';
 import {openXpjDoc} from "./XpjDoc.jsx";
 

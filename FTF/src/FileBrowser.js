@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from'jquery';
 import Uppie from './js/uppie.js';
 
 var INCLUDE_FTLE = false;

@@ -3,7 +3,7 @@
  * @author: Alexandre Bodelot <alexandre.bodelot@gmail.com>
  * @link: https://github.com/abodelot/jquery.json-viewer
  */
- import jQuery from'./jquery-3.2.1.min.js';
+ import jQuery from'jquery';
  
 (function($) {
 
