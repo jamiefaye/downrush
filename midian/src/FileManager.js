@@ -24,23 +24,10 @@ class FileManager {
 
 	this.content_type = props.content_type ? props.content_type : 'text/plain';
 	this.setupGUI();
-	
+
 	this.fs = new FlashAirFS();
   }
 
-/*
- let props = {
-	prefix:  "meow",
-	defaultName: "SONG",
-	defaultDor: "/SONGS",
-	loadCallback:  f(data, fileName, thismanager, homedoc) //
-	saveCallback:  f(thismanager, homeDoc) //
-	newCallback: f(thismanager, homeDoc).
-	fileExtensions: [],
-	content_type: 
- };
-
-*/
   prefixId(item) {
 	return $("#" + this.prefix + item);
   }
@@ -59,32 +46,6 @@ class FileManager {
 		}
 		
 	});
-
-/*
-	$.ajax({
-	url         : this.fname,
-	cache       : false,
-	processData : false,
-	method:		'GET',
-	type        : 'GET',
-	success     : function(data, textStatus, jqXHR){
-		me.loadCallback(data, fname, me, me.homeDoc);
-		me.prefixId("status").text(me.fname + " loaded.");
-	},
-
-	error: function (data, textStatus, jqXHR) {
-		console.log("Error: " + textStatus);
-		me.prefixId("status").text(textStatus);
-	},
-
-	xhr: function() {
-		var xhr = new window.XMLHttpRequest();
-		xhr.responseType= me.dataType;
-		return xhr;
-	},
-
-	});
-*/
 }
 
   initialLoad(fname) {
@@ -102,59 +63,6 @@ class FileManager {
 	});
 }
 
-/*
-	var timestring;
-	var dt = new Date();
-	var year = (dt.getFullYear() - 1980) << 9;
-	var month = (dt.getMonth() + 1) << 5;
-	var date = dt.getDate();
-	var hours = dt.getHours() << 11;
-	var minutes = dt.getMinutes() << 5;
-	var seconds = Math.floor(dt.getSeconds() / 2);
-	var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
-	let me = this;
-	var urlDateSet = '/upload.cgi?FTIME=' + timestring + "&TIME="+(Date.now());;
-	$.get(urlDateSet, function() {
-		$.ajax(filepath, {
-		headers:	{'Overwrite': 't', 'Content-type': "'" + this.content_type + "'"},
-		cache:		false,
-		contentType: false,
-		data:		data,
-		processData : false,
-		method:		'PUT',
-		error:		function(jqXHR, textStatus, errorThrown) {
-			alert(textStatus + "\n" + errorThrown);
-		},
-		success: function(data, textStatus, jqXHR){
-			console.log("Save OK");
-			$.ajax("/upload.cgi?WRITEPROTECT=OFF",{
-				error:	function(jqXHR, textStatus, errorThrown) {
-					alert(textStatus + "\n" + errorThrown);
-				},
-				headers: {"If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT"},
-				success: function(data, textStatus, jqXHR){
-					console.log("save and unlock done");
-					me.prefixId("status").text(filepath + " saved.");
-
-				},
-			})
-		},
-		
-		xhr: function() {
-			var xhr = new window.XMLHttpRequest();
-		  	xhr.upload.addEventListener("progress", function(evt){
-			  if (evt.lengthComputable) {
-				var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
-				me.prefixId("status").text(filepath + " " + percentComplete + "%");
-			  }
-			}, false);
-		 	return xhr;
-		 }
-		});
-	});
-}
-
-*/
  openFileDialog(e) {
 	let me = this;
 	let initial = this.fname;
@@ -167,14 +75,7 @@ class FileManager {
 		}
 	});
 }
-/*
-  stepNextAsync(dir) {
-  	let me = this;
-	setTimeout(e=>{
-		me.stepNextFile(me.fname, dir, openFile);
-	}, 0);
-  }
-*/
+
   saveAs(){
 	let me = this;
 	let doc = this.homeDoc;
@@ -303,17 +204,5 @@ class FileManager {
 	});
   }
 }
-  
-  /*
-  new
-  save
-  open
-  status
-  upbut
-  downbut
-
-  */
-  
-  
   export {FileManager};
   

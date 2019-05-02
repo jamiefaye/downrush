@@ -208,10 +208,6 @@ case 2:
 	}
 	$.each(that.filelist, function() {
 		var file = this;
-		// Skip hidden file.
-		//if ( file["attr"] & 0x02 ) {
-		//	return;
-		//}
 		// Make a link to directories and files.
 		var filelink = $('<a href="javascript:void(0)"></a>');
 		var filelink2 = $('<a href="javascript:void(0)"></a>');
@@ -387,9 +383,7 @@ case 2:
 
 // Get file list
   getFileList(nextPath) { //dir
-	// Make a path to show next.
-	//var nextPath = this.makePath(dir);
-	// Make URL for CGI. (DIR must not end with '/' except if it is the root.)
+
 	let recheckSet = new Set();
 	if (nextPath === this.currentPath) {
 		recheckSet = new Set(this.getCheckedList());
@@ -401,65 +395,10 @@ case 2:
 		that.showFileList(that.currentPath, recheckSet);
 	});
 }
-/*
-  checkDownOne(goodPart, remaining, whenDone)
-{
-	if (remaining.length === 0) {
-		whenDone(true);
-		return;
-	}
-	let that = this;
-	var	url = "/command.cgi?op=100&DIR=" + goodPart +"&TIME="+(Date.now());
-	var seeking = remaining.shift();
-	// Issue CGI command.
-	$.get(url).done(function(data, textStatus, jqXHR){
-	   // Save the current path.
-		// Split lines by new line characters.
-		let xlsd = data.split(/\n/g);
-		// Ignore the first line (title) and last line (blank).
-		xlsd.shift();
-		xlsd.pop();
-		// Convert to V2 format.
-		convertFileList(xlsd);
-		let found = false;
-		for (var i = 0; i < xlsd.length; ++i) {
-			let entry = xlsd[i];
-			if (entry.fname === seeking) {
-				 if (entry.attr !== 0x10) {
-				 	whenDone(false);
-				 	return;
-				 }
-				found = true;
-				break;
-			}
-		}
-
-		if (!found) {
-			let dirpath = goodPart + '/' + seeking;
-			let lurl = "/DR/FTF/mkdir.lua?"+"/" + dirpath;		
-			lurl = lurl.replace(/ /g , "|" ) ;
-				
-		$.get(lurl).done(function(data, textStatus, jqXHR){
-			if (textStatus !== 'success') {
-				whenDone(false);
-				return;				
-			}
-			let deeperGood = goodPart + '/' + seeking;
-			that.checkDownOne(deeperGood, remaining, whenDone);
-		});
-		} else {
-			let deeperGood = goodPart + '/' + seeking;
-			that.checkDownOne(deeperGood, remaining, whenDone);
-		}
-	});
-}
-
-*/
 //Document Ready
   start(where) {
 	// Configure HTTP access
 	$.ajaxSetup({
-		//cache: false,	// If you prohibit caching you can not load anyhow
 		timeout: 300000	// Increased timeout value so as to not interfere with uploads.
 	});
 
@@ -473,35 +412,10 @@ case 2:
 	this.getFileList(this.makePath(''));
 	let that = this;
 
-	//let upitem = document.querySelector('#uploader');
-	//if (upitem) {
-	//	let uppie = new Uppie();
-	//	uppie(upitem, function (event, formData, files) {
-	//	var flist = [];
-	//	for (var [key, value] of formData.entries()) { if(key === 'files[]') flist.push(value); }
-	//	that.uploadNext(flist);
-	//});
-	//}
-	//$('#uploadbut').click(e=>{that.upload()});
 	$('#newdirbut').click(e=>{that.NewDirectory()});
 	$('#deletebut').click(e=>{that.deleteFiles()});
 	$('#renamebut').click(e=>{that.renameFile()});
 	$('#reloadbut').click(e=>{that.reload_list()});
-
-	// Register onClick handler for <a class="dir">
-/*
-	let that = this;
-	$(document).on("click","a.dir",function() {
-		var dirpath = this.makePath(this.text);
-		$("#header").html("dirpath");
-		$("#list").html("Loading...");
-		that.getFileList(dirpath);
-		
-		that.last_dirpath = dirpath;
-	}); 
-*/
-	//this.polling();
-	//setInterval(()=>{that.polling()}, 5000);
 }
 
   dir(fname)
@@ -519,34 +433,6 @@ case 2:
 	this.getFileList(dirpath);
 	this.last_dirpath = dirpath;
 }
-
-//Callback Function for Polling
-/*
-// During long uploads, polling requests were stacking up behind the upload
-// We add an active flag. The flag prevents new requests from going
-// out while one is active.
-  polling() {
-	if(this.polling_active) {
-		return;
-	}
-	this.polling_active = true;
-	let that = this;
-	var url="/command.cgi?op=102";
-	$.get(url).done(function(data, textStatus, jqXHR){
-		that.polling_active = false;
-		let hasUpd = Number(data);
-		if(hasUpd) {
-			that.getFileList(that.last_dirpath);
-			$("#reloadtime").html("<font color=red>"+(new Date()).toLocaleString())+"</font>";
-		}else{
-			$("#reloadtime").html((new Date()).toLocaleString());
-		}
-	}).fail(function(jqXHR, textStatus, errorThrown){
-		that.polling_active = false;
-		$("#reloadtime").html("<font color=red>Error:"+textStatus+"</font>");
-	});
-}
-*/
 
   reload_list()
 {
@@ -568,8 +454,7 @@ case 2:
 	$("#reloadtime").html("<font color=blue>"+(new Date()).toLocaleString())+"</font>";
 }
 
-  NewDirectory()
-{
+  NewDirectory() {
 	var path = window.prompt("Directory name?\n"+ this.last_dirpath, "NewDirectory01");
 	if(path)
 	{
@@ -586,77 +471,8 @@ case 2:
 			that.upload_after();
 		});
 	}
-}
+  }
 
-/**
-
-// Since upload.cgi can only handle one file at a time, do things one at a time.
- uploadNext (flist) {
-	if (!flist.length) {
-		$("#statind").text('Upload done.');
-		this.upload(200); // trigger refresh when done.
-		return;
-	}
-	let f = flist[0];
-	let that = this;
-// Create (if necessary) nested directories)
-	var dirList = f.name.split('/');
-	dirList.pop(); // Get rid of file name at the end.
-	var uploadDirPath = this.currentPath + '/' + dirList.join('/');
-
-	this.checkDownOne(this.currentPath, dirList, function (status) {
-	if (!status) {
-		// Could not create intermediate directories.
-		alert("Unable to create intermediate directories");
-		return;
-	}
-	var fd = new FormData();
-	fd.append('file', f);
-	// fd.append("upload_file", true);
-
-	var timestring;
-	var dt = new Date();
-	var year = (dt.getFullYear() - 1980) << 9;
-	var month = (dt.getMonth() + 1) << 5;
-	var date = dt.getDate();
-	var hours = dt.getHours() << 11;
-	var minutes = dt.getMinutes() << 5;
-	var seconds = Math.floor(dt.getSeconds() / 2);
-	var timestring = "0x" + (year + month + date).toString(16) + (hours + minutes + seconds).toString(16);
-	console.log(uploadDirPath);
-	console.log(f.name);
-	var urlDateSet = '/upload.cgi?FTIME=' + timestring + "&UPDIR=" + uploadDirPath + "&TIME="+(Date.now());;
-	var fName = f.name;
-	$.get(urlDateSet, function() {
-	 $.ajax({
-	   url         : '/upload.cgi',
-	   data        : fd,
-	   cache       : false,
-	   contentType : false,
-	   processData : false,
-	   method:		'POST',
-	   type        : 'POST',
-	   success     : function(data, textStatus, jqXHR){
-		flist.shift();
-		 that.uploadNext(flist);
-		  },
-	   xhr: function() {
-		  var xhr = new window.XMLHttpRequest();
-		  // Upload progress
-		  xhr.upload.addEventListener("progress", function(evt){
-			  if (evt.lengthComputable) {
-				  var percentComplete = Math.round(evt.loaded / evt.total * 100.0);
-				  //Do something with upload progress
-				  $("#statind").text(fName + " " + percentComplete + "%");
-			  }
-		 }, false);
-		 return xhr;
-	  },
-	});
-   });
- });
-};
- **/
 
 }; // End of class
 
