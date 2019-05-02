@@ -34,7 +34,7 @@ class XplTrackCanvas extends React.Component {
     ctx.save();
     ctx.beginPath();
     ctx.clearRect(0, 0, width, height);
-    
+
     ctx.fillStyle = '#' + gamma_correct(color.toString(16));
 
     ctx.fillRect(0, 0, width, height);

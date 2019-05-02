@@ -3,7 +3,7 @@ const path = require('path');
 module.exports = {
   entry: './src/midian.js',
   watch: false,
-   devtool:  false,
+  devtool: 'source-map',
   output: {
     filename: 'midian.js',
     path: path.resolve(__dirname, '../DR/midian/')
@@ -23,4 +23,11 @@ module.exports = {
       { test: /\.handlebars$/, loader: 'handlebars-loader' }
     ]
   },
+  
+  resolve: {
+    modules: [
+     path.resolve(__dirname, '../xmlView/node_modules'),
+     path.resolve(__dirname, 'node_modules'),
+     ],
+    },
 };

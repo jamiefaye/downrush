@@ -1,4 +1,3 @@
-import createClass from "create-react-class";
 import React from 'react';
 import ReactDOM from "react-dom";
 import Clipboard from "./js/clipboard.min.js";
