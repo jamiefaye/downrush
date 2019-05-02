@@ -1,7 +1,7 @@
 import $ from'./js/jquery-3.2.1.min.js';
-import {stepNextFile} from "./StepNextFile.js";
 import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser.js';
 import FileSaver from 'file-saver';
+import {FlashAirFS} from "./FileStore.js";
 
 var local_exec = document.URL.indexOf('file:') == 0 || buildType !='flashair';
 
@@ -24,6 +24,8 @@ class FileManager {
 
 	this.content_type = props.content_type ? props.content_type : 'text/plain';
 	this.setupGUI();
+	
+	this.fs = new FlashAirFS();
   }
 
 /*
@@ -48,6 +50,17 @@ class FileManager {
 	this.fname = fname;
 	let me = this;
 	this.prefixId("status").text("Loading: " +  this.fname);
+
+	this.fs.read(fname, me.dataType, function (data, status) {
+		if (status === 'OK') {
+			me.loadCallback(data, fname, me, me.homeDoc);
+		} else {
+			me.prefixId("status").text(status);
+		}
+		
+	});
+
+/*
 	$.ajax({
 	url         : this.fname,
 	cache       : false,
@@ -71,6 +84,7 @@ class FileManager {
 	},
 
 	});
+*/
 }
 
   initialLoad(fname) {
@@ -80,6 +94,15 @@ class FileManager {
 // use ajax to save-back data (instead of a web worker).
   saveFile(filepath, data)
 {
+	let me = this;	
+	this.fs.write(filepath, data, "'" + this.content_type + "'", function (status) {
+		me.prefixId("status").text(filepath + " saved.");
+	}, function (percentdone) {
+		me.prefixId("status").text(percentdone + '%');
+	});
+}
+
+/*
 	var timestring;
 	var dt = new Date();
 	var year = (dt.getFullYear() - 1980) << 9;
@@ -131,6 +154,7 @@ class FileManager {
 	});
 }
 
+*/
  openFileDialog(e) {
 	let me = this;
 	let initial = this.fname;
@@ -206,6 +230,49 @@ class FileManager {
 	FileSaver.saveAs(blob, saveName);
 }
 
+  stepNextFile(filePath, dir, okexts, callb) {
+	let parts = filePath.split('/');
+	let namePart = parts.pop(); // Get rid of file name at the end.
+	let path = parts.join('/');
+	this.fs.dir(path, function(dirList, status) {
+		let fileList = dirList.filter(e=>!e.isDirectory);
+		// Sort by file name
+		fileList.sort(function(a, b) {
+			if (!a["fname"]) return 0;
+			return a["fname"].localeCompare(b["fname"]);
+		});
+	// Find the filePath in our list.
+	let fx = -1;
+	for (let i = 0; i < fileList.length; ++i) {
+		let fn = fileList[i]["fname"];
+		if (namePart === fn) {
+			fx = i;
+			break;
+		}
+	}
+	let maxPass = fileList.length;
+	if (fx >= 0) {
+		let nextx = fx + dir;
+		while (maxPass > 0) {
+			if (nextx < 0) nextx = fileList.length - 1;
+			if (nextx >= fileList.length) nextx = 0;
+
+			let ext = fileList[nextx]["ext"];
+			let found = okexts.find((element)=>{return element === ext});
+			if (found !== undefined) {
+				let nextF = path + "/" + fileList[nextx]["fname"];
+				callb(nextF);
+				return;
+			}
+			nextx += dir;
+			if (nextx < 0) nextx = fileList.length - 1;
+			if (nextx >= fileList.length) nextx = 0;
+			maxPass--; 
+		}
+	}
+	});
+}
+
  setupGUI() {
  	let me = this;
 
@@ -217,13 +284,13 @@ class FileManager {
 
 	this.prefixId('upbut').click(e=>{
 		if (me.fname !== undefined) {
-			stepNextFile(me.fname, -1, me.fileExtensions, (f)=>me.loadFile(f));
+			me.stepNextFile(me.fname, -1, me.fileExtensions, (f)=>me.loadFile(f));
 		}
 	});
 
 	this.prefixId('dwnbut').click(e=>{
 		if (me.fname !== undefined) {
-			stepNextFile(me.fname, 1, me.fileExtensions, (f)=>me.loadFile(f));
+			me.stepNextFile(me.fname, 1, me.fileExtensions, (f)=>me.loadFile(f));
 		}
 	});
 
