@@ -104,8 +104,11 @@ class XpjClipView extends React.Component {
   }
 
   control(cmd) {
-  	this.wavethumb.command(cmd, undefined, this.wavethumb);
-  // this.audioRef.play();
+  	this.wavethumb.command(cmd, undefined, this);
+  }
+
+  setPlayState(toState) {
+  	this.setState({pushed: toState});
   }
 
 }

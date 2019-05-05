@@ -63,23 +63,23 @@ class WaveThumb extends React.Component {
 
   noteDone() {
   	if (this.panel){
-	//	this.panel.setPlayState(false);
+		this.panel.setPlayState(false);
 	}
   }
 
   command(name, e, panel) {
 	if(name === 'play') {
-
-//		let startT = Number(this.osc.zone.startMilliseconds) / 1000;
-//		let endT =  Number(this.osc.zone.endMilliseconds) / 1000;
+		this.panel = panel;
 		let startT =0;
 		let endT =  99999;
 		// console.log("Play: " + startT + " End: " + endT);
-//		this.panel = panel;
-//		panel.setPlayState(true);
+		panel.setPlayState(true);
 		if(this.wave) {
 			if (this.wave.surfer.isPlaying()) {
 				this.wave.surfer.pause();
+				if (this.panel) {
+					this.panel.setPlayState(false);
+				}
 			} else {
 				this.wave.surfer.play(0, endT);
 			}
