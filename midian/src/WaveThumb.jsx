@@ -141,7 +141,7 @@ class WaveThumb extends React.Component {
   openWaveSurfer(data) {
 	// console.log("b4 openWaveSurfer " + this.props.filename);
 	if(!this.wave) {
-		this.wave = new Wave(this.el);
+		this.wave = new Wave(this.el, {height: 50});
 		// console.log("new Wave");
 	}
 	this.hasNewData = false;

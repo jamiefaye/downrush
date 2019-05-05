@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import Uppie from './js/uppie.js';
-import {FlashAirFS} from './FileStore.js';
+import {getFlashAirFS} from './FileStore.js';
 
 
 function zeroPad(num, places) {
@@ -57,7 +57,7 @@ class FileWidget {
 			this.params = {};
 		}
 		
-		this.fs = new(FlashAirFS);
+		this.fs = getFlashAirFS();
 }
 
   toggleChecks (e) {

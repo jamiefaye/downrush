@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser.js';
 import FileSaver from 'file-saver';
-import {FlashAirFS} from "./FileStore.js";
+import {getFlashAirFS} from "./FileStore.js";
 
 var local_exec = document.URL.indexOf('file:') == 0 || buildType !='flashair';
 
@@ -25,7 +25,7 @@ class FileManager {
 	this.content_type = props.content_type ? props.content_type : 'text/plain';
 	this.setupGUI();
 
-	this.fs = new FlashAirFS();
+	this.fs = getFlashAirFS();
   }
 
   prefixId(item) {

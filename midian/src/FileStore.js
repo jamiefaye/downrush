@@ -290,4 +290,38 @@ function isDirectoryEntry(name, dirList)
 }
 
 
-export {FlashAirFS};
+class DropInFS extends FileStore {
+	constructor() {
+		super();
+		this.currentDir = "";
+		this.currentDirPath = "";
+		this.dropMap = {};
+	}
+}
+
+
+
+
+
+
+
+
+var flashAirSingleton;
+
+function getFlashAirFS() {
+	if (!flashAirSingleton) {
+		flashAirSingleton = new FlashAirFS();
+	}
+	return flashAirSingleton;
+}
+
+var dropInSingleton;
+
+function getDropInFS() {	
+	if (!dropInSingleton) {
+		dropInSingleton = new DropInFS();
+	}
+	return dropInSingleton;
+}
+
+export {FlashAirFS, getFlashAirFS, getDropInFS};
