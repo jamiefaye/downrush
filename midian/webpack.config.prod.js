@@ -3,7 +3,7 @@ const path = require('path');
 module.exports = {
   entry: './src/midian.js',
   watch: false,
-  devtool: 'source-map',
+  devtool: false,
   output: {
     filename: 'midian.js',
     path: path.resolve(__dirname, '../DR/midian/')

@@ -14,6 +14,8 @@ require('file-loader?name=[name].[ext]!../css/midian.css');
 require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
 require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
 
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-halflings-72-play.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-halflings-74-stop.png');
 
 import empty_song_template from "./templates/empty_song.handlebars";
 import {addTrackToMidi, converter} from "./DelugeToMidi.js";

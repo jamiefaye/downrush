@@ -4,7 +4,19 @@ var pako = require('pako');
 import {Xpj, Program_Type, makeMTXpj} from "./Xpj.js";
 import {JsonView} from "./JsonView.jsx";
 import {gamma_correct} from "../../xmlView/src/SongUtils.js";
+import {WaveThumb} from "./WaveThumb.jsx";
 import $ from 'jquery';
+import {Icon2PushButton} from './GUIstuff.jsx';
+
+class PlayerControl extends React.Component {
+  render() {
+	return (
+	<Icon2PushButton className='plsybut' title='Play' pushed={this.props.pushed}
+		onPush={(e)=>{this.props.command('play', e, this)}}
+		srcU='img/glyphicons-halflings-72-play.png'
+		srcD='img/glyphicons-halflings-74-stop.png'/>)
+  }
+};
 
 class XplTrackCanvas extends React.Component {
   constructor(props) {
@@ -61,6 +73,12 @@ class XplTrackCanvas extends React.Component {
 
 class XpjClipView extends React.Component {
 
+  constructor(props) {
+	super(props);
+	this.control = this.control.bind(this);
+	this.state = {pushed: false};
+  }
+ 
   render() {
 	let props = this.props;
 	let clip = props.clip;
@@ -69,14 +87,25 @@ class XpjClipView extends React.Component {
 	let noteH = trans.noteHeight;
 	let w = trans.width;
 	let h = trans.height;
+	var fullPath = "";
+
 	if (clip.type === Program_Type.AUDIO) {
 		let name = '';
 		if (clip.events && clip.events.length > 0 && clip.events[0] && clip.events[0].audio) {
 			name = clip.events[0].audio.name;
+			let path = clip.events[0].audio.sample.path;
+			fullPath = props.prepath + "/" + path;
 		}
-		return <div className='xpjaud'>{name}</div>;
+		return <div className='xpjaud'><WaveThumb open={true} filename={fullPath} ref={el => this.wavethumb = el}/>
+		<PlayerControl pushed={this.state.pushed} command={(e)=>{this.control('play', e)}}/>
+		</div>;
 	}
 	return <XplTrackCanvas clip={clip} transform={trans} width={w} height={h} clipN={this.props.clipN}/>;
+  }
+
+  control(cmd) {
+  	this.wavethumb.command(cmd, undefined, this.wavethumb);
+  // this.audioRef.play();
   }
 
 }
@@ -97,6 +126,8 @@ class XpjView extends React.Component {
 	this.tracks = this.xpj.tracks;
 	this.sequence = this.xpj.sequence;
 	this.clipMaps = this.xpj.clips;
+	let fname = this.props.fname;
+	this.prepath = fname.slice(0, fname.length - 4) + "_[ProjectData]";
   }
 
 // return a transform object adjusted to map the given clip into the target rectangle
@@ -157,7 +188,7 @@ class XpjView extends React.Component {
 				let trans = this.modXform(clip);
 				children.push(<td className='xpjtd' style={colorStyle}><table><tbody>
 					<tr><th className='xpjth'>{clipname}</th></tr>
-					<tr><td><XpjClipView clip={clip} transform={trans}/></td></tr></tbody></table>
+					<tr><td><XpjClipView clip={clip} transform={trans} prepath={this.prepath} /></td></tr></tbody></table>
 				</td>);
 			}
 		}
@@ -182,7 +213,7 @@ class XpjView extends React.Component {
 		<table><tbody>
 			{this.createTable()}
 		</tbody></table>
-		<JsonView label='xpj Json' json = {this.props.xpj} />
+		<JsonView label='xpj Json' json = {this.props.xpj} fname={this.props.fname}/>
 		</React.Fragment>
 
 

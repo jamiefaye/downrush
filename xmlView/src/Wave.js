@@ -45,6 +45,7 @@ export default class Wave {
 		scrollParent:	true,
 		plugins:		plugs,
 		partialRender:  false,
+		height:			25,
 		renderer:		 TiledRenderer,
 		// barWidth:		1,
 	};
