@@ -297,13 +297,11 @@ class DropInFS extends FileStore {
 		this.currentDirPath = "";
 		this.dropMap = {};
 	}
+	
+	addFiles(fileList) {
+		console.log(fileList);
+	}
 }
-
-
-
-
-
-
 
 
 var flashAirSingleton;

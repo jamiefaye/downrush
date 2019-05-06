@@ -1,6 +1,7 @@
 import $ from'jquery';
 import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled, makeEmptyMidiFile} from './MidiDoc.jsx';
 import {openXpjDoc} from "./XpjDoc.jsx";
+import {getDropInFS} from "./FileStore.js";
 
 // The following requires cause individual files to be transferred into the build
 // directory with renaming if needed.
@@ -217,6 +218,8 @@ if (duppy) {
 	uppie(duppy, function (event, formData, files) {
 		var flist = [];
 		for (var [key, value] of formData.entries()) { if(key === 'files[]') flist.push(value); }
-		console.log(flist);
+
+		let dropin = getDropInFS();
+		dropin.addFiles(flist);
 	});
 }
