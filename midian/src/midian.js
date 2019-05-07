@@ -34,6 +34,8 @@ var local_exec = document.URL.indexOf('file:') == 0;
 // test for not coming via the FlashAir card.
 var cloud_served = document.URL.indexOf('/DR/') === -1;
 
+var activeFileManager;
+
 class MidiViewer {
   constructor(name) {
 	this.html = "";
@@ -178,6 +180,8 @@ function onLoadXpj()
 		content_type: "application/zip",
 	});
 
+	activeFileManager = xpjFileManager;
+
 	if(!local_exec && !cloud_served) {
 		var urlarg = location.search.substring(1);
 		if (urlarg && urlarg.toLowerCase().indexOf('.xpj') >0) {
@@ -191,6 +195,9 @@ function onLoadXpj()
 	}
 
 	xpjFileManager.homeDoc = xpjViewDoc;
+	
+	
+	activeFileManager.prefixId("status").text("Drop files and folders onto this yellow area to make them available to this program.");
 }
 
  function addToDocFunction(jsonTrack) {
@@ -222,5 +229,8 @@ if (duppy) {
 		let dropin = getDropInFS();
 		dropin.addFiles(flist);
 
+		if (activeFileManager) {
+			activeFileManager.prefixId("status").text("" +  flist.length + " file entries loaded");
+		}
 	});
 }

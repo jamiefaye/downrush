@@ -181,7 +181,7 @@ class XpjView extends React.Component {
 		let rowA = xpj.matrix[r];
 		let children = [];
 		for (let c = xpj.minCol; c < xpj.maxCol; ++c) {
-			let clip = rowA[c];
+			let clip = rowA ? rowA[c] : undefined;
 			let colorStyle = this.colorStyleFor(c);
 
 			if (!clip) {

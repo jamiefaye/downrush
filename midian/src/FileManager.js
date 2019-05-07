@@ -44,7 +44,6 @@ class FileManager {
 		} else {
 			me.prefixId("status").text(status);
 		}
-		
 	});
 }
 
@@ -180,7 +179,7 @@ class FileManager {
  	this.prefixId('new').click(e=>{if (me.newCallback) me.newCallback(e)});
 
  	this.prefixId('save').click(e=>{me.saveAs(e)});
- 		
+
  	this.prefixId('open').click(e=>{me.openFileDialog(e)});
 
 	this.prefixId('upbut').click(e=>{
