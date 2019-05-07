@@ -51,8 +51,6 @@ class FlashAirFS extends FileStore {
 
 	// Issue CGI command.
 	$.get(url).done(function(data, textStatus, jqXHR){
-	   // Save the current path.
-		me.currentPath = nextPath;
 		// Split lines by new line characters.
 		me.filelist = data.split(/\n/g);
 		// Ignore the first line (title) and last line (blank).
@@ -276,7 +274,6 @@ function FADTtoJSDate(ftime, fdate) {
 	return date;
 }
 
-
 function isDirectoryEntry(name, dirList)
 {
 	let itemName = name.split('/').pop();
@@ -289,21 +286,119 @@ function isDirectoryEntry(name, dirList)
 	return false;
 }
 
-
-class DropInFS extends FileStore {
-	constructor() {
-		super();
-		this.currentDir = "";
-		this.currentDirPath = "";
-		this.dropMap = {};
-	}
-	
-	addFiles(fileList) {
-		console.log(fileList);
+function zapSlash(fname) {
+		if (fname.startsWith("/")) {
+		return fname.substr(1);
+	} else {
+		return fname.substr(0);
 	}
 }
 
+class DropInFS extends FileStore {
+  constructor() {
+		super();
+		this.currentDir = "";
+		this.currentDirPath = "";
+		this.dirMap = {};
+		this.fileMap = {};
+	}
 
+  addFiles(fileList) {
+		for (let x in fileList) {
+			let f = fileList[x];
+			let fn = f.name;
+			let fparts = fn.split('/');
+			let ndirs = fparts.length - 1;
+			let lastDir = this.dirMap;
+			let fName = fparts[ndirs];
+			// work our way down, creating directories as needed.
+			for (let d = 0; d < ndirs; ++d) {
+				let aPart = fparts[d];
+				let dirObj = lastDir[aPart];
+				if (!dirObj) {
+					dirObj = {};
+					lastDir[aPart] = dirObj;
+				}
+				lastDir = dirObj;
+			}
+			lastDir[fName] = f;
+			this.fileMap[fn] = f;
+		}
+	}
+
+// return a compatible file list corresponding to the given place in the dir hierarchy.
+  fileListForPath(pathIn) {
+	let dirPlace = this.dirMap;
+	let path = zapSlash(pathIn);
+	if (path !== "") {
+	let parts = path.split('/');
+		while (parts.length > 0) {
+			let part = parts.shift();
+			let nextPlace = dirPlace[part];
+			if (nextPlace === undefined) {
+				let newLvl = {};
+				dirPlace[part] = newLvl;
+				nextPlace = newLvl;
+			}
+			dirPlace = nextPlace;
+		}
+	}
+
+	let fList = [];
+	for (let p in dirPlace) {
+		if (dirPlace.hasOwnProperty(p)) {
+			let dm = dirPlace[p];
+			let de = {fname: p, r_uri: path};
+			if (dm instanceof File) {
+				de["fsize"] = dm.size;
+				de["attr"] = 0;
+				de["date"] = dm.lastModifiedDate;
+				de["isDirectory"] = false;
+				let fp = p.split('.');
+				if (fp.length > 1) {
+					let ext = fp[fp.length-1].toLowerCase();
+					de["ext"] = ext;
+				}
+			} else if (dm instanceof Object) {
+				// Its a dir
+				de["fsize"] = 0;
+				de["attr"] = 0x10;
+				de["isDirectory"] = true;
+			}
+			fList.push(de);
+		}
+	}
+	return fList;
+  }
+
+  dir(nextPath, done) {
+	let fl = this.fileListForPath(nextPath);
+	done(fl, "OK");
+  }
+
+  read(fnameIn, dataType, done) {
+  	let me = this;
+//	var files = evt.target.files;
+	let fnameZ = zapSlash(fnameIn);
+	var f = me.fileMap[fnameZ];
+	if (f === undefined) return;
+	let fname = f;
+	let reader = new FileReader();
+	if (me.dataType === 'text') {
+		reader.onloadend = (function(theFile) {
+			return function(e) {
+				let t = e.target.result;
+				done(t, "OK");
+			};
+		})(f);
+	} else {
+		reader.onloadend = (function(theFileBlob) {
+			done(theFileBlob, "OK");
+		})(f);
+	}
+	reader.readAsBinaryString(f);
+  }
+}
 var flashAirSingleton;
 
 function getFlashAirFS() {
@@ -322,4 +417,13 @@ function getDropInFS() {
 	return dropInSingleton;
 }
 
-export {FlashAirFS, getFlashAirFS, getDropInFS};
+function getActiveFS() {	
+	if (dropInSingleton) {
+		return dropInSingleton;
+	}
+
+	return getFlashAirFS();
+}
+
+
+export {FlashAirFS, getFlashAirFS, getDropInFS, getActiveFS};

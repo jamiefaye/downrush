@@ -599,7 +599,7 @@ function record()
   setEditData(data)
 {
 	if(!this.wave) {
-		this.wave = new Wave(this.idFor('waveform'));
+		this.wave = new Wave(this.idFor('waveform'), {splitChannels: true});
 	}
 	this.wave.openOnBuffer(data);
 	this.startGuiCheck();
@@ -734,7 +734,7 @@ function record()
 	this.fname = f;
 	var reader = new FileReader();
 	if(!me.wave) {
-		me.wave = new Wave(me.idFor('waveform'));
+		me.wave = new Wave(me.idFor('waveform'), {splitChannels: true});
 	}
 	if (local_exec) {
 		$('#instructions').empty();

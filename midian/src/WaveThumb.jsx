@@ -2,6 +2,7 @@ import $ from 'jquery';
 import React from 'react';
 import {Wave} from "../../xmlView/src/Wave.js";
 import {WedgeIndicator, IconPushButton, PushButton} from './GUIstuff.jsx';
+import {getActiveFS} from "./FileStore.js";
 
 /*
 class ZoomControls extends React.Component {
@@ -101,7 +102,7 @@ class WaveThumb extends React.Component {
 	} else if (name === 'openwave') {
 		// Link to the Waverly editor
 //		console.log("openWaverly " + this.props.filename);
-		window.open("/DR/waverly/viewWAV.htm?" + this.props.filename);
+//		window.open("/DR/waverly/viewWAV.htm?" + this.props.filename);
 	}
   }
 
@@ -180,33 +181,17 @@ class WaveThumb extends React.Component {
   }
 
 // use ajax to load wav data
-  loadFile(filename, done)
-{	// console.log("loadFile");
+  loadFile(filename, done) {
+	// console.log("loadFile");
 	this.loadInProgress = true;
 	this.filename = this.props.filename;
-
 	let me = this;
-	$.ajax({
-	url         : filename,
-	cache       : false,
-	processData : false,
-	method:		'GET',
-	type        : 'GET',
-	success     : function(data, textStatus, jqXHR){
-		me.setEditData(data);
-		if(done) done(data);
-	},
-
-	error: function (data, textStatus, jqXHR) {
-		console.log("Error: " + textStatus);
-	},
-
-	xhr: function() {
-		var xhr = new window.XMLHttpRequest();
-		xhr.responseType= 'blob';
-		return xhr;
-	},
-
+	let fs = getActiveFS();
+	fs.read(this.filename, "blob", function (data, status) {
+		if (status === 'OK') {
+			me.setEditData(data);
+			if(done) done(data);
+		}
 	});
   }
 

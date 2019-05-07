@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import Uppie from './js/uppie.js';
-import {getFlashAirFS} from './FileStore.js';
+import {getActiveFS} from './FileStore.js';
 
 
 function zeroPad(num, places) {
@@ -57,7 +57,7 @@ class FileWidget {
 			this.params = {};
 		}
 		
-		this.fs = getFlashAirFS();
+		this.fs = getActiveFS();
 }
 
   toggleChecks (e) {
@@ -390,6 +390,7 @@ case 2:
 	}
 	let that = this;
 	that.fs.dir(nextPath, function (dirList, status) {
+		that.currentPath = nextPath;
 		that.filelist = dirList;
 		that.filelist.sort(that.sortFunction);
 		that.showFileList(that.currentPath, recheckSet);
@@ -397,11 +398,6 @@ case 2:
 }
 //Document Ready
   start(where) {
-	// Configure HTTP access
-	$.ajaxSetup({
-		timeout: 300000	// Increased timeout value so as to not interfere with uploads.
-	});
-
 	// Iniialize global variables.
 	this.currentPath = where;
 	this.last_dirpath = this.currentPath

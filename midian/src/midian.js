@@ -221,5 +221,6 @@ if (duppy) {
 
 		let dropin = getDropInFS();
 		dropin.addFiles(flist);
+
 	});
 }

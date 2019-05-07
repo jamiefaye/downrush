@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import {openFileBrowser, saveFileBrowser, fileBrowserActive} from './FileBrowser.js';
 import FileSaver from 'file-saver';
-import {getFlashAirFS} from "./FileStore.js";
+import {getActiveFS, getDropInFS} from "./FileStore.js";
 
 var local_exec = document.URL.indexOf('file:') == 0 || buildType !='flashair';
 
@@ -25,7 +25,7 @@ class FileManager {
 	this.content_type = props.content_type ? props.content_type : 'text/plain';
 	this.setupGUI();
 
-	this.fs = getFlashAirFS();
+	this.fs = getActiveFS();
   }
 
   prefixId(item) {
@@ -37,7 +37,7 @@ class FileManager {
 	this.fname = fname;
 	let me = this;
 	this.prefixId("status").text("Loading: " +  this.fname);
-
+	this.fs = getActiveFS();
 	this.fs.read(fname, me.dataType, function (data, status) {
 		if (status === 'OK') {
 			me.loadCallback(data, fname, me, me.homeDoc);

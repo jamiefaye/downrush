@@ -136,7 +136,7 @@ class WaveView extends React.Component {
   openWaveSurfer(data) {
 	// console.log("b4 openWaveSurfer " + this.props.filename);
 	if(!this.wave) {
-		this.wave = new Wave(this.el);
+		this.wave = new Wave(this.el, {splitChannels: true});
 		// console.log("new Wave");
 	}
 	this.hasNewData = false;
