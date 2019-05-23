@@ -1,8 +1,9 @@
 import React from 'react';
-
+import {SampleRange} from './SampleRange.jsx';
 import {binaryIndexOf, convertHexTo50, fixh, fixm50to50, fixpan, fixphase, fixpos50,
 	fixrev, fmtMidiCC, fmtmoddest, fmtonoff, fmtprior, fmtscattack, fmtscrelease,
 	fmtsync, fmttime, fmttransp, sample_path, tonotename} from './FmtSound.js';
+import {forceArray} from "./JsonXMLUtils.js";
 
 class ShrinkIfNeeded extends React.Component {
 
@@ -16,15 +17,45 @@ class ShrinkIfNeeded extends React.Component {
   }
 }
 
-
 class SoundGrid extends React.Component {
+
+  overlayRouting(sound) {
+  	// Populate mod sources fields with specified destinations
+	if (sound.patchCables) {
+		let destMap = {};
+		let patchA = forceArray(sound.patchCables.patchCable);
+		for (var i = 0; i < patchA.length; ++i) {
+			let cable = patchA[i];
+			let sName = "m_" + cable.source;
+			let aDest = cable.destination;
+			// Vibrato is represented by a patchCable between lfo1 and pitch
+			if (cable.source === 'lfo1' && aDest === 'pitch') {
+				let vibratoVal = fixm50to50(cable.amount);
+				sound['vibrato'] = vibratoVal;
+			}
+			let amount = fixm50to50(cable.amount);
+			let info = aDest + "(" + amount + ")";
+			let val = destMap[sName];
+			if (val) val += ' ';
+				else val = "";
+			val += info;
+			destMap[sName]  = val;
+		}
+		
+		let sndOut = Object.assign({}, sound, destMap);
+		return sndOut;
+		//jQuery.extend(true, sound, destMap);
+	}
+	return sound;
+  }
+
 
   render() {
 
-	let s = this.props.sound;
+	let s = this.overlayRouting(this.props.sound);
 	return (
 <table className='sound_grid xmltab'>
-{/* Header */}
+<SampleRange sound={s} />
 <tr>
 <th className ='toph sample1'>Sample 1</th>
 <th className ='toph sample2'>Sample 2</th>
