@@ -15,19 +15,25 @@ import fmtsync from "./templates/fmtsync.js";
 
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 
-import note_tip_template from "./templates/note_tip_template.handlebars";
+//import note_tip_template from "./templates/note_tip_template.handlebars";
 
 import {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString} from "./SongUtils.js";
 
-import track_head_template from "./templates/track_head_template.handlebars";
 import sample_list_template from "./templates/sample_list_template.handlebars";
 import paster_template from "./templates/paster_template.handlebars";
-import midiKnobTemplate from "./templates/midiKnobTemplate.handlebars";
-import modKnobTemplate from "./templates/modKnobTemplate.handlebars";
-import midiModKnobTemplate from "./templates/midiModKnobTemplate.handlebars";
+//import midiKnobTemplate from "./templates/midiKnobTemplate.handlebars";
+//import modKnobTemplate from "./templates/modKnobTemplate.handlebars";
+//import midiModKnobTemplate from "./templates/midiModKnobTemplate.handlebars";
 import sample_range_prefix from "./templates/sample_range_prefix.handlebars";
 import sound_template from "./templates/sound_template.handlebars";
 import song_template from "./templates/song_template.handlebars";
+
+import {SoundTab} from './SoundTab.jsx';
+/*
+
+import getcopytoclip from "./templates/track_head_template.handlebars";
+
+*/
 
 import {placeTrackObj, placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
 
@@ -39,7 +45,7 @@ var gIdCounter = 0;
 
 var focusDoc;
 
-var trackHeaderTemplate = track_head_template;
+//var trackHeaderTemplate = track_head_template;
 
 /* Plotters
 */
@@ -80,7 +86,7 @@ function enableColorPops() {
 	});
 }
 
-
+/* 
 function formatModKnobs(knobs, title, obj)
 {
 	let context = {title: title};
@@ -107,6 +113,7 @@ function formatModKnobsMidi(knobs, obj)
 	obj.append(midiModKnobTemplate(context));
 }
 
+*/
 
 /*
 	Demarcation for code to roll-up into objects followimg.
@@ -312,7 +319,7 @@ function pasteTrackText(text, songDoc) {
 */
 
 
-function formatSound(obj)
+function formatSoundOld(obj)
 {
 	let context = {};
 	for (var i = 1; i < arguments.length; ++i) {
@@ -321,15 +328,16 @@ function formatSound(obj)
 		}
 	}
 
+/*
 	if (context.midiKnobs && context.midiKnobs.midiKnob) {
 		obj.append(midiKnobTemplate(forceArray(context.midiKnobs.midiKnob)));
 		// formatModKnobs(context.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
 	}
 
 	if (context.modKnobs && context.modKnobs.modKnob) {
-		formatModKnobs(context.modKnobs.modKnob, "Parameter Knob Mapping", obj);
+		note_tip_template(context.modKnobs.modKnob, "Parameter Knob Mapping", obj);
 	}
-
+*/
 	// Populate mod sources fields with specified destinations
 	if (context.patchCables) {
 		let destMap = {};
@@ -365,6 +373,20 @@ function formatSound(obj)
 	obj.append(sound_template(context));
 }
 
+function formatSound(obj) {
+	let context = {};
+	for (var i = 1; i < arguments.length; ++i) {
+		if(arguments[i]) {
+			jQuery.extend(true, context, arguments[i]);
+		}
+	}
+
+	// let sndt = new SoundTab({sound: context});
+	let sndt = React.createElement(SoundTab, {sound: context});
+	ReactDOM.render(sndt, obj[0]);
+}
+
+/*
 function formatMidi(obj)
 {
 	let context = {};
@@ -377,6 +399,7 @@ function formatMidi(obj)
 		formatModKnobsMidi(context.modKnobs.modKnob, obj);
 	}
 }
+*/
 
 /*
 function viewSound(e, songJ) {
@@ -993,4 +1016,4 @@ function makeDelugeDoc(fname, text, options)
 	return new DelugeDoc(fname, text, options);
 }
 
-export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson, getTrackText, formatMidi};
+export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson, getTrackText};

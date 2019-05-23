@@ -6,13 +6,16 @@ import convertHexTo50 from "./templates/convertHexTo50.js";
 import tippy from "./js/tippy.all.min.js";
 import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
-import note_tip_template from "./templates/note_tip_template.handlebars";
+//import note_tip_template from "./templates/note_tip_template.handlebars";
 import {trackKind, yToNoteName, patchInfo, makeScaleTab, noteToYOffsetInScale} from "./SongUtils.js";
 import {colorForGroup} from "./Arranger.jsx";
 import {KitListView} from './KitList.jsx';
 import {WedgeIndicator, CopyToClipButton} from "./GUIstuff.jsx";
 import {SoundTab} from './SoundTab.jsx';
-import {FormatMidi} from './FormatTabs.jsx';
+
+//import {FormatMidi} from './FormatTabs.jsx';
+import {MidiModKnob} from './MidiModKnob.jsx';
+
 import {getTrackText} from "./SongViewLib.js";
 
 
@@ -499,6 +502,8 @@ function activateTippy()
 				beatX += '+' + simplifyFraction(subFrac, 192);
 			}
 			// {{notename}} {{notevel}} {{notedur}} {{notestart}} {{noteprob}}
+			let noteInfo = notename + " " + vel + " " + durFrac + " " + beatX + " " + condtext;
+			/* 
 			let noteInfo = note_tip_template({
 				notename: notename,
 				notevel: vel,
@@ -506,6 +511,7 @@ function activateTippy()
 				notestart: beatX,
 				noteprob: condtext,
 			});
+			*/
 			content.innerHTML = noteInfo;
 			},
 		onHidden() {
@@ -945,7 +951,7 @@ class SoundDetails extends React.Component {
 			}
  			return <KitListView kitList={kitroot} />;
  		} else if (trackType === 'midi') {
- 			return <FormatMidi midi={track} />;
+ 			return <MidiModKnob sound={track} />;
  		}
  	}
 }
