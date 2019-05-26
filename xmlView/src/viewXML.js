@@ -19,8 +19,6 @@ import ReactDOM from "react-dom";
 import FileSaver from 'file-saver';
 
 import {stepNextFile} from "./StepNextFile.js";
-//import empty_kit_template from "./templates/empty_kit_template.handlebars";
-
 import {setFocusDoc, makeDelugeDoc} from "./SongViewLib.js";
 import {setSamplePathPrefix} from "./samplePath.js";
 import {empty_kit_temp} from './templates.js';

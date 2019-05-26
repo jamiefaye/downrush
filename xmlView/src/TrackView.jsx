@@ -2,20 +2,17 @@ import $ from'jquery';
 
 import React from 'react';
 import ReactDOM from "react-dom";
-import convertHexTo50 from "./templates/convertHexTo50.js";
+import {convertHexTo50} from './FmtSound.js';;
+
 import tippy from "./js/tippy.all.min.js";
 import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
-//import note_tip_template from "./templates/note_tip_template.handlebars";
 import {trackKind, yToNoteName, patchInfo, makeScaleTab, noteToYOffsetInScale} from "./SongUtils.js";
 import {colorForGroup} from "./Arranger.jsx";
 import {KitListView} from './KitList.jsx';
 import {WedgeIndicator, CopyToClipButton} from "./GUIstuff.jsx";
 import {SoundTab} from './SoundTab.jsx';
-
-//import {FormatMidi} from './FormatTabs.jsx';
 import {MidiModKnob} from './MidiModKnob.jsx';
-
 import {getTrackText} from "./SongViewLib.js";
 
 

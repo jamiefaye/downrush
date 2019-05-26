@@ -9,31 +9,12 @@ import {formatKit} from "./KitList.jsx";
 import {getXmlDOMFromString, jsonToXMLString, xmlToJson, jsonToTable} from "./JsonXMLUtils.js";
 import {showArranger, colorForGroup, bumpTracks} from "./Arranger.jsx";
 import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
-
-import fixm50to50 from "./templates/fixm50to50.js";
-import fmtsync from "./templates/fmtsync.js";
-
+import {fixm50to50, fmtsync} from './FmtSound.js';;
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
-
-//import note_tip_template from "./templates/note_tip_template.handlebars";
-
 import {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString} from "./SongUtils.js";
-
-import sample_list_template from "./templates/sample_list_template.handlebars";
-import paster_template from "./templates/paster_template.handlebars";
-//import midiKnobTemplate from "./templates/midiKnobTemplate.handlebars";
-//import modKnobTemplate from "./templates/modKnobTemplate.handlebars";
-//import midiModKnobTemplate from "./templates/midiModKnobTemplate.handlebars";
-// import sample_range_prefix from "./templates/sample_range_prefix.handlebars";
-//import sound_template from "./templates/sound_template.handlebars";
-import song_template from "./templates/song_template.handlebars";
-
+import {song_template} from "./templates.js";
 import {SoundTab} from './SoundTab.jsx';
-/*
-
-import getcopytoclip from "./templates/track_head_template.handlebars";
-
-*/
+import {SampleList} from './SampleList.jsx';
 
 import {placeTrackObj, placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
 
@@ -523,19 +504,10 @@ function pasteTrack(e, jDoc) {
 }
 
 function trackPasteField(obj, jDoc) {
-	let iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
-	let paster = paster_template({iOSDevice: iOSDevice});
-	obj.append($(paster));
-
-	if(iOSDevice) {
-		$('.iosSubmit', jDoc.docTopElement).on('click', (e)=>{
-			pasteTrackios(e, focusDoc);
-		});
-	} else {
-		$('.paster', jDoc.docTopElement).on('paste', (e)=>{
-			pasteTrack(e, focusDoc);
-		});
-	}
+	obj.append($("<hr><div><b>Paste track data in field below to add it to song.</b><br><textarea class='paster tinybox' rows='2'></textarea></div>"));
+	$('.paster', jDoc.docTopElement).on('paste', (e)=>{
+		pasteTrack(e, focusDoc);
+	});
 }
 
 /*
@@ -560,48 +532,18 @@ function convertTempo(jsong)
 	return tempo;
 }
 
-function scanSamples(json, sampMap) {
-	for (let k in json) {
-		if(json.hasOwnProperty(k)) {
-			let v = json[k];
-			if (k === 'fileName' && typeof v === "string") {
-				sampMap.add(v);
-			} else
-			if (isArrayLike(v)) {
-				for(var ix = 0; ix < v.length; ++ix) {
-					let aobj = v[ix];
-					if (isArrayLike(aobj) || aobj instanceof Object) {
-						scanSamples(v[ix], sampMap);
-					}
-				}
-			} else if(v instanceof Object) {
-				scanSamples(v, sampMap);
-			}
-		}
-	}
-}
-
-function sampleReport(json, showAll, obj) {
-	var sampSet = new Set();
-	scanSamples(json, sampSet);
-	var sampList = Array.from(sampSet);
-	if (!showAll) {
-		sampList = sampList.filter(function (n) {
-			return !n.startsWith('SAMPLES/DRUMS/');
-		});
-	}
-	sampList.sort();
-	obj.append(sample_list_template({sampList: sampList, showDrums: showAll}));
-}
-
-function genSampleReport(jsong,jdoc)
+function genSampleReport(jsong, jdoc)
 {
+	let sndt = React.createElement(SampleList, {samplePath: '/', song: jsong});
+	ReactDOM.render(sndt, $('.samprepplace', jdoc)[0]);
+/*
 	let isChecked = $(".showdrums", jdoc).is(':checked');
 	$('.samprepplace table', jdoc).remove();
 	sampleReport(jsong, isChecked, $('.samprepplace', jdoc));
 	$('.showdrums').on('click', function () {
 		genSampleReport(jsong, jdoc);
 	});
+*/
 }
 
 
@@ -618,7 +560,8 @@ class DelugeDoc {
   	this.idNumber = gIdCounter++;
 	this.idString = "" + this.idNumber;
 	this.fname = fname;
-	let songhead = song_template({idsuffix: this.idString});
+	let temp1 = song_template.split('{{idsuffix}}');
+	let songhead = temp1.join(this.idString);
 	this.options = options;
 	// docspot
 	$('#docspot').empty();

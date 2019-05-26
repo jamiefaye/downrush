@@ -213,4 +213,10 @@ var empty_sound_temp = `		<sound>
 			</modKnobs>
 		</sound>`;
 
-export {empty_sound_temp, empty_kit_temp};
+var song_template =`<div class='filedoc' id='docId{{idsuffix}}'>
+	<div id='fileTitle{{idsuffix}}'></div>
+	<p class='tinygap'/>
+	<div id='jtab{{idsuffix}}'> </div>
+</div>`;
+
+export {empty_sound_temp, empty_kit_temp, song_template};
