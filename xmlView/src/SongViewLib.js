@@ -24,8 +24,8 @@ import paster_template from "./templates/paster_template.handlebars";
 //import midiKnobTemplate from "./templates/midiKnobTemplate.handlebars";
 //import modKnobTemplate from "./templates/modKnobTemplate.handlebars";
 //import midiModKnobTemplate from "./templates/midiModKnobTemplate.handlebars";
-import sample_range_prefix from "./templates/sample_range_prefix.handlebars";
-import sound_template from "./templates/sound_template.handlebars";
+// import sample_range_prefix from "./templates/sample_range_prefix.handlebars";
+//import sound_template from "./templates/sound_template.handlebars";
 import song_template from "./templates/song_template.handlebars";
 
 import {SoundTab} from './SoundTab.jsx';
@@ -319,60 +319,6 @@ function pasteTrackText(text, songDoc) {
 */
 
 
-function formatSoundOld(obj)
-{
-	let context = {};
-	for (var i = 1; i < arguments.length; ++i) {
-		if(arguments[i]) {
-			jQuery.extend(true, context, arguments[i]);
-		}
-	}
-
-/*
-	if (context.midiKnobs && context.midiKnobs.midiKnob) {
-		obj.append(midiKnobTemplate(forceArray(context.midiKnobs.midiKnob)));
-		// formatModKnobs(context.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
-	}
-
-	if (context.modKnobs && context.modKnobs.modKnob) {
-		note_tip_template(context.modKnobs.modKnob, "Parameter Knob Mapping", obj);
-	}
-*/
-	// Populate mod sources fields with specified destinations
-	if (context.patchCables) {
-		let destMap = {};
-		let patchA = forceArray(context.patchCables.patchCable);
-		for (var i = 0; i < patchA.length; ++i) {
-			let cable = patchA[i];
-			let sName = "m_" + cable.source;
-			let aDest = cable.destination;
-			// Vibrato is represented by a patchCable between lfo1 and pitch
-			if (cable.source === 'lfo1' && aDest === 'pitch') {
-				let vibratoVal = fixm50to50(cable.amount);
-				context['vibrato'] = vibratoVal;
-			}
-			let amount = fixm50to50(cable.amount);
-			let info = aDest + "(" + amount + ")";
-			let val = destMap[sName];
-			if (val) val += ' ';
-				else val = "";
-			val += info;
-			destMap[sName]  = val;
-		}
-		
-		jQuery.extend(true, context, destMap);
-	}
-	if ( (context.osc1 && context.osc1.fileName) || (context.osc2 && context.osc2.fileName || (context.osc1 && context.osc1.sampleRanges)) ) {
-		let subContext = jQuery.extend(true, {}, context);
-		// If Osc2 does not have a sample defined for it, strike osc2 from the context
-		if (!context.osc2 || !context.osc2.sampleRanges && (!context.osc2.fileName || $.isEmptyObject(context.osc2.fileName))) {
-			delete subContext.osc2;
-		}
-		context.stprefix = sample_range_prefix(subContext);
-	}
-	obj.append(sound_template(context));
-}
-
 function formatSound(obj) {
 	let context = {};
 	for (var i = 1; i < arguments.length; ++i) {
@@ -658,70 +604,6 @@ function genSampleReport(jsong,jdoc)
 	});
 }
 
-/*
-function formatSong(jdoc, obj) {
-	let jsong = jdoc.jsonDocument.song;
-	let newNoteFormat = jdoc.newNoteFormat;
-	let ctab = genColorTab(jsong.preview);
-	obj.append(ctab);
-	if (COLOR_POPUP) {
-		enableColorPops();
-	}
-	obj.append($("<p class='tinygap'>"));
-	obj.append("Tempo = " + convertTempo(jsong) + " bpm");
-	let swing = Number(jsong.swingAmount);
-	if(swing !== 0) {
-		swing += 50;
-		let sync = Number(jsong.swingInterval);
-		obj.append(", Swing = " + swing + "% on " + fmtsync[sync]);
-	}
-	
-	obj.append(", Key = " + scaleString(jsong));
-	obj.append($("<p class='tinygap'>"));
-	
-	showArranger(jsong, jdoc.newSynthNames, obj);
-
-	obj.append($("<p class='tinygap'>"));
-
-	let sectionTab = forceArray(jsong.sections.section);
-
-	if(jsong.tracks) {
-	  let trax = forceArray(jsong.tracks.track);
-	  if (trax) {
-		for(var i = 0; i < trax.length; ++i) {
-			// obj.append($("<h3/>").text("Track " + (i + 1)));
-			let track = trax[trax.length - i - 1];
-			let tKind = trackKind(track);
-			let refTrack = track;
-			if (track.instrument && track.instrument.referToTrackId !== undefined) {
-				let fromID = Number(track.instrument.referToTrackId);
-				refTrack = trax[fromID];
-			}
-			trackHeader(track, jdoc.newSynthNames, i, sectionTab, trackHeaderTemplate, obj);
-			placeTrackObj(obj, track, jsong);
-		}
-		activateTippy();
-	  }
-	}
-	trackPasteField(obj, jdoc);
-	songTail(jsong, obj);
-	obj.append($("<div class='samprepplace'></div>"));
-	genSampleReport(jsong, obj);
-
-	// Populate copy to clip buttons.
-	//let clippers = $('.clipbtn', jdoc.docTopElement);
-	let clippers = jdoc.docTopElement[0].getElementsByClassName('clipbtn');
-	new Clipboard(clippers, {
-	   text: function(trigger) {
-		let asText = getTrackTextNum(trigger.getAttribute('trackno'), jsong);
-		return asText;
-	}
-	});
-	$(".soundviewbtn").on('click', function(e) {
-		viewSound(e, jsong);
-	});
-}
-*/
 
 
 /*******************************************************************************

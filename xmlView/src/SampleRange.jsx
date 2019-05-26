@@ -25,6 +25,20 @@ function SampleRangeEntry(props) {
   </tbody>);
 }
 
+function SampleFileEntry(props) {
+  let osc = props.osc;
+  let oscFN = osc.fileName;
+  if (oscFN === undefined) return null;
+  if (typeof oscFN === 'string' || oscFN instanceof String) {
+	return (
+		<tr>
+		<td className='sampfile sample1' style={{textAlign: 'left'}} colspan='10'>{oscFN}</td>
+		<td className='sampfile sample1' colspan='6'><audio controls preload='none'><source src={props.spath + oscFN} type='audio/wav'/></audio></td>
+	</tr>);
+  }
+  return null;
+}
+
 
 function SampleRange(props) {
 
@@ -46,17 +60,12 @@ function SampleRange(props) {
   	{o1sr.map((sr)=>{
 		return <SampleRangeEntry range={sr} spath={spath}/>;
 	})}
+	{o1sr.length === 0 ? <SampleFileEntry spath={spath} osc={osc1}/> : null}
 
-<tr>
-<td className='sampfile sample1' style={{textAlign: 'left'}} colspan='10'>{osc1.fileName}</td>
-<td className='sampfile sample1' colspan='6'><audio controls preload='none'><source src={spath + osc1.fileName} type='audio/wav'/></audio></td>
-</tr>
-{/*
-(<tr>
-<td className='sampfile sample2' style={{textAlign: 'left'}} colspan='10'>{osc2.fileName}</td>
-<td className='sampfile sample2'colspan='6'><audio controls preload='none'><source src={spath + osc2.fileName} type='audio/wav'/></audio></td>
-</tr>
-*/}
+  	{o2sr.map((sr)=>{
+		return <SampleRangeEntry range={sr} spath={spath}/>;
+	})}
+	{o2sr.length === 0 ? <SampleFileEntry spath={spath} osc={osc2}/> : null}
 </React.Fragment>);
 }
 
