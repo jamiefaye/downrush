@@ -1,8 +1,8 @@
 import $ from 'jquery';
 import {FileWidget} from './FileWidget.js';
-import open_frame from "./fileWidgetTemplates/open_frame.handlebars";
-import save_frame from "./fileWidgetTemplates/save_frame.handlebars";
-import dir_template from "./fileWidgetTemplates/dir_template.handlebars";
+// import open_frame from "./fileWidgetTemplates/open_frame.handlebars";
+// import save_frame from "./fileWidgetTemplates/save_frame.handlebars";
+//import dir_template from "./fileWidgetTemplates/dir_template.handlebars";
 
 require('file-loader?name=[name].[ext]!../css/filewidget.css');
 
@@ -13,6 +13,48 @@ var fileopencb;
 
 $('#hiddenfileopener').click((e)=>{fileopencb()});
 */
+
+var open_frame = `<div id="filewidget" class="modal">
+  <div class="filewidget">
+	<div class="fw-header">
+	  <span class="fw-close">&times;</span>
+	  <h4>Select File to Open</h4>
+	</div>
+	<div class="fw-body">
+			<div id="header">
+			</div>
+			<div class="wrapper">
+			</div>
+	</div>
+	<div class="fw-footer">
+	<table class='fw-btn-frame'><tr>
+		<td width='100%'><label class='inlab'>Open:&nbsp;</label><span class='inspan'><div id='file_selected'></div></span></td>
+		<td><input class='fw-but' id='openfilebut' type="button" value="Open"></td>
+		<td><input class='fw-but' id='cancelbut' type="button" value="Cancel"></td>
+	</tr></table>
+  </div>
+</div>`;
+
+var save_frame = `<div id="filewidget" class="modal">
+  <div class="filewidget">
+	<div class="fw-header">
+	  <span class="fw-close">&times;</span>
+	  <h4>Save File</h4>
+	</div>
+	<div class="fw-body">
+			<div id="header">
+			</div>
+			<div class="wrapper">
+			</div>
+	</div>
+	<div class="fw-footer">
+	<table class='fw-btn-frame'><tr>
+		<td width='100%'><label class='inlab'>Save as:&nbsp;</label><span class='inspan'><input id="fw-name" class='fw-name'/></span></td>
+		<td><input class='fw-but' id='savefilebut' type="button" value="Save"></td>
+		<td><input class='fw-but' id='cancelbut' type="button" value="Cancel"></td>
+	</tr></table>
+  </div>
+</div>`;
 
 function setDisable(item, state)
 {
@@ -26,7 +68,7 @@ class FileBrowser {
   	let template = params.template;
   	let initialDir = params.initialPath;
 
-	let html = template();
+	let html = template;
 	$('#popupspot').append(html);
 	let widg = $('#filewidget');
 	widg.css('display', 'block');
@@ -36,8 +78,7 @@ class FileBrowser {
 	// console.log(window.innerHeight + " " + h);
 	$('.wrapper').css('height', h + 'px');
 
-	this.browser = new FileWidget({template: dir_template,
-		initialDir: initialDir,
+	this.browser = new FileWidget({initialDir: initialDir,
 		fileSelected: (...args) => {me.fileSelect(...args)},
 		dirCallback: (...args) => {me.dirSelect(...args)},
 	});

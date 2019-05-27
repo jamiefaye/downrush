@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import Uppie from './js/uppie.js';
+import {formatDT} from './formatDT.js';
 
 function convertFileList(fl) {
 	for (var i = 0; i < fl.length; i++) {
@@ -39,6 +40,17 @@ function isDirectoryEntry(name, xlsd)
 		}
 	}
 	return false;
+}
+
+function makeDateTime(f) {
+	let seconds = (f.ftime & 31) * 2;
+	let minutes = (f.ftime >> 5) & 63;
+	let hours   = (f.ftime >> 11) & 31;
+	let day   = f.fdate & 31;
+	let month = (f.fdate >> 5) & 15;
+	let year  = ((f.fdate >> 9) & 127) + 1980;
+	if (year < 2000) return "";
+	return "" + month + '/' + day + '&nbsp;' + zeroPad(hours,2) + ':' + zeroPad(minutes,2);
 }
 
 var editWhiteList = ['xml', 'js', 'htm', 'html', 'css', 'lua', 'wav'];
@@ -108,11 +120,11 @@ case 2:
 }
 
   showFileList(path, recheckSet) {
-	if(!this.params.template) {
-		this.classicShowFileList(path, recheckSet);
-	} else {
-		this.showListUsingTemplate(path, recheckSet);
-	}
+//	if(!this.params.template) {
+//		this.classicShowFileList(path, recheckSet);
+//	} else {
+		this.showListNew(path, recheckSet);
+//	}
   }
 
 
@@ -145,6 +157,53 @@ case 2:
 	}
   }
 
+  showListNew(path, recheckSet) {
+	let place = this.params.place;
+	let guiCallback = this.params.guiCallback;
+	let dirCallback = this.params.dirCallback;
+	if (!place) place = '.wrapper';
+	$(place).empty();
+	//$(place).append(html);
+	let obj = $(place)[0];
+
+	let context = {
+		place:		place,
+		filelist:	this.filelist,
+		path:		path,
+		recheckSet: recheckSet,
+		atRootLevel: path === '/',
+	}
+
+$(obj).append("<table class='filetab' id='filetable'>");
+$(obj).append("<tr><th class='nameh table_bts'>Name</th><th class='sizeh table_bts'>Size</th><th class='dateh table_bts'>Date</th></tr>");
+
+if(path!== '/') {$(obj).append(`
+	<tr>
+	<td class='table_name direntry' colspan='3'><span>..</span><a href="javascript:void(0)"/></td>
+	</tr>`);
+}
+
+	for (let fx in this.filelist) {
+		let f = this.filelist[fx];
+		if (f.isDirectory) {
+			$(obj).append("<tr><td class='table_name direntry'><b>" + f.fname + "</b><a href='javascript:void(0)'/></td><td colspan='2'></td></tr>");
+		} else {
+			$(obj).append("<tr></tr>").append("<td class='table_name fileentry'>" + f.fname + "<a href='javascript:void(0)'/></td>");
+			$(obj).append("<td class='table_dts'>" + f.fsize + "</td>");
+			$(obj).append("<td class='table_dts'>" + formatDT(f) + "</td>");
+		}
+	}
+	$(obj).append("</table>");
+
+	if (guiCallback) {
+		guiCallback(this, context);
+	} else {
+		this.bindDefaultGUI();
+	}
+	if(dirCallback) {
+		dirCallback(this, path, context);
+	}
+}
   bindDefaultGUI() {
 	this.bindListSorting();
 	this.bindDirMotion();

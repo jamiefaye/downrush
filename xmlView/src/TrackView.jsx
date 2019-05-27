@@ -241,7 +241,18 @@ function findSoundData(track, song) {
 	} else {
 		soundData = findSoundInstrument(track, song.instruments);
 		if(!soundData) {
-			console.log("Missing sound data");
+			// Follow any indirect reference if need be.
+			if (track.instrument && track.instrument.referToTrackId !== undefined) {
+				let trackA = forceArray(song.tracks.track);
+				let fromID = Number(track.instrument.referToTrackId);
+				track = trackA[fromID];
+				if (track) {
+					soundData = track.sound;
+				}
+				if (!soundData) {
+					console.log("Missing sound data");
+				}
+			}
 		}
 	}
 	return soundData;
@@ -938,7 +949,9 @@ class SoundDetails extends React.Component {
  		let trackType = trackKind(track);
  		if (trackType === 'sound') {
  			let soundData = findSoundData(track, this.props.song);
- 			return 	<SoundTab sound={soundData} />;
+ 			if (soundData) {
+ 				return 	<SoundTab sound={soundData} />;
+ 			} else return null
  		} else if (trackType === 'kit') {
 			let kitroot = track.kit;
 			if (track['soundSources']) {
