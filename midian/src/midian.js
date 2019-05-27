@@ -18,6 +18,8 @@ require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
 require('file-loader?name=img/[name].[ext]!../img/glyphicons-halflings-72-play.png');
 require('file-loader?name=img/[name].[ext]!../img/glyphicons-halflings-74-stop.png');
 
+require('file-loader?name=[name].[ext]!../html/test.html');
+
 import empty_song_template from "./templates/empty_song.handlebars";
 import {addTrackToMidi, converter} from "./DelugeToMidi.js";
 import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson} from "../../xmlView/src/SongViewLib.js";
@@ -182,13 +184,18 @@ function onLoadXpj()
 
 	activeFileManager = xpjFileManager;
 
-	if(!local_exec && !cloud_served) {
+//	if(!local_exec && !cloud_served) {
+
+	if(!local_exec) {
 		var urlarg = location.search.substring(1);
 		if (urlarg && urlarg.toLowerCase().indexOf('.xpj') >0) {
 			let fname = decodeURI(urlarg);
 			xpjFileManager.initialLoad(fname);
 		} else {
 			xpjViewDoc.midiDoc = makeEmptyMidiFile($('#xpjview')[0]);
+			if (cloud_served) {
+				let dropin = getDropInFS();
+			}
 		}
 	} else {
 		xpjViewDoc.midiDoc = makeEmptyMidiFile($('#xpjview')[0]);
@@ -234,3 +241,9 @@ if (duppy) {
 		}
 	});
 }
+
+
+$("#xpjtestbut").on('click', e=>{
+	console.log("Clicked");
+	let newWin = window.open("test.html");
+});

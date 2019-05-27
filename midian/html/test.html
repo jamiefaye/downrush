@@ -1,0 +1,27 @@
+<html>
+<head>
+</head>
+<body>
+<button id="test" onclick='testfunc()' class="butn testerbutn" title="testrbutn">Test</button>
+<button id="close" class="butn closebutn"onclick='closefunc()' title="testbutn">Close</button>
+
+<script>
+	window.onload = function () {
+	
+};
+
+function testfunc() {
+	console.log("Testing");
+	let myFS = window.opener.dropIn;
+	let fname = "Force/808DiddleA2A_[ProjectData]/BD 808 2 MP3 F.WAV";
+	myFS.read(fname, 'blob', function (data, status) {
+		console.log("Loaded: " + data.length);
+	});
+}
+
+function closefunc() {
+	self.close(); 
+}
+
+</script>
+</body>

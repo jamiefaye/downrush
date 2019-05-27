@@ -404,6 +404,7 @@ var flashAirSingleton;
 function getFlashAirFS() {
 	if (!flashAirSingleton) {
 		flashAirSingleton = new FlashAirFS();
+		window.flashAir = flashAirSingleton;
 	}
 	return flashAirSingleton;
 }
@@ -413,6 +414,7 @@ var dropInSingleton;
 function getDropInFS() {	
 	if (!dropInSingleton) {
 		dropInSingleton = new DropInFS();
+		window.dropIn = dropInSingleton;
 	}
 	return dropInSingleton;
 }
