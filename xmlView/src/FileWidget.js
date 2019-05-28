@@ -120,42 +120,9 @@ case 2:
 }
 
   showFileList(path, recheckSet) {
-//	if(!this.params.template) {
-//		this.classicShowFileList(path, recheckSet);
-//	} else {
-		this.showListNew(path, recheckSet);
-//	}
+	this.showListNew(path, recheckSet);
   }
 
-
-  showListUsingTemplate(path, recheckSet)
-  {
-	let template = this.params.template;
-	let place = this.params.place;
-	let guiCallback = this.params.guiCallback;
-	let dirCallback = this.params.dirCallback;
-
-	if (!place) place = '.wrapper';
-	let context = {
-		place:		place,
-		filelist:	this.filelist,
-		path:		path,
-		recheckSet: recheckSet,
-		atRootLevel: path === '/',
-	}
-	let html = template(context);
-	$(place).empty();
-	$(place).append(html);
-
-	if (guiCallback) {
-		guiCallback(this, context);
-	} else {
-		this.bindDefaultGUI();
-	}
-	if(dirCallback) {
-		dirCallback(this, path, context);
-	}
-  }
 
   showListNew(path, recheckSet) {
 	let place = this.params.place;
@@ -164,8 +131,8 @@ case 2:
 	if (!place) place = '.wrapper';
 	$(place).empty();
 	//$(place).append(html);
-	let obj = $(place)[0];
-
+	//let obj = $(place)[0];
+	let obj = [];
 	let context = {
 		place:		place,
 		filelist:	this.filelist,
@@ -174,27 +141,28 @@ case 2:
 		atRootLevel: path === '/',
 	}
 
-$(obj).append("<table class='filetab' id='filetable'>");
-$(obj).append("<tr><th class='nameh table_bts'>Name</th><th class='sizeh table_bts'>Size</th><th class='dateh table_bts'>Date</th></tr>");
+obj.push("<table class='filetab' id='filetable'><tbody>");
+obj.push("<tr><th class='nameh table_bts'>Name</th><th class='sizeh table_bts'>Size</th><th class='dateh table_bts'>Date</th></tr>");
 
-if(path!== '/') {$(obj).append(`
+if(path!== '/') {obj.push(`
 	<tr>
 	<td class='table_name direntry' colspan='3'><span>..</span><a href="javascript:void(0)"/></td>
 	</tr>`);
 }
-
 	for (let fx in this.filelist) {
 		let f = this.filelist[fx];
 		if (f.isDirectory) {
-			$(obj).append("<tr><td class='table_name direntry'><b>" + f.fname + "</b><a href='javascript:void(0)'/></td><td colspan='2'></td></tr>");
+			obj.push("<tr><td class='table_name direntry'><b>" + f.fname + "</b><a href='javascript:void(0)'/></td><td colspan='2'></td></tr>");
 		} else {
-			$(obj).append("<tr></tr>").append("<td class='table_name fileentry'>" + f.fname + "<a href='javascript:void(0)'/></td>");
-			$(obj).append("<td class='table_dts'>" + f.fsize + "</td>");
-			$(obj).append("<td class='table_dts'>" + formatDT(f) + "</td>");
+			obj.push("<tr><td class='table_name fileentry'>" + f.fname + "<a href='javascript:void(0)'/></td>");
+			obj.push("<td class='table_dts'>" + f.fsize + "</td>");
+			obj.push("<td class='table_dts'>" + formatDT(f) + "</td></tr>");
 		}
 	}
-	$(obj).append("</table>");
-
+	obj.push("</tbody></table>");
+	let html = obj.join('');
+	$(place).append($($.parseHTML(html)));
+	
 	if (guiCallback) {
 		guiCallback(this, context);
 	} else {
@@ -243,98 +211,6 @@ if(path!== '/') {$(obj).append(`
 	return this.currentPath + '/' + name;
   }
 
-// Show file list
-  classicShowFileList(path, recheckSet) {
-	// Clear box.
-	//$("#list").html('');
-	$("#filetable tr").remove();
-	let that = this;
-	var row = $("<tr></tr>");
-	row.append($("<td></td>").append($("<input id='headcheck' type='checkbox'></input>").addClass('tab_check')));
-	row.append($("<td></td>").append($("<b>Name</b><a href='javascript:void(0)'></a>") ).addClass("table_bts nameh"));
-	row.append($("<td></td>").append($("<b>Time</b><a href='javascript:void(0)'></a>")).addClass("table_bts sizeh"));
-	row.append($("<td></td>").append($("<b>Size</b><a href='javascript:void(0)'></a>")).addClass("table_bts datah"));
-	row.append($("<td></td>").append($("<div>Edit</div><a href='javascript:void(0)'></a>")).addClass("table_cmd"));
-
-	$("#filetable").append(row);
-	this.bindListSorting();
-	$("#headcheck").on('click', ()=>{that.toggleChecks()});
-	// Output a link to the parent directory if it is not the root directory.
-	if( path != "/" ) {
-		var row = $("<tr></tr>");
-		row.append(
-			$("<td colspan='2'></td>").append($("<span>..</span>")).append(
-				$('<a href="javascript:void(0)"></a>').on('click', (e)=>{that.dir('..')})
-			).addClass("table_name")
-		);
-		row.append($("<td colspan='5'></td>").append($("<b> </b><a href='javascript:void(0)'></a>")).addClass("table_bts"));
-		$("#filetable").append(row);
-	}
-	$.each(that.filelist, function() {
-		var file = this;
-		// Skip hidden file.
-		//if ( file["attr"] & 0x02 ) {
-		//	return;
-		//}
-		// Make a link to directories and files.
-		var filelink = $('<a href="javascript:void(0)"></a>');
-		var filelink2 = $('<a href="javascript:void(0)"></a>');
-
-		var caption;
-		var caption2;
-		var filesize;
-		var dateTime;
-
-		if ( file["attr"] & 0x10 ) {
-			caption = "<b>"+file["fname"]+"</b>";
-			caption2 = "Edit";
-			filelink.addClass("dir").attr('href', "javascript:void(0)");
-			filelink.on('click', (e)=>{that.dir(file["fname"])});
-			filelink.addClass("dir");
-		} else {
-			var f = file["fname"].split('.');
-			var ext = f[f.length-1].toLowerCase();
-			filesize = file["fsize"];
-			dateTime = makeDateTime(file);
-			caption = file["fname"];
-
-			filelink.addClass("file").attr('href', "javascript:void(0)");
-			filelink.on('click', (e)=>{that.opensp(file["r_uri"] + '/' + file["fname"], false)});
-			if (editWhiteListSet.has(ext)) {
-				caption2 = "<font color='#FF0000'>Edit</font>";
-				filelink2.addClass("file").attr('href', "javascript:void(0)");
-				filelink2.on('click', (e)=>{that.openedit(file["r_uri"] + '/' + file["fname"])});
-			}
-		}
-		// Append a file entry or directory to the end of the list.
-		var row = $("<tr></tr>");
-		// Be careful if you rearrange the order of items, as the checkbox is assumed to be immediately to the left of the file name item.
-		let isChecked = recheckSet.has(file['fname']) ? ' checked' : '';
-		let checkText = "<input class='aBox' type='checkbox'" + isChecked + "></input>";
-		row.append($("<td></td>").append(checkText).addClass('tab_check'));
-		row.append(
-			$("<td></td>").append(caption).append(
-				filelink.append()
-			).addClass("table_name")
-		);
-		row.append(
-			$("<td></td>").append(dateTime)
-			.addClass("table_dts")
-		);
-		row.append(
-			$("<td></td>").append(filesize)
-			.addClass("table_dts")
-		);
-
-		row.append(
-			$("<td></td>").append(caption2).append(
-				filelink2.append()
-			).addClass("table_cmd")
-		);
-
-		$("#filetable").append(row);
-	});
-}
 
 // Be careful if you rearrange the order of items, as the following code assumes
 // the checkbox to be immediately to the left of the file name item.
