@@ -1,8 +1,5 @@
 import $ from 'jquery';
 import {FileWidget} from './FileWidget.js';
-// import open_frame from "./fileWidgetTemplates/open_frame.handlebars";
-// import save_frame from "./fileWidgetTemplates/save_frame.handlebars";
-//import dir_template from "./fileWidgetTemplates/dir_template.handlebars";
 
 require('file-loader?name=[name].[ext]!../css/filewidget.css');
 

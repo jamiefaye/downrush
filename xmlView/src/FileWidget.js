@@ -75,7 +75,7 @@ class FileWidget {
 		} else {
 			this.params = {};
 		}
-}
+	}
 
   toggleChecks (e) {
 	var mcv = $('#headcheck').is(':checked');

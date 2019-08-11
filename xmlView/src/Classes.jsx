@@ -69,6 +69,25 @@ class MidiOutput extends DRObject {
 	}
 };
 
+class AudioTrack extends DRObject {
+	xmlName() {
+		return 'audioTrack';
+	}
+};
+
+class AudioClip extends DRObject {
+	xmlName() {
+		return 'audioClip';
+	}
+};
+
+class InstrumentClip extends DRObject {
+	xmlName() {
+		return 'instrumentClip';
+	}
+};
+
+
 registerClass('kit', Kit);
 registerClass('sound', Sound);
 registerClass('osc1', Osc1);
@@ -76,5 +95,11 @@ registerClass('osc2', Osc2);
 registerClass('midiOutput', MidiOutput);
 registerClass('cvChannel', CVChannel);
 registerClass('midiChannel', MidiChannel);
+
+
+registerClass('audioTrack', AudioTrack);
+registerClass('audioClip', AudioClip);
+registerClass('instrumentClip', InstrumentClip);
+
 
 export {DRObject, nameToClassTab, Kit, Sound, Song, MidiChannel, CVChannel};

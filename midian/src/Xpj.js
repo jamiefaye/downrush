@@ -3,6 +3,7 @@
 const Program_Type = Object.freeze({
 	DRUM: 	0,
 	KEYGROUP: 1,
+	CLIP:	2,
 	PLUGIN: 3,
 	MIDI: 	4,
 	CV:		5,

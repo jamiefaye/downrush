@@ -6,9 +6,9 @@ import ReactDOM from "react-dom";
 import Clipboard from "./js/clipboard.min.js";
 import tippy from "./js/tippy.all.min.js";
 import {formatKit} from "./KitList.jsx";
-import {getXmlDOMFromString, jsonToXMLString, xmlToJson, jsonToTable} from "./JsonXMLUtils.js";
+import {getXmlDOMFromString, jsonToXMLString, xmlToJson, xml3ToJson, jsonToTable} from "./JsonXMLUtils.js";
 import {showArranger, colorForGroup, bumpTracks} from "./Arranger.jsx";
-import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
+import {jsonequals, reviveClass, forceArray, getClipArray, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {fixm50to50, fmtsync} from './FmtSound.js';;
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 import {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString} from "./SongUtils.js";
@@ -208,7 +208,7 @@ function addTrackToSong(pastedJSON, songDoc) {
 	}
 	
 	let track0 = trackA[0];
-	if (songDoc.version2x) {
+	if (songDoc.version2x || songDoc.version3Format) {
 		song.instruments = forceArray(song.instruments);
 		// Check if we need to add the sound, kit, midiChannel, or cvChannel to the instruments list.
 		let tKind = trackKind(track0);
@@ -313,76 +313,6 @@ function formatSound(obj) {
 	ReactDOM.render(sndt, obj[0]);
 }
 
-/*
-function formatMidi(obj)
-{
-	let context = {};
-	for (var i = 1; i < arguments.length; ++i) {
-		if(arguments[i]) {
-			jQuery.extend(true, context, arguments[i]);
-		}
-	}
-	if (context.modKnobs && context.modKnobs.modKnob) {
-		formatModKnobsMidi(context.modKnobs.modKnob, obj);
-	}
-}
-*/
-
-/*
-function viewSound(e, songJ) {
-	let target = e.target;
-	let trn =  Number(target.getAttribute('trackno'));
-
-	let hideShow = target.textContent;
-	if (!songJ) return;
-
-	let trackA = forceArray(songJ.tracks.track);
-	let trackIX = trackA.length - trn - 1;
-	let trackD = trackA[trackIX];
-	
-	// Follow any indirect reference
-	if (trackD.instrument && trackD.instrument.referToTrackId !== undefined) {
-		let fromID = Number(trackD.instrument.referToTrackId);
-		trackD = trackA[fromID];
-	}
-
-	// find head div, then place to put
-	let headdiv = $(target).closest('.trackhd');
-	let where = $('.sndplc', headdiv);
-
-	if (hideShow === "▼") {
-		target.textContent = "►";
-		ReactDOM.unmountComponentAtNode($(where)[0]);
-		$(where)[0].innerHTML = "";
-	} else {
-		let trackType = trackKind(trackD);
-		if (trackType === 'sound' || trackType === 'kit'|| trackType === 'midi') {
-			target.textContent = "▼";
-		} else {
-			return;
-		}
-		if (trackType === 'sound') {
-		let soundD = findSoundData(trackD, songJ);
-		formatSound(where, soundD, trackD.soundParams);
-	  } else if (trackType === 'kit') {
-			// We have a kit track,, 
-			let kitroot = trackD.kit;
-			if (trackD['soundSources']) {
-				kitroot = trackD.soundSources.sound;
-			} else {
-				kitroot = findKitList(trackD, songJ);
-			}
-
-			if(kitroot) {
-				formatKit(kitroot, where[0]);
-			}
-		} else if(trackType === 'midi') {
-			formatMidi(where, trackD);
-		}
-	 }
-}
-
-*/
 
 /*******************************************************************************
 
@@ -416,7 +346,7 @@ function getTrackTextNum(trackNum, songJ)
 {
 	if (!songJ) return;
 
-	let trackA = forceArray(songJ.tracks.track);
+	let trackA = getClipArray(songJ);
 	let trackIX = trackA.length - trackNum - 1;
 	let trackJ = trackA[trackIX];
 	return getTrackText(trackJ, songJ);
@@ -588,6 +518,7 @@ class DelugeDoc {
 //	alert(str);
 
 	this.newNoteFormat = !(this.firmwareVersionFound.indexOf('1.2.') >= 0 || this.firmwareVersionFound.indexOf('1.3.') >= 0);
+	this.version3Format = text.indexOf('earliestCompatibleFirmware="3') > 0;
 	this.version2x = this.firmwareVersionFound.indexOf('>2.') >= 0;
 	this.newSynthNames = !!this.earliestCompatibleFirmware;
 	
@@ -610,7 +541,7 @@ class DelugeDoc {
 	var asDOM = getXmlDOMFromString(fixedText);
 	// Uncomment following to generate ordering table based on a real-world example.
 	// enOrderTab(asDOM);
-	var asJSON = xmlToJson(asDOM);
+	var asJSON = this.version3Format ? xml3ToJson(asDOM) : xmlToJson(asDOM);
 	if (options.newKit) {
 		asJSON.kit.soundSources = [];
 	}
@@ -650,8 +581,8 @@ class DelugeDoc {
 
 	let sectionTab = forceArray(jsong.sections.section);
 
-	if(jsong.tracks) {
-	  let trax = forceArray(jsong.tracks.track);
+	if(jsong.tracks || jsong.sessionClips) {
+	  let trax = getClipArray(jsong);
 	  if (trax) {
 		for(var i = 0; i < trax.length; ++i) {
 			let track = trax[trax.length - i - 1];
@@ -661,7 +592,8 @@ class DelugeDoc {
 	  }
 	}
 
-	if (fullFormat) {
+	// Don't allow track pasting in version 3 yet.
+	if (fullFormat && !jdoc.version3Format) {
 		trackPasteField(obj, jdoc);
 		obj.append($("<div class='samprepplace'></div>"));
 		genSampleReport(jsong, obj);
@@ -749,6 +681,10 @@ class DelugeDoc {
   }
 
  genDocXMLString() {
+ 	if (this.version3Format) {
+ 		return genDoc3XMLString();
+ 	}
+
  	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
 	if (this.firmwareVersionFound) {
 		headerStr += this.firmwareVersionFound + "\n";
@@ -765,6 +701,20 @@ class DelugeDoc {
  	let saveText = headerStr + jsonToXMLString(toMake, this.jsonDocument[toMake]);
  	return saveText;
  }
+
+ genDoc3XMLString() {
+ 	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
+
+	let jsonDoc =  this.jsonDocument
+	let toMake;
+	if (jsonDoc['song']) toMake = 'song';
+	  else if (jsonDoc['sound']) toMake = 'sound';
+	   else if (jsonDoc['kit']) toMake = 'kit';
+	if (!toMake) return;
+ 	let saveText = headerStr + jsonToXMLString(toMake, this.jsonDocument[toMake]);
+ 	return saveText;
+ }
+
 
  save(toName) {
  	let saveText = this.genDocXMLString();

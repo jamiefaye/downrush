@@ -5,7 +5,7 @@ import ReactDOM from "react-dom";
 import {convertHexTo50} from './FmtSound.js';;
 
 import tippy from "./js/tippy.all.min.js";
-import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
+import {jsonequals, reviveClass, forceArray, getClipArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
 import {trackKind, yToNoteName, patchInfo, makeScaleTab, noteToYOffsetInScale} from "./SongUtils.js";
 import {colorForGroup} from "./Arranger.jsx";
@@ -243,7 +243,7 @@ function findSoundData(track, song) {
 		if(!soundData) {
 			// Follow any indirect reference if need be.
 			if (track.instrument && track.instrument.referToTrackId !== undefined) {
-				let trackA = forceArray(song.tracks.track);
+				let trackA = getClipArray(song);
 				let fromID = Number(track.instrument.referToTrackId);
 				track = trackA[fromID];
 				if (track) {
@@ -396,6 +396,8 @@ function plotTrack14(track, song) {
 	let trackW = Number(track.trackLength);
 	let ymin =  1000000;
 	let ymax = -1000000;
+
+	if (!track.noteRows || !track.noteRows.noteRow) return; 
 	let rowList = forceArray(track.noteRows.noteRow);
 	let parentDiv = $("<div class='trgrid'/>");
 	if (rowList.length === 0) {
@@ -427,6 +429,7 @@ function plotTrack14(track, song) {
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
 		var noteData = row.noteData;
+		if (!noteData) continue;
 		let y = rowYfilter(row);
 		if (y < 0) continue;
 		let labName = yToNoteName(y);
@@ -530,6 +533,8 @@ function activateTippy()
 }
 
 function usesNewNoteFormat(track) {
+	if (!track.noteRows || !track.noteRows.noteRow) return true;
+
 	let rowList = forceArray(track.noteRows.noteRow);
 	if (rowList.length === 0) return true;
 	for (var rx = 0; rx < rowList.length; ++rx) {
@@ -706,7 +711,7 @@ class NotePlot extends React.Component {
 	let refTrack = track;
 	let newNotes = usesNewNoteFormat(track);
 	if (track.instrument && track.instrument.referToTrackId !== undefined) {
-		let trax = forceArray(jsong.tracks.track);
+		let trax = getClipArray(jsong);
 		let fromID = Number(track.instrument.referToTrackId);
 		refTrack = trax[fromID];
 	}
@@ -726,6 +731,9 @@ class NotePlot extends React.Component {
 			divInfo = plotTrack13(track, jsong);
 		}
 	}
+	
+	if (!divInfo) return;
+	
 	let {parentDiv, width, height} = divInfo;
 
 	this.selection = $("<div class='selbox'/>");

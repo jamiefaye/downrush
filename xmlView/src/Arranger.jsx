@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from "react-dom";
 import $ from'jquery';
 import {gamma_correct, patchInfo} from './SongUtils.js';
-import {forceArray} from "./JsonXMLUtils.js";
+import {forceArray, getClipArray} from "./JsonXMLUtils.js";
 import {patchNames, kitNames, newSynthPatchNames} from "./js/delugepatches.js";
 
 var chanHeight = 16;
@@ -39,7 +39,7 @@ class Instrument extends React.Component {
 
 	let parentDiv = $("<div class='arrgrid'/>");
 	let song = this.props.song;
-	let trackTab = forceArray(song.tracks.track);
+	let trackTab = getClipArray(song);
 	let arrangeOnlyTab = [];
 	if (song.arrangementOnlyTracks) {
 		arrangeOnlyTab = forceArray(song.arrangementOnlyTracks.track);
