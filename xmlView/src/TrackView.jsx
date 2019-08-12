@@ -14,6 +14,7 @@ import {WedgeIndicator, CopyToClipButton} from "./GUIstuff.jsx";
 import {SoundTab} from './SoundTab.jsx';
 import {MidiModKnob} from './MidiModKnob.jsx';
 import {getTrackText} from "./SongViewLib.js";
+import {AudioView} from "./AudioView.jsx";
 
 
 const copy = require('clipboard-copy')
@@ -724,6 +725,8 @@ class NotePlot extends React.Component {
 		} else {
 			divInfo = plotKit13(track, refTrack);
 		}
+	} else if (tKind === 'audio') {
+		
 	} else {
 		if(newNotes) {
 			divInfo = plotTrack14(track, jsong);
@@ -791,6 +794,11 @@ class NotePlot extends React.Component {
   }
 }
 
+class AudioPlot extends React.Component {
+	  render() {
+		return <div>Audio Waveform goes here.</div>;
+	  }
+}
 
 
 class NoteGrid extends React.Component {
@@ -799,8 +807,12 @@ class NoteGrid extends React.Component {
   }
 
   render() {
+	let props = this.props;
+  	let track = props.track;
+
+
   	return <div onMouseDown={(e)=>{this.begin_drag(e)}}>
-		<NotePlot ref={el => this.plot = el} track={this.props.track} song={this.props.song} notifier={this.props.notifier} />
+		 <NotePlot ref={el => this.plot = el} track={props.track} song={props.song} notifier={props.notifier} />
   		</div>
   }
 
@@ -860,48 +872,6 @@ class NoteGrid extends React.Component {
   getSelectedTimes() {
 	return this.plot.getSelection();
   }
-}
-
- class TrackView extends React.Component {
-    constructor(context) {
-      	super(context);
-		this.context = context;
-		this.jqElem = context.jqElem;
-  	}
-
- 	render() {
- 		let props = this.props;
- 		let track = props.track;
- 		return <NoteGrid track={track} song={props.song} />
- 	}
- }
-
- class TrackObj {
-   constructor(context) {
-		this.context = context;
-		this.jqElem = context.jqElem;
-  	}
-
-	render() {
-		let jqElem = this.jqElem;
-		this.trackObj = React.createElement(TrackView, this.context);
-		ReactDOM.render(this.trackObj, jqElem);
-	}
-
-} // End class
-
-function placeTrackObj(where, trackJ, song) {
-	
-	let context = {};
-	// React wants to be given a DOM object to replace, so we make one up
-	where.append("<div/>");
-	let obj = where[0].lastChild
-	context.jqElem = obj
-	context.track = trackJ;
-	context.song = song;
-	let trackObj = new TrackObj(context);
-	trackObj.render();
-	return trackObj;
 }
 
 // **********************************************************************
@@ -970,7 +940,14 @@ class SoundDetails extends React.Component {
  			return <KitListView kitList={kitroot} />;
  		} else if (trackType === 'midi') {
  			return <MidiModKnob sound={track} />;
+ 		} else if (trackType === 'audio') {
+ 			let soundData = track.params;
+ 			 if (soundData) {
+ 				return 	<SoundTab sound={soundData} />;
+ 			}
  		}
+
+ 		return null;
  	}
 }
 
@@ -991,16 +968,21 @@ class SoundDetails extends React.Component {
 		let props = this.props;
 		let track = props.track;
 		let state = this.state;
+		let tkind = trackKind(track);
+		let waveProps = {height: 128, splitChannels: false};
 		let trigFunc = props.options.transTrack ? this.transTrig : undefined;
  		return (
  	  <div>
  		<table className='simplehead'><tbody><tr>
  			<SimpleTrackHeader track={track} trackNum={props.trackNum} song={props.song} showTab={state.showTab}
  				copySel={this.copySel} toggleTab={this.toggleTab} transTrig = {trigFunc} options = {props.options}/>
-			<td><NoteGrid track={track} song={props.song} notifier={(t0, t1)=>{
+			<td> {tkind !== 'audio' ?
+				(<NoteGrid track={track} song={props.song} notifier={(t0, t1)=>{
 				this.selt0 = t0;
 				this.selt1 = t1;
-			}} /></td>
+				}} />) :  (<AudioView filename={track.filePath} waveprops={waveProps} />)
+					}
+			</td>
 			</tr>
 			</tbody>
 		</table>
@@ -1056,4 +1038,4 @@ function placeTrack(where, trackJ, trackNum, song, options) {
 }
 
 
-export {placeTrackObj, placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}
+export {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}

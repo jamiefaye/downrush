@@ -291,7 +291,7 @@ class SoundGrid extends React.Component {
 <td className='fmmod1 pw hleftb'> </td>
 <td className='fmmod2 pw'> </td>
 <td className='master'>{fixpan(s.pan)}</td>
-<td className='unison'>{s.unison.detune}</td>
+<td className='unison'>{s.unison ? s.unison.detune : null}</td>
               
 <td className='attack env1 hleftb'>{s.envelope1 ? fixh(s.envelope1.attack) : null}</td>
 <td className='attack env2'>{s.envelope2 ? fixh(s.envelope2.attack) : null}</td>
@@ -343,8 +343,8 @@ class SoundGrid extends React.Component {
 <td className='sidechain'>{s.compressor ? fixrev(s.compressor.volume) : null}</td>
 <td className='arp'>{fixh(s.arpeggiatorGate)}</td>
               
-<td className='lfo1 shape hleftb'>{s.lfo1.type}</td>
-<td className='lfo2 shape'>{s.lfo2.type}</td>
+<td className='lfo1 shape hleftb'>{s.lfo1 ? s.lfo1.type : null}</td>
+<td className='lfo2 shape'>{s.lfo2 ? s.lfo2.type : null}</td>
 <td className='delay'>{fixh(s.delay.analog)}</td>
 <td className='textsm modsources m_random'>{s.m_random}</td>
 </tr>
@@ -373,8 +373,8 @@ class SoundGrid extends React.Component {
 </tr>
 
 <tr>
-<td className='sample1 reverse'>{s.osc1.reversed}</td>
-<td className='sample2 reverse'>{s.osc2.reversed}</td>
+<td className='sample1 reverse'>{s.osc1 ? s.osc1.reversed : null}</td>
+<td className='sample2 reverse'>{s.osc2 ? s.osc2.reversed : null}</td>
 <td className='osc1 transpose'>{fmttransp(s.osc1)}</td>
 <td className='osc2 transpose'>{fmttransp(s.osc2)}</td>
               

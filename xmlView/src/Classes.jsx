@@ -102,4 +102,4 @@ registerClass('audioClip', AudioClip);
 registerClass('instrumentClip', InstrumentClip);
 
 
-export {DRObject, nameToClassTab, Kit, Sound, Song, MidiChannel, CVChannel};
+export {DRObject, nameToClassTab, Kit, Sound, Song, MidiChannel, CVChannel, AudioTrack, AudioClip, InstrumentClip};

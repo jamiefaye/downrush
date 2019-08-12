@@ -27,6 +27,8 @@ function SampleRangeEntry(props) {
 
 function SampleFileEntry(props) {
   let osc = props.osc;
+  if (!osc) return null;
+  
   let oscFN = osc.fileName;
   if (oscFN === undefined) return null;
   if (typeof oscFN === 'string' || oscFN instanceof String) {

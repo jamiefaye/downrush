@@ -1,6 +1,7 @@
 import {patchNames, kitNames, newSynthPatchNames} from "./js/delugepatches.js";
 import {jsonequals} from "./JsonXMLUtils.js";
-
+import {AudioTrack, AudioClip} from "./Classes.jsx";
+	
 var gamma = 1.0 / 5.0;
 var gammaTab;
 
@@ -27,8 +28,9 @@ var trackKindNames = {"kit": "Kit",
 					"sound": "Synth",
 					"midi": "Midi",
 					"cv": "CV",
+					"audio": "Audio",
 					"unknown": "?",
-					};
+				};
 
 
 function trackKind(track) {
@@ -39,6 +41,7 @@ function trackKind(track) {
 	// deal with indirect refs
 	if(track['kitParams'] !== undefined) return 'kit';
 	if(track['soundParams'] !== undefined) return 'sound';
+	if (track instanceof AudioTrack || track instanceof AudioClip) return "audio";
 	return 'unknown';
 }
 
@@ -75,6 +78,12 @@ function patchInfo(track, newSynthNames) {
 	} else if (kind === 'cv') {
 		patchStr = Number(track.cvChannel) + 1;
 		patchName = '';
+	} else if (kind === 'audio') {
+		if (track.name !== undefined) {
+			patchName = track.name;
+		} else {
+			patchName = track.trackName;
+		}
 	}
 
 	return {

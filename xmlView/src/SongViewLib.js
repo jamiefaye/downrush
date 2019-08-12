@@ -16,7 +16,7 @@ import {song_template} from "./templates.js";
 import {SoundTab} from './SoundTab.jsx';
 import {SampleList} from './SampleList.jsx';
 
-import {placeTrackObj, placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
+import {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
 
 "use strict";
 
@@ -241,6 +241,9 @@ function addTrackToSong(pastedJSON, songDoc) {
 				co.channel = track0.cvChannel;
 				song.instruments.unshift(co);
 			}
+		} else if (tKind === 'audio') {
+			// Someday handle paste here.
+			
 		}
 		// Iterate thru the song-level instruments element if it exists, fixing the track numbers.
 		for (let inst in song.instruments) {
