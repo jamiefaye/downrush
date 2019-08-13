@@ -8,6 +8,13 @@ function WedgeIndicator(props) {
 	</span>);
 }
 
+function WedgeIndicator2(props) {
+	return (<span className='wedge' onClick={props.toggler}>
+	{props.opened ? '▽' : '▷'}
+	</span>);
+}
+
+
 class IconPushButton extends React.Component {
   constructor(props) {
 	super(props);
@@ -40,7 +47,7 @@ class Icon2PushButton extends React.Component {
 
   render() {
 	return (
-		<button className='butn' title={this.props.title} ref={(el) => { this.buttonEl = el}}>
+		<button className='butn' style={{border: "1px"}}  title={this.props.title} ref={(el) => { this.buttonEl = el}}>
 			<img width='16px' height='18px' className='playbutimg' src={this.props.pushed ? this.props.srcD : this.props.srcU}
 			 onClick={this.handleClick} />
 		</button>);
@@ -108,4 +115,30 @@ class PasteTarget extends React.Component {
 	}
 };
 
-export {WedgeIndicator, IconPushButton, Icon2PushButton, PushButton, CopyToClipButton, PasteTarget};
+
+class Checkbox extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {checked: false};
+	}
+
+	render() {
+		return (<input className='achkbox' type='checkbox' checked={this.state.checked} onClick={e=>{
+			let newState = !this.state.checked;
+			this.setState({checked: newState});
+			this.props.checker(this, newState);
+		}}></input>);
+	}
+}
+
+class PlayerControl extends React.Component {
+  render() {
+	return (
+	<Icon2PushButton className='plsybut' title='Play' pushed={this.props.pushed}
+		onPush={(e)=>{this.props.command('play', e, this)}}
+		srcU='img/glyphicons-174-play.png'
+		srcD='img/glyphicons-176-stop.png'/>)
+  }
+};
+
+export {WedgeIndicator, WedgeIndicator2, IconPushButton, Icon2PushButton, PushButton, CopyToClipButton, PasteTarget, Checkbox, PlayerControl};

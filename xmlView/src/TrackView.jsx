@@ -14,7 +14,7 @@ import {WedgeIndicator, CopyToClipButton} from "./GUIstuff.jsx";
 import {SoundTab} from './SoundTab.jsx';
 import {MidiModKnob} from './MidiModKnob.jsx';
 import {getTrackText} from "./SongViewLib.js";
-import {AudioView} from "./AudioView.jsx";
+import {AudioTrackView} from "./AudioTrackView.jsx";
 
 
 const copy = require('clipboard-copy')
@@ -969,7 +969,7 @@ class SoundDetails extends React.Component {
 		let track = props.track;
 		let state = this.state;
 		let tkind = trackKind(track);
-		let waveProps = {height: 128, splitChannels: false};
+
 		let trigFunc = props.options.transTrack ? this.transTrig : undefined;
  		return (
  	  <div>
@@ -980,7 +980,7 @@ class SoundDetails extends React.Component {
 				(<NoteGrid track={track} song={props.song} notifier={(t0, t1)=>{
 				this.selt0 = t0;
 				this.selt1 = t1;
-				}} />) :  (<AudioView filename={track.filePath} waveprops={waveProps} />)
+				}} />) :  (<AudioTrackView track={track}  />)
 					}
 			</td>
 			</tr>
