@@ -24,4 +24,10 @@ module.exports = {
       { test: /\.handlebars$/, loader: 'handlebars-loader' }
     ]
   },
+    resolve: {
+    modules: [
+     path.resolve(__dirname, '../xmlView/node_modules'),
+     path.resolve(__dirname, 'node_modules'),
+     ],
+    },
 };

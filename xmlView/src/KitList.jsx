@@ -1,18 +1,18 @@
 import React from 'react';
 import ReactDOM from "react-dom";
 import Dropdown from 'react-dropdown';
-import {WaveView} from './WaveView.jsx';
+import {WaveView, SampleView} from './WaveView.jsx';
 import {openFileBrowser} from './FileBrowser.js';
 import {forceArray} from "./JsonXMLUtils.js";
-import empty_sound_template from './templates/empty_sound_template.handlebars';
 import {getXmlDOMFromString, xmlToJson, reviveClass} from './JsonXMLUtils.js';
 import shortid from 'shortid';
-import {WedgeIndicator, IconPushButton, Icon2PushButton, PushButton, CopyToClipButton, PasteTarget} from './GUIstuff.jsx';
+import {WedgeIndicator, IconPushButton, Icon2PushButton, PushButton, Checkbox, PlayerControl, CopyToClipButton, PasteTarget} from './GUIstuff.jsx';
 import {SortableContainer, SortableElement, SortableHandle, arrayMove} from 'react-sortable-hoc';
 import TextInput from 'react-autocomplete-input';
 import {SoundTab} from './SoundTab.jsx';
 import $ from 'jquery';
 import {getSamplePathPrefix} from "./samplePath.js";
+import {empty_sound_temp} from './templates.js';
 
 var local_exec = document.URL.indexOf('file:') == 0;
 
@@ -104,31 +104,6 @@ function suggestName(path) {
 	upName = upName.replace('.','');
 	return upName;
 }
-
-class Checkbox extends React.Component {
-	constructor(props) {
-		super(props);
-		this.state = {checked: false};
-	}
-
-	render() {
-		return (<input className='achkbox' type='checkbox' checked={this.state.checked} onClick={e=>{
-			let newState = !this.state.checked;
-			this.setState({checked: newState});
-			this.props.checker(this, newState);
-		}}></input>);
-	}
-}
-
-class PlayerControl extends React.Component {
-  render() {
-	return (
-	<Icon2PushButton className='plsybut' title='Play' pushed={this.props.pushed}
-		onPush={(e)=>{this.props.command('play', e, this)}}
-		srcU='img/glyphicons-174-play.png'
-		srcD='img/glyphicons-176-stop.png'/>)
-  }
-};
 
 const DragHandle = SortableHandle(() => <span>::</span>); // This can be any component you want ↕
 
@@ -236,7 +211,7 @@ class SampleEntry extends React.Component {
 			showAudioControl ? (<td><audio controls preload='none'><source src={getSamplePathPrefix() + this.props.osc.fileName} type='audio/wav'/></audio></td>)
 							 :(<td> </td>)}
 		</tr>
-		{showWaveView ? (<WaveView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} editing={openEditing}
+		{showWaveView ? (<SampleView key='wview' ref={el => this.waveViewRef = el} open={this.state.opened} editing={openEditing}
 		 toggleTab={this.toggleTab} showTab={this.state.showTab}
 			osc={this.props.osc} filename={this.props.osc.fileName} selectionUpdate={this.selectionUpdate.bind(this)}
 		 />) : null}
@@ -329,7 +304,10 @@ class KitList extends React.Component {
 		name = name.slice(1);
 	}
 	let suggestion = suggestName(name);
-	let filledSoundT = empty_sound_template({fileName: name, name: suggestion});
+	let temp = empty_sound_temp.split('{{fileName}}');
+	let temp2 = temp.join(name);
+	let temp3 = temp.split('{{name}}');
+	let filledSoundT = temp3.join(suggestion);
 	let newDrumX = getXmlDOMFromString(filledSoundT);
 	let newSound = xmlToJson(newDrumX).sound;
 	this.props.kitList.push(newSound);

@@ -1,9 +1,10 @@
-import $ from'./js/jquery-3.2.1.min.js';
-import {FileWidget, makeDateTime} from './FileWidget.js';
+import $ from 'jquery';
+import {FileWidget} from './FileWidget.js';
 import open_frame from "./fileWidgetTemplates/open_frame.handlebars";
 import save_frame from "./fileWidgetTemplates/save_frame.handlebars";
 import dir_template from "./fileWidgetTemplates/dir_template.handlebars";
 require('file-loader?name=[name].[ext]!../css/filewidget.css');
+import {FlashAirFS} from "./FileStore.js";
 
 var browserActiveFlag = false;
 
@@ -29,12 +30,12 @@ class FileBrowser {
 	console.log(window.innerHeight + " " + h);
 	$('.wrapper').css('height', h + 'px');
 
-	this.browser = new FileWidget({template: dir_template,
+	this.widget = new FileWidget({template: dir_template,
 		initialDir: initialDir,
 		fileSelected: (...args) => {me.fileSelect(...args)},
 		dirCallback: (...args) => {me.dirSelect(...args)},
 	});
-	
+
 	let openPlace = '/';
 	if (initialDir) {
 		let splits = initialDir.split('/');
@@ -43,7 +44,7 @@ class FileBrowser {
 			openPlace = splits.join('/');
 		}
 	}
-	this.browser.start(openPlace);
+	this.widget.start(openPlace);
 
 	browserActiveFlag = true;
 	$('#cancelbut').click(e=>{me.cancel(e)});	
@@ -62,7 +63,7 @@ class FileBrowser {
 	let selfiles = $('.file-select');
 	if (selfiles && selfiles.length > 0) {
 		let name = selfiles[0].firstChild.textContent;
-		let fullName = this.browser.fullPathFor(name);
+		let fullName = this.widget.fullPathFor(name);
 		console.log(fullName);
 	} else {
 		console.log('nobody');
@@ -157,7 +158,7 @@ class SaveFileBrowser extends FileBrowser {
 	let cbf = this.params.saver;
 	let saveName = $('#fw-name').val();
 	if (cbf && saveName) {
-		this.browser.doesFileExist(saveName, (exists, status)=>{
+		this.widget.doesFileExist(saveName, (exists, status)=>{
 			if(exists) {
 				let OK = confirm("The file named " + saveName + " already exists. Overwrite?");
 				if (!OK) return;

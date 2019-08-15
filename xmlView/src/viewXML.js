@@ -19,11 +19,9 @@ import ReactDOM from "react-dom";
 import FileSaver from 'file-saver';
 
 import {stepNextFile} from "./StepNextFile.js";
-import empty_kit_template from "./templates/empty_kit_template.handlebars";
-
 import {setFocusDoc, makeDelugeDoc} from "./SongViewLib.js";
 import {setSamplePathPrefix} from "./samplePath.js";
-
+import {empty_kit_temp} from './templates.js';
 "use strict";
 
 // Change the following line as needed to point to the parent directory containing your sample directory.
@@ -149,10 +147,9 @@ window.onload = onLoad;
 }
 
 function newKitDoc(e) {
-	let filledKitT = empty_kit_template();
+	let filledKitT = empty_kit_temp;
 	focusDoc = makeDelugeDoc("/KITS/KIT0.XML", filledKitT, {newKit: true});
 	setFocusDoc(focusDoc);
-	// this.forceUpdate();
   }
 
 

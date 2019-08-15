@@ -2,18 +2,19 @@ import $ from'jquery';
 
 import React from 'react';
 import ReactDOM from "react-dom";
-import convertHexTo50 from "./templates/convertHexTo50.js";
+import {convertHexTo50} from './FmtSound.js';;
+
 import tippy from "./js/tippy.all.min.js";
-import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
+import {jsonequals, reviveClass, forceArray, getClipArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
-import note_tip_template from "./templates/note_tip_template.handlebars";
 import {trackKind, yToNoteName, patchInfo, makeScaleTab, noteToYOffsetInScale} from "./SongUtils.js";
 import {colorForGroup} from "./Arranger.jsx";
 import {KitListView} from './KitList.jsx';
 import {WedgeIndicator, CopyToClipButton} from "./GUIstuff.jsx";
 import {SoundTab} from './SoundTab.jsx';
-import {FormatMidi} from './FormatTabs.jsx';
+import {MidiModKnob} from './MidiModKnob.jsx';
 import {getTrackText} from "./SongViewLib.js";
+import {AudioTrackView} from "./AudioTrackView.jsx";
 
 
 const copy = require('clipboard-copy')
@@ -241,7 +242,18 @@ function findSoundData(track, song) {
 	} else {
 		soundData = findSoundInstrument(track, song.instruments);
 		if(!soundData) {
-			console.log("Missing sound data");
+			// Follow any indirect reference if need be.
+			if (track.instrument && track.instrument.referToTrackId !== undefined) {
+				let trackA = getClipArray(song);
+				let fromID = Number(track.instrument.referToTrackId);
+				track = trackA[fromID];
+				if (track) {
+					soundData = track.sound;
+				}
+				if (!soundData) {
+					console.log("Missing sound data");
+				}
+			}
 		}
 	}
 	return soundData;
@@ -385,6 +397,8 @@ function plotTrack14(track, song) {
 	let trackW = Number(track.trackLength);
 	let ymin =  1000000;
 	let ymax = -1000000;
+
+	if (!track.noteRows || !track.noteRows.noteRow) return; 
 	let rowList = forceArray(track.noteRows.noteRow);
 	let parentDiv = $("<div class='trgrid'/>");
 	if (rowList.length === 0) {
@@ -416,6 +430,7 @@ function plotTrack14(track, song) {
 	for (var rx = 0; rx < rowList.length; ++rx) {
 		let row = rowList[rx];
 		var noteData = row.noteData;
+		if (!noteData) continue;
 		let y = rowYfilter(row);
 		if (y < 0) continue;
 		let labName = yToNoteName(y);
@@ -499,6 +514,8 @@ function activateTippy()
 				beatX += '+' + simplifyFraction(subFrac, 192);
 			}
 			// {{notename}} {{notevel}} {{notedur}} {{notestart}} {{noteprob}}
+			let noteInfo = notename + " " + vel + " " + durFrac + " " + beatX + " " + condtext;
+			/* 
 			let noteInfo = note_tip_template({
 				notename: notename,
 				notevel: vel,
@@ -506,6 +523,7 @@ function activateTippy()
 				notestart: beatX,
 				noteprob: condtext,
 			});
+			*/
 			content.innerHTML = noteInfo;
 			},
 		onHidden() {
@@ -516,6 +534,8 @@ function activateTippy()
 }
 
 function usesNewNoteFormat(track) {
+	if (!track.noteRows || !track.noteRows.noteRow) return true;
+
 	let rowList = forceArray(track.noteRows.noteRow);
 	if (rowList.length === 0) return true;
 	for (var rx = 0; rx < rowList.length; ++rx) {
@@ -692,7 +712,7 @@ class NotePlot extends React.Component {
 	let refTrack = track;
 	let newNotes = usesNewNoteFormat(track);
 	if (track.instrument && track.instrument.referToTrackId !== undefined) {
-		let trax = forceArray(jsong.tracks.track);
+		let trax = getClipArray(jsong);
 		let fromID = Number(track.instrument.referToTrackId);
 		refTrack = trax[fromID];
 	}
@@ -705,6 +725,8 @@ class NotePlot extends React.Component {
 		} else {
 			divInfo = plotKit13(track, refTrack);
 		}
+	} else if (tKind === 'audio') {
+		
 	} else {
 		if(newNotes) {
 			divInfo = plotTrack14(track, jsong);
@@ -712,6 +734,9 @@ class NotePlot extends React.Component {
 			divInfo = plotTrack13(track, jsong);
 		}
 	}
+	
+	if (!divInfo) return;
+	
 	let {parentDiv, width, height} = divInfo;
 
 	this.selection = $("<div class='selbox'/>");
@@ -769,6 +794,11 @@ class NotePlot extends React.Component {
   }
 }
 
+class AudioPlot extends React.Component {
+	  render() {
+		return <div>Audio Waveform goes here.</div>;
+	  }
+}
 
 
 class NoteGrid extends React.Component {
@@ -777,8 +807,12 @@ class NoteGrid extends React.Component {
   }
 
   render() {
+	let props = this.props;
+  	let track = props.track;
+
+
   	return <div onMouseDown={(e)=>{this.begin_drag(e)}}>
-		<NotePlot ref={el => this.plot = el} track={this.props.track} song={this.props.song} notifier={this.props.notifier} />
+		 <NotePlot ref={el => this.plot = el} track={props.track} song={props.song} notifier={props.notifier} />
   		</div>
   }
 
@@ -840,48 +874,6 @@ class NoteGrid extends React.Component {
   }
 }
 
- class TrackView extends React.Component {
-    constructor(context) {
-      	super(context);
-		this.context = context;
-		this.jqElem = context.jqElem;
-  	}
-
- 	render() {
- 		let props = this.props;
- 		let track = props.track;
- 		return <NoteGrid track={track} song={props.song} />
- 	}
- }
-
- class TrackObj {
-   constructor(context) {
-		this.context = context;
-		this.jqElem = context.jqElem;
-  	}
-
-	render() {
-		let jqElem = this.jqElem;
-		this.trackObj = React.createElement(TrackView, this.context);
-		ReactDOM.render(this.trackObj, jqElem);
-	}
-
-} // End class
-
-function placeTrackObj(where, trackJ, song) {
-	
-	let context = {};
-	// React wants to be given a DOM object to replace, so we make one up
-	where.append("<div/>");
-	let obj = where[0].lastChild
-	context.jqElem = obj
-	context.track = trackJ;
-	context.song = song;
-	let trackObj = new TrackObj(context);
-	trackObj.render();
-	return trackObj;
-}
-
 // **********************************************************************
 
 class TinyButton extends React.Component {
@@ -935,7 +927,9 @@ class SoundDetails extends React.Component {
  		let trackType = trackKind(track);
  		if (trackType === 'sound') {
  			let soundData = findSoundData(track, this.props.song);
- 			return 	<SoundTab sound={soundData} />;
+ 			if (soundData) {
+ 				return 	<SoundTab sound={soundData} />;
+ 			} else return null
  		} else if (trackType === 'kit') {
 			let kitroot = track.kit;
 			if (track['soundSources']) {
@@ -945,8 +939,15 @@ class SoundDetails extends React.Component {
 			}
  			return <KitListView kitList={kitroot} />;
  		} else if (trackType === 'midi') {
- 			return <FormatMidi midi={track} />;
+ 			return <MidiModKnob sound={track} />;
+ 		} else if (trackType === 'audio') {
+ 			let soundData = track.params;
+ 			 if (soundData) {
+ 				return 	<SoundTab sound={soundData} />;
+ 			}
  		}
+
+ 		return null;
  	}
 }
 
@@ -967,16 +968,21 @@ class SoundDetails extends React.Component {
 		let props = this.props;
 		let track = props.track;
 		let state = this.state;
+		let tkind = trackKind(track);
+
 		let trigFunc = props.options.transTrack ? this.transTrig : undefined;
  		return (
  	  <div>
  		<table className='simplehead'><tbody><tr>
  			<SimpleTrackHeader track={track} trackNum={props.trackNum} song={props.song} showTab={state.showTab}
  				copySel={this.copySel} toggleTab={this.toggleTab} transTrig = {trigFunc} options = {props.options}/>
-			<td><NoteGrid track={track} song={props.song} notifier={(t0, t1)=>{
+			<td> {tkind !== 'audio' ?
+				(<NoteGrid track={track} song={props.song} notifier={(t0, t1)=>{
 				this.selt0 = t0;
 				this.selt1 = t1;
-			}} /></td>
+				}} />) :  (<AudioTrackView track={track}  />)
+					}
+			</td>
 			</tr>
 			</tbody>
 		</table>
@@ -1032,4 +1038,4 @@ function placeTrack(where, trackJ, trackNum, song, options) {
 }
 
 
-export {placeTrackObj, placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}
+export {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}

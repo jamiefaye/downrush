@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from'jquery';
 import knob from'./js/jquery.knob.js';
 import {FilterBase} from './Filters.js';
 import delay_template from'./templates/delay_template.handlebars';

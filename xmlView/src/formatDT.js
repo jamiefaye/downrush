@@ -1,4 +1,4 @@
-module.exports = function(f) {
+function formatDT(f) {
 	let seconds = (f.ftime & 31) * 2;
 	let minutes = (f.ftime >> 5) & 63;
 	let hours   = (f.ftime >> 11) & 31;
@@ -8,7 +8,10 @@ module.exports = function(f) {
 	if (year < 2000) return "";
 	return "" + month + '/' + day + '&nbsp;' + zeroPad(hours,2) + ':' + zeroPad(minutes,2);
 }
+
 function zeroPad(num, places) {
   var zero = places - num.toString().length + 1;
   return Array(+(zero > 0 && zero)).join("0") + num;
 }
+
+export {formatDT};

@@ -1,20 +1,20 @@
-cd /Users/jamie/deluge/downrush/FTF
+cd FTF
 npm run build
-cd /Users/jamie/deluge/downrush/xmlView
+cd ../xmlView
 npm run build
-cd /Users/jamie/deluge/downrush/waverly
+cd ../waverly
 npm run build
-cd /Users/jamie/deluge/downrush/midian
+cd ../midian
 npm run build
-cd /Users/jamie/deluge
+cd ../../
 rm -rf distribution
 mkdir distribution
-cd /Users/jamie/deluge/downrush
-cp -R SD_WLAN ~/deluge/distribution/.
-cp -R DR  ~/deluge/distribution/.
-pandoc -f markdown  -t plain --wrap=auto  README.md -o  ~/deluge/distribution/DR/README.txt
-pandoc -f markdown  -t plain --wrap=auto  MANUAL.md -o  ~/deluge/distribution/DR/MANUAL.txt
+cd downrush
+cp -R SD_WLAN ../distribution/.
+cp -R DR  ../distribution/.
+pandoc -f markdown  -t plain --wrap=auto  README.md -o  ../distribution/DR/README.txt
+pandoc -f markdown  -t plain --wrap=auto  MANUAL.md -o  ../distribution/DR/MANUAL.txt
 #cp -R ../tools  ~/deluge/distribution/.
-cd /Users/jamie/deluge
+cd ..
 rm  downrush.zip
 zip -r downrush.zip distribution

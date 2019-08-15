@@ -32,16 +32,52 @@
 body {
 	background-color:#f8f8f8;
 }
-table {
-	border-collapse: collapse;
-	text-align: center;
-}
-td {
+.xmltab  td  th  tr {
 	border: solid 1px;
 	padding: 0.2em;
 }
 
-th {
+.simplehead td th tr {
+	border: solid 1px;
+	padding: 0.2em;
+}
+
+th.mkhead, td.mkhdata {
+	border: solid 1px;
+	padding: 0.2em;
+}
+
+.sound_grid * th, .sound_grid * td {
+	border: solid 1px;
+	padding: 0.2em;
+}
+
+.samplelist * td {
+	border: solid 1px;
+	padding: 0.2em;
+}
+
+#filegroup * button {
+	border: solid 1px;
+	border-color: black,
+}
+
+table.xmltab {
+	border-collapse: collapse;
+	text-align: center;
+}
+
+.kit_tab * td {
+	border: solid 1px;
+	padding: 0.2em;
+}
+
+table.kit_tab {
+	border-collapse: collapse;
+	text-align: center;
+}
+
+td.coltab {
 	border: solid 1px;
 	padding: 0.2em;
 }
@@ -249,6 +285,9 @@ div.paramconst {
 	background-color:  #E8E8E8;
 }
 
+.bbh {
+	border-botoom: hidden;
+}
 .textsm {
 	font-size: 7pt;
 }
@@ -263,6 +302,10 @@ div.paramconst {
 
 .sample2 {
 	background-color: #F8C8B8;
+}
+
+.audhdr {
+	background-color: #e8e8c8;
 }
 
 .samplenb {
@@ -374,6 +417,10 @@ div.paramconst {
 	background-color: #FFFFE8;
 }
 .kithead {
+	background-color: #EFEFd8;
+}
+
+.audiotrack {
 	background-color: #EFEFd8;
 }
 
@@ -551,4 +598,11 @@ div.selbox {
 	background-color: gray;
 	position: absolute;
 	opacity: 0.2;
+}
+
+
+.audiotrack {
+	border: none;
+	width: auto;
+	padding: 0px;
 }

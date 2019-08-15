@@ -1,4 +1,4 @@
-import createClass from "create-react-class";
+
 import React from 'react';
 import ReactDOM from "react-dom";
 import Clipboard from "./js/clipboard.min.js";
@@ -41,8 +41,8 @@ class Icon2PushButton extends React.Component {
 
   render() {
 	return (
-		<button className='butn' title={this.props.title} ref={(el) => { this.buttonEl = el}}>
-			<img width='16px' height='18px' className='playbutimg' src={this.props.pushed ? this.props.srcD : this.props.srcU}
+		<button className='butns' title={this.props.title} ref={(el) => { this.buttonEl = el}}>
+			<img className='playbutimg' src={this.props.pushed ? this.props.srcD : this.props.srcU}
 			 onClick={this.handleClick} />
 		</button>);
 	}

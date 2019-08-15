@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1, maximum-scale=1, user-scalable=no">
+	<meta charset="UTF-8">
+	<title>Midian</title>
+<!-- https://stackoverflow.com/questions/951791/javascript-global-error-handling -->
+<div id="npoptemp" style="display: none;"></div>
+<script type="text/javascript">
+<!--
+window.onerror = function(msg, url, line, col, error) {
+   var extra = !col ? '' : '\ncolumn: ' + col;
+   extra += !error ? '' : '\nerror: ' + error;
+   alert("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
+   return true;
+};
+-->
+var buildType='xpj';
+</script>
+<link rel="stylesheet" href="filewidget.css">
+<link rel="stylesheet" href="edit.css">
+<link rel="stylesheet" href="midian.css">
+</head>
+<body>
+This program lets you open MPC .xpj-format files for inspection.
+<p>
+<div id="uploader">
+	<form action="/upload.cgi" method="post" enctype="multipart/form-data" target="hogehogeFrame" >
+		<input id='xpjopenlocal'name="file" type="file" accept=".xpj,.XPJ"/>
+		<input id='uploadbut' type="submit" value="upload"/>
+		<iframe src="about:blank" id="hogehogeFrame" name="hogehogeFrame" style="display:none;"></iframe>
+	</form>
+	<br>Drag and drop a directory or an .XPJ file along with its directory<br>
+</div>
+<div id='popupspot'></div>
+<p class='tinygap'/>
+<div id='xpjview'>
+</div>
+<div id='docspot'>
+</div>
+<div id='midiantab'>
+</div>
+© 2019 Catnip/Jamie Faye Fenton.
+<script src="midian.js"></script>
+</body>
+</html>

@@ -1,4 +1,46 @@
-		<sound>
+var empty_kit_temp = `<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
+<kit>
+	<lpfMode>24dB</lpfMode>
+	<modFXType>flanger</modFXType>
+	<modFXCurrentParam>feedback</modFXCurrentParam>
+	<currentFilterType>lpf</currentFilterType>
+	<defaultParams>
+		<delay>
+			<rate>0x00000000</rate>
+			<feedback>0x80000000</feedback>
+		</delay>
+		<reverbAmount>0x80000000</reverbAmount>
+		<volume>0x3504F334</volume>
+		<pan>0x00000000</pan>
+		<lpf>
+			<frequency>0x7FFFFFFF</frequency>
+			<resonance>0x00000000</resonance>
+		</lpf>
+		<hpf>
+			<frequency>0x80000000</frequency>
+			<resonance>0xC0000000</resonance>
+		</hpf>
+		<modFXDepth>0x00000000</modFXDepth>
+		<modFXRate>0xE0000000</modFXRate>
+		<stutterRate>0x00000000</stutterRate>
+		<sampleRateReduction>0x80000000</sampleRateReduction>
+		<bitCrush>0x80000000</bitCrush>
+		<equalizer>
+			<bass>0x00000000</bass>
+			<treble>0x00000000</treble>
+			<bassFrequency>0x00000000</bassFrequency>
+			<trebleFrequency>0x00000000</trebleFrequency>
+		</equalizer>
+		<modFXOffset>0x00000000</modFXOffset>
+		<modFXFeedback>0x80000000</modFXFeedback>
+	</defaultParams>
+	<soundSources>
+	</soundSources>
+	<selectedDrumIndex>0</selectedDrumIndex>
+</kit>`;
+
+var empty_sound_temp = `		<sound>
 			<name>{{name}}</name>
 			<osc1>
 				<type>sample</type>
@@ -169,4 +211,12 @@
 					<controlsParam>sampleRateReduction</controlsParam>
 				</modKnob>
 			</modKnobs>
-		</sound>
+		</sound>`;
+
+var song_template =`<div class='filedoc' id='docId{{idsuffix}}'>
+	<div id='fileTitle{{idsuffix}}'></div>
+	<p class='tinygap'/>
+	<div id='jtab{{idsuffix}}'> </div>
+</div>`;
+
+export {empty_sound_temp, empty_kit_temp, song_template};

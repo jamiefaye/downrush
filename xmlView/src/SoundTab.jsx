@@ -1,20 +1,19 @@
 import $ from 'jquery';
 import React from 'react';
-import {formatSound} from "./SongViewLib.js";
+import {MidiKnob} from './MidiKnob.jsx';
+import {MidiModKnob} from './MidiModKnob.jsx';
+import {ModKnobs} from './ModKnobs.jsx';
+import {SoundGrid} from './SoundGrid.jsx';
+
 
 class SoundTab extends React.Component {
-
-  constructor() {
-	super();
-	this.state = {};
-  }
-
-  componentDidMount() {
-  	formatSound($(this.el), this.props.sound, this.props.sound.defaultParams);
-  }
-
   render() {
-	return <div  ref={el => this.el = el}> </div>
+  	let sound = this.props.sound;
+	return <div>
+		<ModKnobs sound={sound}/>
+		<MidiKnob sound={sound}/>
+		<SoundGrid sound={sound}/>
+	</div>
   }
 };
 

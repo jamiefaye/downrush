@@ -1,33 +1,69 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from'jquery';
 import {openMidiDoc, setFocusMidiView, setAddToDocFunction, setMpcEnabled, setClipboardEnabled, makeEmptyMidiFile} from './MidiDoc.jsx';
+import {openXpjDoc} from "./XpjDoc.jsx";
+import {getDropInFS} from "./FileStore.js";
 
+// The following requires cause individual files to be transferred into the build
+// directory with renaming if needed.
 require('file-loader?name=[name].[ext]!../html/midian.htm');
 require('file-loader?name=index.html!../html/index_web.html');
 require('file-loader?name=index.htm!../html/index_mpc.html');
+require('file-loader?name=xpj2midi.html!../html/xpj2midi.html');
+require('file-loader?name=index_xpj.html!../html/index_xpj.html');
+require('file-loader?name=xpjview.html!../html/xpjview.html');
 require('file-loader?name=[name].[ext]!../css/midian.css');
 require('file-loader?name=[name].[ext]!../../xmlView/css/edit.css');
 require('file-loader?name=img/[name].[ext]!../img/menu-up.png');
+
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-halflings-72-play.png');
+require('file-loader?name=img/[name].[ext]!../img/glyphicons-halflings-74-stop.png');
+
+require('file-loader?name=[name].[ext]!../html/test.html');
 
 import empty_song_template from "./templates/empty_song.handlebars";
 import {addTrackToMidi, converter} from "./DelugeToMidi.js";
 import {setFocusDoc, makeDelugeDoc, getFocusDoc, pasteTrackJson} from "../../xmlView/src/SongViewLib.js";
 import {FileManager} from "./FileManager.js";
+import Uppie from './js/uppie.js';
+
 
 "use strict";
 
 // Flag to enable local execution (not via the FlashAir web server)
-var local_exec = document.URL.indexOf('file:') == 0 || buildType !='flashair';
+var local_exec = document.URL.indexOf('file:') == 0;
+
+// cloud_served flag is set if the URL does not contain /DR/, which is a crude
+// test for not coming via the FlashAir card.
+var cloud_served = document.URL.indexOf('/DR/') === -1;
+
+var activeFileManager;
 
 class MidiViewer {
   constructor(name) {
 	this.html = "";
   }
 
-//Save
+
  openOnBuffer(data, fname) {
 	if(!this.midiDoc) {
 		let midiPlace = $('#midiview');
 		this.midiDoc = openMidiDoc(midiPlace[0], fname);
+	}
+	this.midiDoc.openOnBuffer(data);
+ }
+
+}; // ** End of class
+
+class XpjViewer {
+  constructor(name) {
+	this.html = "";
+  }
+
+
+ openOnBuffer(data, fname) {
+	if(!this.midiDoc) {
+		let midiPlace = $('#xpjview');
+		this.midiDoc = openXpjDoc(midiPlace[0], fname);
 	}
 	this.midiDoc.openOnBuffer(data);
  }
@@ -39,12 +75,13 @@ function onLoad()
 {
 	let midiViewDoc = new MidiViewer('midiview');
 
+
 	let midiFileManager = new FileManager({
 		prefix:  "midi",
 		defaultName: "Untitled.mid",
 		defaultDir: "/",
 		dataType: "blob",
-		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.midiViewDoc);
+		load:  function(theData, fname, manager, fromViewer) {
 			let homeViewer = new MidiViewer('midiview');
 			manager.homeDoc = homeViewer;
 			homeViewer.openOnBuffer(theData, fname);
@@ -59,7 +96,7 @@ function onLoad()
 		content_type: "audio/midi",
 	});
 
-	if(!local_exec) {
+	if(!local_exec && !cloud_served) {
 		var urlarg = location.search.substring(1);
 		if (urlarg && urlarg.toLowerCase().indexOf('.mid') >0) {
 			let fname = decodeURI(urlarg);
@@ -90,7 +127,7 @@ function onLoad()
 		defaultName: "/SONGS/SONG.XML",
 		defaultDir: "/SONGS/",
 		dataType: "text",
-		load:  function(theData, fname, manager, fromViewer) { // (theData, fname, me, me.homeDoc); constructor(fname, text, newKitFlag, simple) 
+		load:  function(theData, fname, manager, fromViewer) {
 			let homeViewer = makeDelugeDoc(fname, theData, {transTrack: transTrackToMidi});
 			setFocusDoc(homeViewer);
 			manager.homeDoc = homeViewer;
@@ -120,6 +157,56 @@ function onLoad()
 	});
 }
 
+
+function onLoadXpj()
+{
+	let xpjViewDoc = new XpjViewer('xpjview');
+
+	let xpjFileManager = new FileManager({
+		prefix:  "xpj",
+		defaultName: "Untitled.xpj",
+		defaultDir: "/",
+		dataType: "blob",
+		load:  function(theData, fname, manager, fromViewer) {
+			let homeViewer = new XpjViewer('xpjview');
+			manager.homeDoc = homeViewer;
+			homeViewer.openOnBuffer(theData, fname);
+			$('#xpjview').append(homeViewer.html);
+			
+		},
+		save:  function(manager, fromViewer) {
+			return fromViewer.midiDoc.generateMid();
+		},
+		newCallback: 	null,
+		fileExtensions: ["XPJ", "xpj"],
+		content_type: "application/zip",
+	});
+
+	activeFileManager = xpjFileManager;
+
+//	if(!local_exec && !cloud_served) {
+
+	if(!local_exec) {
+		var urlarg = location.search.substring(1);
+		if (urlarg && urlarg.toLowerCase().indexOf('.xpj') >0) {
+			let fname = decodeURI(urlarg);
+			xpjFileManager.initialLoad(fname);
+		} else {
+			xpjViewDoc.midiDoc = makeEmptyMidiFile($('#xpjview')[0]);
+			if (cloud_served) {
+				let dropin = getDropInFS();
+			}
+		}
+	} else {
+		xpjViewDoc.midiDoc = makeEmptyMidiFile($('#xpjview')[0]);
+	}
+
+	xpjFileManager.homeDoc = xpjViewDoc;
+	
+	
+	activeFileManager.prefixId("status").text("Drop files and folders onto this yellow area to make them available to this program.");
+}
+
  function addToDocFunction(jsonTrack) {
  	pasteTrackJson(jsonTrack, getFocusDoc());
  }
@@ -131,6 +218,32 @@ if (buildType !== 'mpc') {
 }
 
 setMpcEnabled(buildType === 'mpc');
-setClipboardEnabled(buildType !== 'mpc');
+setClipboardEnabled(buildType !== 'mpc' && buildType !== 'xpj');
 
-window.onload = onLoad;
+if (buildType === 'xpj') {
+	window.onload = onLoadXpj;
+} else {
+	window.onload = onLoad;
+}
+
+let uppie = new Uppie();
+let duppy = document.querySelector('#uploader');
+if (duppy) {
+	uppie(duppy, function (event, formData, files) {
+		var flist = [];
+		for (var [key, value] of formData.entries()) { if(key === 'files[]') flist.push(value); }
+
+		let dropin = getDropInFS();
+		dropin.addFiles(flist);
+
+		if (activeFileManager) {
+			activeFileManager.prefixId("status").text("" +  flist.length + " file entries loaded");
+		}
+	});
+}
+
+
+$("#xpjtestbut").on('click', e=>{
+	console.log("Clicked");
+	let newWin = window.open("test.html");
+});

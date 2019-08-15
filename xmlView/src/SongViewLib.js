@@ -6,30 +6,17 @@ import ReactDOM from "react-dom";
 import Clipboard from "./js/clipboard.min.js";
 import tippy from "./js/tippy.all.min.js";
 import {formatKit} from "./KitList.jsx";
-import {getXmlDOMFromString, jsonToXMLString, xmlToJson, jsonToTable} from "./JsonXMLUtils.js";
+import {getXmlDOMFromString, jsonToXMLString, xmlToJson, xml3ToJson, jsonToTable} from "./JsonXMLUtils.js";
 import {showArranger, colorForGroup, bumpTracks} from "./Arranger.jsx";
-import {jsonequals, reviveClass, forceArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
-
-import fixm50to50 from "./templates/fixm50to50.js";
-import fmtsync from "./templates/fmtsync.js";
-
+import {jsonequals, reviveClass, forceArray, getClipArray, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
+import {fixm50to50, fmtsync} from './FmtSound.js';;
 import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
-
-import note_tip_template from "./templates/note_tip_template.handlebars";
-
 import {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString} from "./SongUtils.js";
+import {song_template} from "./templates.js";
+import {SoundTab} from './SoundTab.jsx';
+import {SampleList} from './SampleList.jsx';
 
-import track_head_template from "./templates/track_head_template.handlebars";
-import sample_list_template from "./templates/sample_list_template.handlebars";
-import paster_template from "./templates/paster_template.handlebars";
-import midiKnobTemplate from "./templates/midiKnobTemplate.handlebars";
-import modKnobTemplate from "./templates/modKnobTemplate.handlebars";
-import midiModKnobTemplate from "./templates/midiModKnobTemplate.handlebars";
-import sample_range_prefix from "./templates/sample_range_prefix.handlebars";
-import sound_template from "./templates/sound_template.handlebars";
-import song_template from "./templates/song_template.handlebars";
-
-import {placeTrackObj, placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
+import {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
 
 "use strict";
 
@@ -39,7 +26,7 @@ var gIdCounter = 0;
 
 var focusDoc;
 
-var trackHeaderTemplate = track_head_template;
+//var trackHeaderTemplate = track_head_template;
 
 /* Plotters
 */
@@ -80,7 +67,7 @@ function enableColorPops() {
 	});
 }
 
-
+/* 
 function formatModKnobs(knobs, title, obj)
 {
 	let context = {title: title};
@@ -107,6 +94,7 @@ function formatModKnobsMidi(knobs, obj)
 	obj.append(midiModKnobTemplate(context));
 }
 
+*/
 
 /*
 	Demarcation for code to roll-up into objects followimg.
@@ -220,7 +208,7 @@ function addTrackToSong(pastedJSON, songDoc) {
 	}
 	
 	let track0 = trackA[0];
-	if (songDoc.version2x) {
+	if (songDoc.version2x || songDoc.version3Format) {
 		song.instruments = forceArray(song.instruments);
 		// Check if we need to add the sound, kit, midiChannel, or cvChannel to the instruments list.
 		let tKind = trackKind(track0);
@@ -253,6 +241,9 @@ function addTrackToSong(pastedJSON, songDoc) {
 				co.channel = track0.cvChannel;
 				song.instruments.unshift(co);
 			}
+		} else if (tKind === 'audio') {
+			// Someday handle paste here.
+			
 		}
 		// Iterate thru the song-level instruments element if it exists, fixing the track numbers.
 		for (let inst in song.instruments) {
@@ -312,8 +303,7 @@ function pasteTrackText(text, songDoc) {
 */
 
 
-function formatSound(obj)
-{
+function formatSound(obj) {
 	let context = {};
 	for (var i = 1; i < arguments.length; ++i) {
 		if(arguments[i]) {
@@ -321,118 +311,11 @@ function formatSound(obj)
 		}
 	}
 
-	if (context.midiKnobs && context.midiKnobs.midiKnob) {
-		obj.append(midiKnobTemplate(forceArray(context.midiKnobs.midiKnob)));
-		// formatModKnobs(context.modKnobs.modKnob, "Midi Parameter Knob Mapping", obj);
-	}
-
-	if (context.modKnobs && context.modKnobs.modKnob) {
-		formatModKnobs(context.modKnobs.modKnob, "Parameter Knob Mapping", obj);
-	}
-
-	// Populate mod sources fields with specified destinations
-	if (context.patchCables) {
-		let destMap = {};
-		let patchA = forceArray(context.patchCables.patchCable);
-		for (var i = 0; i < patchA.length; ++i) {
-			let cable = patchA[i];
-			let sName = "m_" + cable.source;
-			let aDest = cable.destination;
-			// Vibrato is represented by a patchCable between lfo1 and pitch
-			if (cable.source === 'lfo1' && aDest === 'pitch') {
-				let vibratoVal = fixm50to50(cable.amount);
-				context['vibrato'] = vibratoVal;
-			}
-			let amount = fixm50to50(cable.amount);
-			let info = aDest + "(" + amount + ")";
-			let val = destMap[sName];
-			if (val) val += ' ';
-				else val = "";
-			val += info;
-			destMap[sName]  = val;
-		}
-		
-		jQuery.extend(true, context, destMap);
-	}
-	if ( (context.osc1 && context.osc1.fileName) || (context.osc2 && context.osc2.fileName || (context.osc1 && context.osc1.sampleRanges)) ) {
-		let subContext = jQuery.extend(true, {}, context);
-		// If Osc2 does not have a sample defined for it, strike osc2 from the context
-		if (!context.osc2 || !context.osc2.sampleRanges && (!context.osc2.fileName || $.isEmptyObject(context.osc2.fileName))) {
-			delete subContext.osc2;
-		}
-		context.stprefix = sample_range_prefix(subContext);
-	}
-	obj.append(sound_template(context));
+	// let sndt = new SoundTab({sound: context});
+	let sndt = React.createElement(SoundTab, {sound: context});
+	ReactDOM.render(sndt, obj[0]);
 }
 
-function formatMidi(obj)
-{
-	let context = {};
-	for (var i = 1; i < arguments.length; ++i) {
-		if(arguments[i]) {
-			jQuery.extend(true, context, arguments[i]);
-		}
-	}
-	if (context.modKnobs && context.modKnobs.modKnob) {
-		formatModKnobsMidi(context.modKnobs.modKnob, obj);
-	}
-}
-
-/*
-function viewSound(e, songJ) {
-	let target = e.target;
-	let trn =  Number(target.getAttribute('trackno'));
-
-	let hideShow = target.textContent;
-	if (!songJ) return;
-
-	let trackA = forceArray(songJ.tracks.track);
-	let trackIX = trackA.length - trn - 1;
-	let trackD = trackA[trackIX];
-	
-	// Follow any indirect reference
-	if (trackD.instrument && trackD.instrument.referToTrackId !== undefined) {
-		let fromID = Number(trackD.instrument.referToTrackId);
-		trackD = trackA[fromID];
-	}
-
-	// find head div, then place to put
-	let headdiv = $(target).closest('.trackhd');
-	let where = $('.sndplc', headdiv);
-
-	if (hideShow === "▼") {
-		target.textContent = "►";
-		ReactDOM.unmountComponentAtNode($(where)[0]);
-		$(where)[0].innerHTML = "";
-	} else {
-		let trackType = trackKind(trackD);
-		if (trackType === 'sound' || trackType === 'kit'|| trackType === 'midi') {
-			target.textContent = "▼";
-		} else {
-			return;
-		}
-		if (trackType === 'sound') {
-		let soundD = findSoundData(trackD, songJ);
-		formatSound(where, soundD, trackD.soundParams);
-	  } else if (trackType === 'kit') {
-			// We have a kit track,, 
-			let kitroot = trackD.kit;
-			if (trackD['soundSources']) {
-				kitroot = trackD.soundSources.sound;
-			} else {
-				kitroot = findKitList(trackD, songJ);
-			}
-
-			if(kitroot) {
-				formatKit(kitroot, where[0]);
-			}
-		} else if(trackType === 'midi') {
-			formatMidi(where, trackD);
-		}
-	 }
-}
-
-*/
 
 /*******************************************************************************
 
@@ -466,7 +349,7 @@ function getTrackTextNum(trackNum, songJ)
 {
 	if (!songJ) return;
 
-	let trackA = forceArray(songJ.tracks.track);
+	let trackA = getClipArray(songJ);
 	let trackIX = trackA.length - trackNum - 1;
 	let trackJ = trackA[trackIX];
 	return getTrackText(trackJ, songJ);
@@ -554,19 +437,10 @@ function pasteTrack(e, jDoc) {
 }
 
 function trackPasteField(obj, jDoc) {
-	let iOSDevice = !!navigator.platform.match(/iPhone|iPod|iPad/);
-	let paster = paster_template({iOSDevice: iOSDevice});
-	obj.append($(paster));
-
-	if(iOSDevice) {
-		$('.iosSubmit', jDoc.docTopElement).on('click', (e)=>{
-			pasteTrackios(e, focusDoc);
-		});
-	} else {
-		$('.paster', jDoc.docTopElement).on('paste', (e)=>{
-			pasteTrack(e, focusDoc);
-		});
-	}
+	obj.append($("<hr><div><b>Paste track data in field below to add it to song.</b><br><textarea class='paster tinybox' rows='2'></textarea></div>"));
+	$('.paster', jDoc.docTopElement).on('paste', (e)=>{
+		pasteTrack(e, focusDoc);
+	});
 }
 
 /*
@@ -591,114 +465,20 @@ function convertTempo(jsong)
 	return tempo;
 }
 
-function scanSamples(json, sampMap) {
-	for (let k in json) {
-		if(json.hasOwnProperty(k)) {
-			let v = json[k];
-			if (k === 'fileName' && typeof v === "string") {
-				sampMap.add(v);
-			} else
-			if (isArrayLike(v)) {
-				for(var ix = 0; ix < v.length; ++ix) {
-					let aobj = v[ix];
-					if (isArrayLike(aobj) || aobj instanceof Object) {
-						scanSamples(v[ix], sampMap);
-					}
-				}
-			} else if(v instanceof Object) {
-				scanSamples(v, sampMap);
-			}
-		}
-	}
-}
-
-function sampleReport(json, showAll, obj) {
-	var sampSet = new Set();
-	scanSamples(json, sampSet);
-	var sampList = Array.from(sampSet);
-	if (!showAll) {
-		sampList = sampList.filter(function (n) {
-			return !n.startsWith('SAMPLES/DRUMS/');
-		});
-	}
-	sampList.sort();
-	obj.append(sample_list_template({sampList: sampList, showDrums: showAll}));
-}
-
-function genSampleReport(jsong,jdoc)
+function genSampleReport(jsong, jdoc)
 {
+	let sndt = React.createElement(SampleList, {samplePath: '/', song: jsong});
+	ReactDOM.render(sndt, $('.samprepplace', jdoc)[0]);
+/*
 	let isChecked = $(".showdrums", jdoc).is(':checked');
 	$('.samprepplace table', jdoc).remove();
 	sampleReport(jsong, isChecked, $('.samprepplace', jdoc));
 	$('.showdrums').on('click', function () {
 		genSampleReport(jsong, jdoc);
 	});
-}
-
-/*
-function formatSong(jdoc, obj) {
-	let jsong = jdoc.jsonDocument.song;
-	let newNoteFormat = jdoc.newNoteFormat;
-	let ctab = genColorTab(jsong.preview);
-	obj.append(ctab);
-	if (COLOR_POPUP) {
-		enableColorPops();
-	}
-	obj.append($("<p class='tinygap'>"));
-	obj.append("Tempo = " + convertTempo(jsong) + " bpm");
-	let swing = Number(jsong.swingAmount);
-	if(swing !== 0) {
-		swing += 50;
-		let sync = Number(jsong.swingInterval);
-		obj.append(", Swing = " + swing + "% on " + fmtsync[sync]);
-	}
-	
-	obj.append(", Key = " + scaleString(jsong));
-	obj.append($("<p class='tinygap'>"));
-	
-	showArranger(jsong, jdoc.newSynthNames, obj);
-
-	obj.append($("<p class='tinygap'>"));
-
-	let sectionTab = forceArray(jsong.sections.section);
-
-	if(jsong.tracks) {
-	  let trax = forceArray(jsong.tracks.track);
-	  if (trax) {
-		for(var i = 0; i < trax.length; ++i) {
-			// obj.append($("<h3/>").text("Track " + (i + 1)));
-			let track = trax[trax.length - i - 1];
-			let tKind = trackKind(track);
-			let refTrack = track;
-			if (track.instrument && track.instrument.referToTrackId !== undefined) {
-				let fromID = Number(track.instrument.referToTrackId);
-				refTrack = trax[fromID];
-			}
-			trackHeader(track, jdoc.newSynthNames, i, sectionTab, trackHeaderTemplate, obj);
-			placeTrackObj(obj, track, jsong);
-		}
-		activateTippy();
-	  }
-	}
-	trackPasteField(obj, jdoc);
-	songTail(jsong, obj);
-	obj.append($("<div class='samprepplace'></div>"));
-	genSampleReport(jsong, obj);
-
-	// Populate copy to clip buttons.
-	//let clippers = $('.clipbtn', jdoc.docTopElement);
-	let clippers = jdoc.docTopElement[0].getElementsByClassName('clipbtn');
-	new Clipboard(clippers, {
-	   text: function(trigger) {
-		let asText = getTrackTextNum(trigger.getAttribute('trackno'), jsong);
-		return asText;
-	}
-	});
-	$(".soundviewbtn").on('click', function(e) {
-		viewSound(e, jsong);
-	});
-}
 */
+}
+
 
 
 /*******************************************************************************
@@ -713,7 +493,8 @@ class DelugeDoc {
   	this.idNumber = gIdCounter++;
 	this.idString = "" + this.idNumber;
 	this.fname = fname;
-	let songhead = song_template({idsuffix: this.idString});
+	let temp1 = song_template.split('{{idsuffix}}');
+	let songhead = temp1.join(this.idString);
 	this.options = options;
 	// docspot
 	$('#docspot').empty();
@@ -740,6 +521,7 @@ class DelugeDoc {
 //	alert(str);
 
 	this.newNoteFormat = !(this.firmwareVersionFound.indexOf('1.2.') >= 0 || this.firmwareVersionFound.indexOf('1.3.') >= 0);
+	this.version3Format = text.indexOf('earliestCompatibleFirmware="3') > 0;
 	this.version2x = this.firmwareVersionFound.indexOf('>2.') >= 0;
 	this.newSynthNames = !!this.earliestCompatibleFirmware;
 	
@@ -762,7 +544,7 @@ class DelugeDoc {
 	var asDOM = getXmlDOMFromString(fixedText);
 	// Uncomment following to generate ordering table based on a real-world example.
 	// enOrderTab(asDOM);
-	var asJSON = xmlToJson(asDOM);
+	var asJSON = this.version3Format ? xml3ToJson(asDOM) : xmlToJson(asDOM);
 	if (options.newKit) {
 		asJSON.kit.soundSources = [];
 	}
@@ -802,8 +584,8 @@ class DelugeDoc {
 
 	let sectionTab = forceArray(jsong.sections.section);
 
-	if(jsong.tracks) {
-	  let trax = forceArray(jsong.tracks.track);
+	if(jsong.tracks || jsong.sessionClips) {
+	  let trax = getClipArray(jsong);
 	  if (trax) {
 		for(var i = 0; i < trax.length; ++i) {
 			let track = trax[trax.length - i - 1];
@@ -813,7 +595,8 @@ class DelugeDoc {
 	  }
 	}
 
-	if (fullFormat) {
+	// Don't allow track pasting in version 3 yet.
+	if (fullFormat && !jdoc.version3Format) {
 		trackPasteField(obj, jdoc);
 		obj.append($("<div class='samprepplace'></div>"));
 		genSampleReport(jsong, obj);
@@ -901,6 +684,10 @@ class DelugeDoc {
   }
 
  genDocXMLString() {
+ 	if (this.version3Format) {
+ 		return genDoc3XMLString();
+ 	}
+
  	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
 	if (this.firmwareVersionFound) {
 		headerStr += this.firmwareVersionFound + "\n";
@@ -917,6 +704,20 @@ class DelugeDoc {
  	let saveText = headerStr + jsonToXMLString(toMake, this.jsonDocument[toMake]);
  	return saveText;
  }
+
+ genDoc3XMLString() {
+ 	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
+
+	let jsonDoc =  this.jsonDocument
+	let toMake;
+	if (jsonDoc['song']) toMake = 'song';
+	  else if (jsonDoc['sound']) toMake = 'sound';
+	   else if (jsonDoc['kit']) toMake = 'kit';
+	if (!toMake) return;
+ 	let saveText = headerStr + jsonToXMLString(toMake, this.jsonDocument[toMake]);
+ 	return saveText;
+ }
+
 
  save(toName) {
  	let saveText = this.genDocXMLString();
@@ -993,4 +794,4 @@ function makeDelugeDoc(fname, text, options)
 	return new DelugeDoc(fname, text, options);
 }
 
-export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson, getTrackText, formatMidi};
+export {formatSound, makeDelugeDoc, setFocusDoc, getFocusDoc, pasteTrackJson, getTrackText};

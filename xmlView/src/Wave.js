@@ -39,7 +39,6 @@ export default class Wave {
 		container:		this.rootDivId,
 		waveColor:		'black',
 		progressColor:	'#303030',
-		splitChannels:	true,
 		interact:		false,
 		fillParent:		false,
 		scrollParent:	true,
@@ -49,8 +48,8 @@ export default class Wave {
 		// barWidth:		1,
 	};
 
-	if (this.params) {
-		initParams = Object.assign(initParams, this.params);
+	if (this.initParams) {
+		initParams = Object.assign(initParams, this.initParams);
 	}
 
 	this.surfer = WaveSurfer.create(initParams);

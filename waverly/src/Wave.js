@@ -1,4 +1,4 @@
-import $ from'./js/jquery-3.2.1.min.js';
+import $ from'jquery';
 import WaveSurfer from './js/wavesurfer.js';
 import TimelinePlugin from'./js/plugins/wavesurfer.timeline.js';
 import RegionPlugin  from'./js/plugins/wavesurfer.regions.js';
@@ -52,7 +52,7 @@ export default class Wave {
 		container:		this.rootDivId,
 		waveColor:		'blue',
 		progressColor:	'darkblue',
-		splitChannels:	true,
+		//splitChannels:	true,
 		interact:		false,
 		fillParent:		false,
 		scrollParent:	true,
@@ -62,8 +62,8 @@ export default class Wave {
 		// barWidth:		1,
 	};
 
-	if (this.params) {
-		initParams = Object.assign(initParams, this.params);
+	if (this.initParams) {
+		initParams = Object.assign(initParams, this.initParams);
 	}
 
 	this.surfer = WaveSurfer.create(initParams);

@@ -115,11 +115,6 @@ function gentabs(d) {
 	return str;
 }
 
-function isObject(val) {
-    if (val === null) { return false;}
-    return ( (typeof val === 'function') || (typeof val === 'object') );
-}
-
 function reviveClass(k, v) {
 	if (doNotSerializeJson.has(k)) return undefined;
 	if (!isObject(v)) return v;
@@ -238,6 +233,7 @@ function jsonToXMLString(root, json) {
 	return jsonToXML(root, json, depth);
 }
 
+
 // Thanks to Dr. White for the jsonequals function.
 // https://stackoverflow.com/users/2215072/drwhite
 // https://stackoverflow.com/questions/26049303/how-to-compare-two-json-have-the-same-properties-without-order
@@ -354,6 +350,21 @@ function forceArray(obj) {
 	return aObj;
 }
 
+// 
+function getClipArray(song) {
+	if (song.tracks) {
+		if (song.tracks.track) {
+			return forceArray(song.tracks.track);
+		}
+	}
+
+	if (song.sessionClips) {
+		return forceArray(song.sessionClips);
+	}
+
+	return [];
+}
+
 function classReplacer(key, value) {
 	if (value === undefined) {
 		return value;
@@ -387,4 +398,167 @@ function zonkDNS(json) {
  }
 }
 
-export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, reviveClass, jsonToTable, forceArray, isArrayLike, nameToClassTab, classReplacer, zonkDNS};
+
+// Changes XML Dom elements to JSON in new format.
+function xml3ToJson(xml, fill) {
+  // Create the return object
+  let obj = fill ? fill : {};
+
+  if (xml.nodeType === 1) { // element
+	// do attributes
+	if (xml.attributes.length > 0) {
+	  for (let j = 0; j < xml.attributes.length; j += 1) {
+		const attribute = xml.attributes.item(j);
+		obj[attribute.nodeName] = attribute.nodeValue;
+	  }
+	}
+  } else if (xml.nodeType === 3) { // text
+	obj = xml.nodeValue;
+  }
+
+	let makeArray = heteroArrays.has(xml.nodeName);
+	if (makeArray) {
+		obj = [];
+	}
+  // do children
+  // If just one text node inside
+  if (xml.hasChildNodes() && xml.childNodes.length === 1 && xml.childNodes[0].nodeType === 3) {
+	obj = xml.childNodes[0].nodeValue;
+  } else if (xml.hasChildNodes()) {
+	for (let i = 0; i < xml.childNodes.length; i += 1) {
+		const item = xml.childNodes.item(i);
+		const nodeName = item.nodeName;
+		if (item.nodeType === 3) continue; // JFF don't bother with text nodes
+		let classToMake = nameToClassTab[nodeName];
+		let childToFill;
+		if (classToMake) {
+			childToFill = new classToMake();
+		}
+	if (makeArray) {
+		obj.push(xml3ToJson(item, childToFill));
+	} else if (typeof (obj[nodeName]) === 'undefined') {
+		obj[nodeName] = xml3ToJson(item, childToFill);
+	  } else {
+		if (typeof (obj[nodeName].push) === 'undefined') {
+			const old = obj[nodeName];
+			obj[nodeName] = [];
+			obj[nodeName].push(old);
+		}
+		obj[nodeName].push(xml3ToJson(item, childToFill)); // ,childToFill
+	   }
+	}
+  }
+  return obj;
+}
+
+
+
+
+function jsonToXML3(kv, j, d) {
+//	console.log(kv);
+	if(!isObject(j)) {
+		return gentabs(d) + "<" + kv + ">" + j + "</" + kv + ">\n";
+	}
+	let atList = j["@attributes"];
+	let atStr = "";
+	if (atList) {
+		for (let ak in atList) {
+			if(atList.hasOwnProperty(ak)) {
+				atStr += ' ';
+				atStr += ak;
+				atStr += '="';
+				atStr += atList[ak];
+				atStr +='"';
+			}
+		}
+	}
+	let insides = "";
+
+	let keyOrder = [];
+	let keyTab = keyOrderTab[kv];
+
+	if (keyTab) {
+		let keySet = new Set();
+		for(let ek in j) { 
+			if(!doNotSerialize.has(ek) && j.hasOwnProperty(ek) && ek != "@attributes") {
+				keySet.add(ek);
+			}
+		}
+		for (let ktx = 0; ktx < keyTab.length; ++ktx) {
+			let nkv = keyTab[ktx];
+			if (!doNotSerialize.has(nkv) && j.hasOwnProperty(nkv)) {
+				keyOrder.push(nkv);
+				keySet.delete(nkv);
+			}
+		}
+
+		if (keySet.size > 0) {
+			for (let sk of keySet.keys()) {
+				keyOrder.push(sk);
+				console.log("Missing: " + sk + " in: " + kv);
+			}
+		}
+	} else { // No keytab entry, do it the old-fashioned way.
+		for(let ek in j) { 
+			if(!doNotSerialize.has(ek) && j.hasOwnProperty(ek) && ek != "@attributes") {
+				keyOrder.push(ek);
+			}
+		}
+	}
+
+	for(let i = 0; i < keyOrder.length; ++i) {
+		let kvo = keyOrder[i];
+		let v = j[kvo];
+		if (v === undefined) {
+			continue;
+		}
+
+		if (kvo === 'instruments') {
+			console.log('meow');
+		}
+
+		// a heteroArray is a special case. Instead of <tracks><track></track>…</tracks> we have
+		// <instruments><sound></sound><kit></kit></instruments>. Put another way, a heteroArray
+		// has more than one type of element in it.
+		if (heteroArrays.has(kvo)) {
+			insides += gentabs(d) + "<" + kvo + ">\n";
+			for(let n = 0; n < v.length; ++n) {
+				let ao = v[n];
+				if (!(ao instanceof DRObject)) {
+					continue;
+				}
+				let hkv = ao.xmlName();
+				insides += jsonToXML(hkv, ao, d + 1);
+			}
+			insides +=  gentabs(d + 1) + "</" + kvo + ">\n";
+		} else if (isArrayLike(v)) {
+			for(let k = 0; k < v.length; ++k) {
+				insides += jsonToXML(kvo, v[k], d + 1);
+			}
+		} else if (v.constructor == Object) {
+			insides += jsonToXML(kvo, v, d + 1);
+		} else {
+				// Simple k/v pair
+			if(typeof v === "string") v = v.trim();
+			insides += jsonToXML(kvo, v, d);
+		}
+	}
+	let str = gentabs(d) + "<" + kv + atStr;
+	
+	if (insides.length > 0) {
+		str += '>\n' + insides + gentabs(d - 1) + '</' + kv + '>\n';
+	} else {
+		str += "/>";
+	}
+	return str;
+}
+
+
+function jsonToXML3String(root, json) {
+	let depth = 0;
+	return jsonToXML3(root, json, depth);
+}
+
+
+export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, xml3ToJson, reviveClass, 
+	jsonToXML3String, jsonToTable, forceArray, getClipArray, isArrayLike, nameToClassTab, classReplacer, zonkDNS};
