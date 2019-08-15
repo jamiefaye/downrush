@@ -36,7 +36,8 @@ class AudioTrackView extends React.Component {
 	let track = this.props.track;
 	let me = this;
 
-	return <table><tbody><tr>
+	return <table className='audiotrack'><tbody><tr className='nobord'><td colSpan='2' className='audhdr nobord'>{track.filePath}</td></tr>
+		<tr>
 		<td><div style= {{width: '26px'}}>
 		<PlayerControl pushed={this.state.pushed} command={(e)=>{this.command('play', e)}}/>
 		<p/>

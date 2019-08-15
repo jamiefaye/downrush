@@ -276,16 +276,14 @@ class SampleView extends WaveView {
 class AudioView extends WaveView {
   constructor(props) {
 	super(props);
-
   }
 
   render() {
   	let track = this.props.track;
   	let trackLen = track.length;
-	if (this.props.open) {
-		return <div style={{width: trackLen + 'px'}} 
-			ref={el => this.el = el}> </div>;
-	} else return <div style={{height: '0px'}}> </div>;
+		return <div style={{width: trackLen + 'px'}}>
+			{this.props.open ? <div ref={el => this.el = el}> </div> : null}
+			</div>
   }
 }
 

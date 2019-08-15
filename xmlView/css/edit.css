@@ -304,6 +304,10 @@ div.paramconst {
 	background-color: #F8C8B8;
 }
 
+.audhdr {
+	background-color: #e8e8c8;
+}
+
 .samplenb {
 	background-color: #FFD2b2;
 }
@@ -413,6 +417,10 @@ div.paramconst {
 	background-color: #FFFFE8;
 }
 .kithead {
+	background-color: #EFEFd8;
+}
+
+.audiotrack {
 	background-color: #EFEFd8;
 }
 
@@ -590,4 +598,11 @@ div.selbox {
 	background-color: gray;
 	position: absolute;
 	opacity: 0.2;
+}
+
+
+.audiotrack {
+	border: none;
+	width: auto;
+	padding: 0px;
 }
