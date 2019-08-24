@@ -728,8 +728,8 @@ class DelugeDoc {
 // use ajax to save-back data (instead of a web worker).
   saveFile(filepath, data)
 {
-	console.log(data);
-	return;
+//	console.log(data);
+//	return;
 
 	var timestring;
 	var dt = new Date();
