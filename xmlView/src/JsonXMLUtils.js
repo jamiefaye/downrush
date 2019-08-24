@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import {keyOrderTab, heteroArrays} from "./keyOrderTab.js";
 import {DRObject, nameToClassTab} from "./Classes.jsx";
-
+var xmlescape = require('xml-escape');
 /*******************************************************************************
 
 		JSON and XML conversions and aids.
@@ -459,34 +459,48 @@ function jsonToXML3(kv, j, d) {
 	if(!isObject(j)) {
 		return gentabs(d) + "<" + kv + ">" + j + "</" + kv + ">\n";
 	}
-	let atList = j["@attributes"];
-	let atStr = "";
-	if (atList) {
-		for (let ak in atList) {
-			if(atList.hasOwnProperty(ak)) {
-				atStr += ' ';
-				atStr += ak;
-				atStr += '="';
-				atStr += atList[ak];
-				atStr +='"';
-			}
-		}
-	}
+
 	let insides = "";
 
-	let keyOrder = [];
-	let keyTab = keyOrderTab[kv];
-
-	if (keyTab) {
-		let keySet = new Set();
-		for(let ek in j) { 
-			if(!doNotSerialize.has(ek) && j.hasOwnProperty(ek) && ek != "@attributes") {
+	let attrList = [];
+	let keySet = new Set();
+	for(let ek in j) {
+		if(!doNotSerialize.has(ek) && j.hasOwnProperty(ek)) {
+			let v = j[ek];
+			if (!isObject(v)) {
+				attrList.push(ek);
+			} else {
 				keySet.add(ek);
 			}
 		}
+	}
+
+	let atStr = "";
+	if (attrList) {
+		for (let ix = 0; ix < attrList.length; ++ix) {
+			let ak = attrList[ix];
+			let v = j[ak];
+			if(typeof v === "string") v = v.trim();
+			if (ix > 0) {
+				atStr += "\n" + gentabs(d + 1);
+			} else {
+				atStr += ' ';
+			}
+			let ve = xmlescape(v);
+			atStr += ak;
+			atStr += '="';
+			atStr += ve;
+			atStr +='"';
+		}
+	}
+
+	let keyTab = keyOrderTab[kv];
+	let keyOrder = [];
+
+	if (keyTab) {
 		for (let ktx = 0; ktx < keyTab.length; ++ktx) {
 			let nkv = keyTab[ktx];
-			if (!doNotSerialize.has(nkv) && j.hasOwnProperty(nkv)) {
+			if (keySet.has(nkv)) {
 				keyOrder.push(nkv);
 				keySet.delete(nkv);
 			}
@@ -499,10 +513,8 @@ function jsonToXML3(kv, j, d) {
 			}
 		}
 	} else { // No keytab entry, do it the old-fashioned way.
-		for(let ek in j) { 
-			if(!doNotSerialize.has(ek) && j.hasOwnProperty(ek) && ek != "@attributes") {
-				keyOrder.push(ek);
-			}
+		for(let ek in keySet) { 
+			keyOrder.push(ek);
 		}
 	}
 
@@ -528,27 +540,28 @@ function jsonToXML3(kv, j, d) {
 					continue;
 				}
 				let hkv = ao.xmlName();
-				insides += jsonToXML(hkv, ao, d + 1);
+				insides += jsonToXML3(hkv, ao, d + 1);
 			}
 			insides +=  gentabs(d + 1) + "</" + kvo + ">\n";
 		} else if (isArrayLike(v)) {
 			for(let k = 0; k < v.length; ++k) {
-				insides += jsonToXML(kvo, v[k], d + 1);
+				insides += jsonToXML3(kvo, v[k], d + 1);
 			}
-		} else if (v.constructor == Object) {
-			insides += jsonToXML(kvo, v, d + 1);
+		} else if (isObject(v)) {
+			insides += jsonToXML3(kvo, v, d + 1);
 		} else {
 				// Simple k/v pair
-			if(typeof v === "string") v = v.trim();
-			insides += jsonToXML(kvo, v, d);
+			console.log("k/v pair should not appear here " + kvo + " " + v);
+			// if(typeof v === "string") v = v.trim();
+			// insides += jsonToXML3(kvo, v, d);
 		}
 	}
 	let str = gentabs(d) + "<" + kv + atStr;
 	
 	if (insides.length > 0) {
-		str += '>\n' + insides + gentabs(d - 1) + '</' + kv + '>\n';
+		str += '>\n' + insides + gentabs(d) + '</' + kv + '>\n';
 	} else {
-		str += "/>";
+		str += "/>\n";
 	}
 	return str;
 }

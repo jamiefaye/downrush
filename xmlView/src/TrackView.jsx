@@ -986,7 +986,7 @@ class SoundDetails extends React.Component {
 			</tr>
 			</tbody>
 		</table>
-		{state.showTab ? <tr><SoundDetails track={track} song={props.song} /></tr> : null}
+		{state.showTab ? <tr><td><SoundDetails track={track} song={props.song} /></td></tr> : null}
 	  </div>)
  	}
 

@@ -6,7 +6,7 @@ import ReactDOM from "react-dom";
 import Clipboard from "./js/clipboard.min.js";
 import tippy from "./js/tippy.all.min.js";
 import {formatKit} from "./KitList.jsx";
-import {getXmlDOMFromString, jsonToXMLString, xmlToJson, xml3ToJson, jsonToTable} from "./JsonXMLUtils.js";
+import {getXmlDOMFromString, jsonToXMLString, jsonToXML3String, xmlToJson, xml3ToJson, jsonToTable} from "./JsonXMLUtils.js";
 import {showArranger, colorForGroup, bumpTracks} from "./Arranger.jsx";
 import {jsonequals, reviveClass, forceArray, getClipArray, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {fixm50to50, fmtsync} from './FmtSound.js';;
@@ -685,7 +685,7 @@ class DelugeDoc {
 
  genDocXMLString() {
  	if (this.version3Format) {
- 		return genDoc3XMLString();
+ 		return this.genDoc3XMLString();
  	}
 
  	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -714,7 +714,7 @@ class DelugeDoc {
 	  else if (jsonDoc['sound']) toMake = 'sound';
 	   else if (jsonDoc['kit']) toMake = 'kit';
 	if (!toMake) return;
- 	let saveText = headerStr + jsonToXMLString(toMake, this.jsonDocument[toMake]);
+ 	let saveText = headerStr + jsonToXML3String(toMake, this.jsonDocument[toMake]);
  	return saveText;
  }
 
@@ -728,6 +728,9 @@ class DelugeDoc {
 // use ajax to save-back data (instead of a web worker).
   saveFile(filepath, data)
 {
+	console.log(data);
+	return;
+
 	var timestring;
 	var dt = new Date();
 	var year = (dt.getFullYear() - 1980) << 9;
