@@ -240,6 +240,12 @@ function fmtscrelease(sv) {
 	return maxX;
 }
 
+function fmtinterp(v) {
+	if (v === undefined) return null;
+	if (v === 1) return "linear";
+	return "sinc";
+}
+
 var syncLevelTab = ["off", "4 bars", "2 bars", "1 bar", "2nd", "4th", "8th", "16th", "32nd", "64th"];
 
 function fmtsync (tv) {
@@ -257,6 +263,7 @@ function fmttime(tv) {
 
 function fmttransp(osc) {
 	if(osc === undefined) return "";
+	if (osc.transpose === undefined) return "";
 	let amt = Number(osc.transpose) + Number(osc.cents) / 100;
 	return amt.toFixed(2);
 }
@@ -274,5 +281,5 @@ function tonotename(y) {
 
 
 export {binaryIndexOf, convertHexTo50, fixh, fixm50to50, fixpan, fixphase, fixpos50,
-	fixrev, fmtMidiCC, fmtmoddest, fmtonoff, fmtprior, fmtscattack, fmtscrelease,
+	fixrev, fmtMidiCC, fmtmoddest, fmtonoff, fmtprior, fmtscattack, fmtscrelease, fmtinterp,
 	fmtsync, fmttime, fmttransp, sample_path, tonotename};

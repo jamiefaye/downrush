@@ -10,7 +10,7 @@ import {getXmlDOMFromString, jsonToXMLString, jsonToXML3String, xmlToJson, xml3T
 import {showArranger, colorForGroup, bumpTracks} from "./Arranger.jsx";
 import {jsonequals, reviveClass, forceArray, getClipArray, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {fixm50to50, fmtsync} from './FmtSound.js';;
-import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
+import {Kit, Sound, Song, MidiChannel, CVChannel, become} from "./Classes.jsx";
 import {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString} from "./SongUtils.js";
 import {song_template} from "./templates.js";
 import {SoundTab} from './SoundTab.jsx';
@@ -403,7 +403,14 @@ function getTrackText(trackJ, songJ)
 		}
 	}
 	zonkDNS(trackD);
-	let trackWrap = {"track": trackD};
+	let trackClass;
+	if (!trackJ.xmlName) {
+		trackClass = "track";
+	} else {
+		trackClass = trackJ.xmlName();
+	}
+	let trackWrap = {};
+	trackWrap[trackClass] = trackD;
 	let asText = JSON.stringify(trackWrap, classReplacer, 1);
 	return asText;
 }
@@ -595,8 +602,7 @@ class DelugeDoc {
 	  }
 	}
 
-	// Don't allow track pasting in version 3 yet.
-	if (fullFormat && !jdoc.version3Format) {
+	if (fullFormat) {
 		trackPasteField(obj, jdoc);
 		obj.append($("<div class='samprepplace'></div>"));
 		genSampleReport(jsong, obj);

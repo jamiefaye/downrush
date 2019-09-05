@@ -102,4 +102,10 @@ registerClass('audioClip', AudioClip);
 registerClass('instrumentClip', InstrumentClip);
 
 
-export {DRObject, nameToClassTab, Kit, Sound, Song, MidiChannel, CVChannel, AudioTrack, AudioClip, InstrumentClip};
+function become(was, classToBe) {
+	let me = new classToBe();
+	let newMe = Object.assign(me, was);
+	return newMe;
+}
+
+export {DRObject, nameToClassTab, Kit, Sound, Song, MidiChannel, CVChannel, AudioTrack, AudioClip, InstrumentClip, become};

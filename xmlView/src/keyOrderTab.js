@@ -222,6 +222,7 @@
 "reversed",
 "timeStretchEnable",
 "timeStretchAmount",
+"linearInterpolation",
 "sampleRanges",
 "fileName",
 "zone",
