@@ -10,13 +10,14 @@ import {getXmlDOMFromString, jsonToXMLString, jsonToXML3String, xmlToJson, xml3T
 import {showArranger, colorForGroup, bumpTracks} from "./Arranger.jsx";
 import {jsonequals, reviveClass, forceArray, getClipArray, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {fixm50to50, fmtsync} from './FmtSound.js';;
-import {Kit, Sound, Song, MidiChannel, CVChannel, become} from "./Classes.jsx";
+import {Kit, Sound, Song, MidiChannel, AudioTrack, InstrumentClip, AudioClip, CVChannel, become} from "./Classes.jsx";
 import {gamma_correct, patchInfo, trackKind, yToNoteName, scaleString} from "./SongUtils.js";
 import {song_template} from "./templates.js";
 import {SoundTab} from './SoundTab.jsx';
 import {SampleList} from './SampleList.jsx';
 
-import {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
+import {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, findAudioTrack,
+	usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
 
 "use strict";
 
@@ -164,39 +165,48 @@ function pasteTrackJson(pastedJSON, songDoc) {
 	// If we have a document with one empty track at the front, get rid of it.
 	// as this must have been a generated empty document.
 	let song = songDoc.jsonDocument.song;
-	
-	let trackA = forceArray(song.tracks.track);
-	song.tracks.track = trackA; // If we forced an array, we want that permanent.
 
-	if (trackA.length === 1) {
-		if (typeof trackA[0].noteRows ==='string') {
-			song.tracks.track = [];
-			song.instruments = [];
+	let trackA;
+	
+	if (song.tracks && song.tracks.track) {
+		trackA = forceArray(song.tracks.track);
+		song.tracks.track = trackA; // If we forced an array, we want that permanent.
+		// deal with possible whitespace garbage.
+		if (trackA.length === 1) {
+			if (typeof trackA[0].noteRows ==='string') {
+				song.tracks.track = [];
+				song.instruments = [];
+			}
 		}
 	}
+
 	addTrackToSong(pastedJSON, songDoc);
 }
 
-function addTrackToSong(pastedJSON, songDoc) {
+function addTrackToSong(pastedIn, songDoc) {
 	let song = songDoc.jsonDocument.song;
-
 	// If needed, convert the tracks note format
-	let clipUsingNewNotes = usesNewNoteFormat(pastedJSON.track);
+	let clipUsingNewNotes = usesNewNoteFormat(pastedIn);
 	if (clipUsingNewNotes !== songDoc.newNoteFormat) {
 		if (songDoc.newNoteFormat) {
 			console.log('converting old note format to new');
-			oldToNewNotes(pastedJSON.track);
+			oldToNewNotes(pastedIn);
 		} else {
 			console.log('converting new note format to old');
-			newToOldNotes(pastedJSON.track);
+			newToOldNotes(pastedIn);
 		}
 	}
 
-	// Place the new track at the beginning of the track array
-	let trackA = forceArray(song.tracks.track);
-	song.tracks.track = trackA; // If we forced an array, we want that permanent.
+	let trackA;
+	if (song.tracks && song.tracks.track) {
+		trackA = forceArray(song.tracks.track);
+		song.tracks.track = trackA; // If we forced an array, we want that permanent.
+	} else {
+		trackA = forceArray(song.sessionClips);
+	}
+
 	// The beginning of the track array shows up at the screen bottom.
-	trackA.unshift(pastedJSON.track);
+	trackA.unshift(pastedIn);
 
 	// Iterate thru the remaining tracks, updating the referToTrackId fields.
 	for(var i = 1; i < trackA.length; ++i) {
@@ -242,8 +252,15 @@ function addTrackToSong(pastedJSON, songDoc) {
 				song.instruments.unshift(co);
 			}
 		} else if (tKind === 'audio') {
+			let ai = findAudioTrack(track0, song.instruments);
+			if (!ai) {
 			// Someday handle paste here.
-			
+				let au = new AudioTrack();
+				au.name = track0.trackName;
+				au = Object.assign(au, track0["_audioTrack"]);
+				track0["_audioTrack"] = undefined;
+				song.instruments.unshift(au);
+			}
 		}
 		// Iterate thru the song-level instruments element if it exists, fixing the track numbers.
 		for (let inst in song.instruments) {
@@ -285,12 +302,28 @@ function pasteTrackText(text, songDoc) {
 	let song = songDoc.jsonDocument.song;
 	let pastedJSON = JSON.parse(text, reviveClass);
 
-	if (!pastedJSON || !pastedJSON.track) {
+	if (!pastedJSON) {
+		alert("Invalid data on clipboard.");
+		return;
+	}
+	let pasteObj;
+
+	if (pastedJSON.track) {
+		if (songDoc.version3Format) {
+			pasteObj = become(pastedJSON.track, InstrumentClip);
+		} else {
+			pasteObj = pastedJSON.track;
+		}
+	} else if (pastedJSON.audioClip) {
+			pasteObj = become(pastedJSON.audioClip, AudioClip);	
+	} else if (pastedJSON.instrumentClip) {
+			pasteObj = become(pastedJSON.instrumentClip, InstrumentClip);
+	} else {
 		alert("Invalid data on clipboard.");
 		return;
 	}
 
-	addTrackToSong(pastedJSON, songDoc);
+	addTrackToSong(pasteObj, songDoc);
 	
 }
 
@@ -377,7 +410,7 @@ function getTrackText(trackJ, songJ)
 	}
 	// If we are a kit track, and we don't have a kit element, see if the song-level 
 	// instruments element is available. If so, borrow from that.
-	let tkind = trackKind(trackD);
+	let tkind = trackKind(trackJ);
 	if (tkind === 'kit') {
 		if (!trackD["kit"]) {
 			let kitI = findKitInstrument(trackD, songJ.instruments);
@@ -401,7 +434,10 @@ function getTrackText(trackJ, songJ)
 				trackD['sound'] = sd;
 			}
 		}
+	} else if (tkind === 'audio') {
+		trackD["_audioTrack"] = findAudioTrack(trackD, songJ.instruments);
 	}
+
 	zonkDNS(trackD);
 	let trackClass;
 	if (!trackJ.xmlName) {

@@ -261,6 +261,19 @@ function fmttime(tv) {
 	return v;
 }
 
+// Used for handling whichever time format is valid.
+function fmttime2(tv, tv2) {
+	if(tv === undefined) {
+		if (tv2 === undefined) {
+			return "";
+		}
+		return tv2;
+	}
+	let t = Number(tv) / 1000;
+	let v = t.toFixed(3);
+	return v;
+}
+
 function fmttransp(osc) {
 	if(osc === undefined) return "";
 	if (osc.transpose === undefined) return "";
@@ -282,4 +295,4 @@ function tonotename(y) {
 
 export {binaryIndexOf, convertHexTo50, fixh, fixm50to50, fixpan, fixphase, fixpos50,
 	fixrev, fmtMidiCC, fmtmoddest, fmtonoff, fmtprior, fmtscattack, fmtscrelease, fmtinterp,
-	fmtsync, fmttime, fmttransp, sample_path, tonotename};
+	fmtsync, fmttime, fmttime2, fmttransp, sample_path, tonotename};

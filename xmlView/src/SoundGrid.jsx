@@ -2,7 +2,7 @@ import React from 'react';
 import {SampleRange} from './SampleRange.jsx';
 import {binaryIndexOf, convertHexTo50, fixh, fixm50to50, fixpan, fixphase, fixpos50,
 	fixrev, fmtMidiCC, fmtmoddest, fmtonoff, fmtprior, fmtscattack, fmtscrelease, fmtinterp,
-	fmtsync, fmttime, fmttransp, sample_path, tonotename} from './FmtSound.js';
+	fmtsync, fmttime, fmttime2, fmttransp, sample_path, tonotename} from './FmtSound.js';
 import {forceArray} from "./JsonXMLUtils.js";
 
 class ShrinkIfNeeded extends React.Component {
@@ -78,8 +78,8 @@ class SoundGrid extends React.Component {
 
 {/* Row 0 c1-16 */}
 <tr>
-<th className='zone start sample1'>Start 1</th>
-<th className='zone start sample2'>Start 2</th>
+<th className='waveform sample1'>Waveform 1</th>
+<th className='waveform sample2'>Waveform 2</th>
 <th className='unlab bbh'> </th>
 <th className='unlab bbh'> </th>
 
@@ -100,8 +100,8 @@ class SoundGrid extends React.Component {
 </tr>
 
 <tr>
-<td className='zone start sample1'>{s.osc1 && s.osc1.zone ? fmttime(s.osc1.zone.startMilliseconds) : null}</td>
-<td className='zone start sample2'>{s.osc2 && s.osc2.zone ? fmttime(s.osc2.zone.startMilliseconds) : null}</td>
+<td className='waveform sample1'> </td>
+<td className='waveform sample2'> </td>
 <td className='noise'>{fixh(s.noiseVolume)}</td>
 <td className='osc2'>{s.osc2 && fmtonoff(s.osc2.oscillatorSync)}</td>
 

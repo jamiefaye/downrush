@@ -6,7 +6,7 @@ import {convertHexTo50} from './FmtSound.js';;
 
 import tippy from "./js/tippy.all.min.js";
 import {jsonequals, reviveClass, forceArray, getClipArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
-import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
+import {Kit, Sound, Song, MidiChannel, CVChannel, AudioTrack} from "./Classes.jsx";
 import {trackKind, yToNoteName, patchInfo, makeScaleTab, noteToYOffsetInScale} from "./SongUtils.js";
 import {colorForGroup} from "./Arranger.jsx";
 import {KitListView} from './KitList.jsx';
@@ -213,6 +213,21 @@ function findMidiInstrument(track, list) {
 		for(let k of items) {
 			if (k instanceof MidiChannel) {
 				if (k.channel === pChan) return k;
+			}
+		}
+	}
+	return undefined;
+}
+
+function findAudioTrack(track, list) {
+	let pChan = track.name;
+	let items = forceArray(list);
+	if (items) {
+		for(let k of items) {
+			if (k instanceof AudioTrack) {
+				if (k.name === track.trackName) {
+					return k;
+				}
 			}
 		}
 	}
@@ -1038,4 +1053,4 @@ function placeTrack(where, trackJ, trackNum, song, options) {
 }
 
 
-export {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}
+export {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findAudioTrack, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}

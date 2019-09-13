@@ -188,9 +188,15 @@ class SampleEntry extends React.Component {
 	let soundGridOnly = !hasSample || showAudioControl;
 	let startTS = "";
 	let endTS = "";
+	let oldZone = this.props.osc.zone.startMilliseconds !== undefined;
 	if (hasSample) {
-		startTS = fmtTime(this.props.osc.zone.startMilliseconds);
-		endTS = fmtTime(this.props.osc.zone.endMilliseconds);
+		if (oldZone) {
+			startTS = fmtTime(this.props.osc.zone.startMilliseconds);
+			endTS = fmtTime(this.props.osc.zone.endMilliseconds);
+		} else {
+			startTS = this.props.osc.zone.startSamplePos;
+			endTS = this.props.osc.zone.endSamplePos;
+		}
 	}
    return (<React.Fragment>
 		<tr className="kitentry unselectable" key='sinfo'>
