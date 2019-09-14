@@ -167,7 +167,7 @@ function pasteTrackJson(pastedJSON, songDoc) {
 	let song = songDoc.jsonDocument.song;
 
 	let trackA;
-	
+
 	if (song.tracks && song.tracks.track) {
 		trackA = forceArray(song.tracks.track);
 		song.tracks.track = trackA; // If we forced an array, we want that permanent.
@@ -178,6 +178,8 @@ function pasteTrackJson(pastedJSON, songDoc) {
 				song.instruments = [];
 			}
 		}
+	} else {
+		pastedJSON = become(pastedJSON.track, InstrumentClip);
 	}
 
 	addTrackToSong(pastedJSON, songDoc);

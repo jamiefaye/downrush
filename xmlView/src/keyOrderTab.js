@@ -399,6 +399,40 @@
 "currentFilterType",
 "delay",
 "compressor"
+],
+
+"audioClip": [
+"trackName",
+"filePath",
+"startSamplePos",
+"endSamplePos",
+"pitchSpeedIndependent",
+"attack",
+"priority",
+"isPlaying",
+"isSoloing",
+"isArmedForRecording",
+"length=",
+"colourOffset",
+"section",
+"params"
+],
+"params": [
+"reverbAmount",
+"volume",
+"pan",
+"sidechainCompressorShape",
+"modFXDepth",
+"modFXRate",
+"stutterRate",
+"sampleRateReduction",
+"bitCrush",
+"modFXOffset",
+"modFXFeedback",
+"delay",
+"lpf",
+"hpf",
+"equalizer"
 ]
 };
 
