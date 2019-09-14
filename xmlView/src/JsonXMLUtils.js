@@ -479,8 +479,7 @@ function jsonToXML3(kv, j, d) {
 	if (attrList) {
 		for (let ix = 0; ix < attrList.length; ++ix) {
 			let ak = attrList[ix];
-			let v = j[ak];
-			if(typeof v === "string") v = v.trim();
+			let v = String(j[ak]).trim();
 			if (ix > 0) {
 				atStr += "\n" + gentabs(d + 1);
 			} else {

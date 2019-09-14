@@ -144,6 +144,7 @@ function onLoad()
 	if (buildType !== 'mpc') {
 		let data = empty_song_template();
 		let homeSong = makeDelugeDoc("SONG.XML", data, {transTrack: transTrackToMidi, viewer: 'midian'});
+		homeSong.noPasteYet = true;
 		songManager.homeDoc = homeSong;
 		setFocusDoc(homeSong);
 	}

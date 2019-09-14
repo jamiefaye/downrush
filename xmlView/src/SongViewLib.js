@@ -179,6 +179,12 @@ function pasteTrackJson(pastedJSON, songDoc) {
 			}
 		}
 	} else {
+		trackA = songDoc.sessionClips;
+		if (songDoc.noPasteYet) {
+			song.sessionClips = [];
+			song.instruments = [];
+			songDoc.noPasteYet = false;
+		}
 		pastedJSON = become(pastedJSON.track, InstrumentClip);
 	}
 
