@@ -405,6 +405,7 @@ function getTrackText(trackJ, songJ)
 	if (trackJ.instrument && trackJ.instrument.referToTrackId !== undefined) {
 		let fromID = Number(trackJ.instrument.referToTrackId);
 		delete trackD.instrument; // zonk reference
+		let trackA = forceArray(songJ.tracks.track);
 		let sourceT = trackA[fromID];
 		// patch in data from source (depending on what type).
 		let kind = trackKind(sourceT);

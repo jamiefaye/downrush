@@ -500,4 +500,8 @@ var heteroArrays = new Set();
 heteroArrays.add('instruments');
 heteroArrays.add('soundSources');
 heteroArrays.add('sessionClips');
-export {keyOrderTab, heteroArrays};
+
+var dontEncodeAsAttributes = new Set();
+dontEncodeAsAttributes.add("midiKnobs");
+
+export {keyOrderTab, heteroArrays, dontEncodeAsAttributes};

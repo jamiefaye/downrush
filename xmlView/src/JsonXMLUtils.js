@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import {keyOrderTab, heteroArrays} from "./keyOrderTab.js";
+import {keyOrderTab, heteroArrays, dontEncodeAsAttributes} from "./keyOrderTab.js";
 import {DRObject, nameToClassTab} from "./Classes.jsx";
 var xmlescape = require('xml-escape');
 /*******************************************************************************
@@ -468,7 +468,7 @@ function jsonToXML3(kv, j, d) {
 		if(!doNotSerialize.has(ek) && j.hasOwnProperty(ek)) {
 			let v = j[ek];
 			if (!isObject(v)) {
-				attrList.push(ek);
+				if(!dontEncodeAsAttributes.has(ek)) attrList.push(ek);
 			} else {
 				keySet.add(ek);
 			}

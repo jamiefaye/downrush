@@ -306,7 +306,10 @@ function plotKit14(track, reftrack, song) {
 			let ypos = (y- ymin) * kitItemH;
 	
 			if (row.drumIndex) {
-				let rowInfo = kitList[row.drumIndex];
+				let rowInfo = kitList[Number(row.drumIndex)];
+				if (!rowInfo) {
+					continue;
+				}
 				labName = rowInfo.name;
 				if (rowInfo.channel) {
 					let chanNum = Number(rowInfo.channel);
