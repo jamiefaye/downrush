@@ -24,7 +24,8 @@
     "react-dropdown": "^1.6.4",
     "react-sortable-hoc": "^0.6.8",
     "shortid": "^2.2.14",
-    "webpack": "^4.30.0"
+    "webpack": "^4.30.0",
+    "xml-escape": "^1.1.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.3",

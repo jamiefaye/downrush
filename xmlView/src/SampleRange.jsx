@@ -1,6 +1,6 @@
 import React from 'react';
 import {forceArray} from "./JsonXMLUtils.js";
-import {sample_path, tonotename} from './FmtSound.js';
+import {sample_path, tonotename, fmttime2} from './FmtSound.js';
 
 function SampleRangeEntry(props) {
   let sr = props.range;
@@ -31,10 +31,12 @@ function SampleFileEntry(props) {
   
   let oscFN = osc.fileName;
   if (oscFN === undefined) return null;
-  if (typeof oscFN === 'string' || oscFN instanceof String) {
+  if ((typeof oscFN === 'string' || oscFN instanceof String) && oscFN.length > 0) {
 	return (
 		<tr>
-		<td className='sampfile sample1' style={{textAlign: 'left'}} colspan='10'>{oscFN}</td>
+		<td className='sampfile sample1' style={{textAlign: 'left'}} colspan='8'>{oscFN}</td>
+		<td className='sample1'>{fmttime2(osc.zone.startMilliseconds, osc.zone.startSamplePos)}</td>
+		<td className='sample1'>{fmttime2(osc.zone.endMilliseconds, osc.zone.endSamplePos)}</td>
 		<td className='sampfile sample1' colspan='6'><audio controls preload='none'><source src={props.spath + oscFN} type='audio/wav'/></audio></td>
 	</tr>);
   }

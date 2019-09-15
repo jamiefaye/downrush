@@ -6,7 +6,7 @@ import {convertHexTo50} from './FmtSound.js';;
 
 import tippy from "./js/tippy.all.min.js";
 import {jsonequals, reviveClass, forceArray, getClipArray, isArrayLike, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
-import {Kit, Sound, Song, MidiChannel, CVChannel} from "./Classes.jsx";
+import {Kit, Sound, Song, MidiChannel, CVChannel, AudioTrack} from "./Classes.jsx";
 import {trackKind, yToNoteName, patchInfo, makeScaleTab, noteToYOffsetInScale} from "./SongUtils.js";
 import {colorForGroup} from "./Arranger.jsx";
 import {KitListView} from './KitList.jsx';
@@ -219,6 +219,21 @@ function findMidiInstrument(track, list) {
 	return undefined;
 }
 
+function findAudioTrack(track, list) {
+	let pChan = track.name;
+	let items = forceArray(list);
+	if (items) {
+		for(let k of items) {
+			if (k instanceof AudioTrack) {
+				if (k.name === track.trackName) {
+					return k;
+				}
+			}
+		}
+	}
+	return undefined;
+}
+
 
 function findKitList(track, song) {
 	let kitList;
@@ -291,7 +306,10 @@ function plotKit14(track, reftrack, song) {
 			let ypos = (y- ymin) * kitItemH;
 	
 			if (row.drumIndex) {
-				let rowInfo = kitList[row.drumIndex];
+				let rowInfo = kitList[Number(row.drumIndex)];
+				if (!rowInfo) {
+					continue;
+				}
 				labName = rowInfo.name;
 				if (rowInfo.channel) {
 					let chanNum = Number(rowInfo.channel);
@@ -986,7 +1004,7 @@ class SoundDetails extends React.Component {
 			</tr>
 			</tbody>
 		</table>
-		{state.showTab ? <tr><SoundDetails track={track} song={props.song} /></tr> : null}
+		{state.showTab ? <tr><td><SoundDetails track={track} song={props.song} /></td></tr> : null}
 	  </div>)
  	}
 
@@ -1038,4 +1056,4 @@ function placeTrack(where, trackJ, trackNum, song, options) {
 }
 
 
-export {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}
+export {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findAudioTrack, usesNewNoteFormat, encodeNoteInfo, findSoundData, findMidiInstrument}

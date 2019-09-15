@@ -19,6 +19,19 @@ function forceArray(obj) {
 	return aObj;
 }
 
+function getClipArray(song) {
+	if (song.tracks) {
+		if (song.tracks.track) {
+			return forceArray(song.tracks.track);
+		}
+	}
+
+	if (song.sessionClips) {
+		return forceArray(song.sessionClips);
+	}
+
+	return [];
+}
 // Used to cope with y addresses of -32768
 function rowYfilter(row) {
 	if (row.drumIndex) return Number(row.drumIndex);
@@ -232,7 +245,9 @@ function encodeInstrumentAsMidiTrack(inst, lane, song, timeoff, head)
  {
 	let instString = inst.trackInstances;
 	if (!instString) return [];
-	let trackTab = forceArray(song.tracks.track);
+	
+	
+	let trackTab = getClipArray(song);
 	let maxTrack = trackTab.length;
 	let midiOut = [];
 	let highTime =  0;
@@ -329,7 +344,7 @@ function delugeToMidiArranged(midi, song) {
 }
 
 function addTrackToMidi(midiDoc, song, trackNum, timeoff, clipS, clipE) {
-	let delTrackTab = forceArray(song.tracks.track);
+	let delTrackTab = getClipArray(song);
 	let delTrack = delTrackTab[delTrackTab.length - trackNum];
 	let trackLen = Number(delTrack.trackLength);
 	let toMidiChan = 0;
@@ -344,7 +359,7 @@ function addTrackToMidi(midiDoc, song, trackNum, timeoff, clipS, clipE) {
 }
 
 function convertAllTracks(midi, song) {
-	let delTrackTab = forceArray(song.tracks.track);
+	let delTrackTab = getClipArray(song);
 //	for (let i = delTrackTab.length; i >= 1; i--) {
 	for (let i = 1; i <= delTrackTab.length; ++i) {
 		addTrackToMidi(midi, song, i, 0, 0, 0);

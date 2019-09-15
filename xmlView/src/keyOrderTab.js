@@ -34,10 +34,12 @@
 "lpfMode",
 "modFXType",
 "delay",
+"compressor",
 "modFXCurrentParam",
 "currentFilterType",
 "songParams",
-"instruments",
+'instruments',
+'sessionClips',
 "sections",
 "tracks",
 "arrangementOnlyTracks",
@@ -121,6 +123,34 @@
 "kitParams",
 "noteRows",
 ],
+"instrumentClip": ["inKeyMode",
+"yScroll",
+"yScrollKeyboard",
+"affectEntire",
+"status",
+"instrumentPresetSlot",
+"instrumentPresetSubSlot",
+"isPlaying",
+"isSoloing",
+"isArmedForRecording",
+"length",
+"colourOffset",
+"crossScreenEditLevel",
+"beingEdited",
+"affectEntire",
+"activeModFunction",
+"instrument",
+"arpeggiator",
+"midiChannel",
+"midiParams",
+"modKnobs",
+"section",
+"sound",
+"soundParams",
+"kit",
+"kitParams",
+"noteRows",
+],
 "instrument": ["referToTrackId",
 ],
 "modKnobs": ["modKnob",
@@ -149,6 +179,7 @@
 "kit": ["lpfMode",
 "modFXType",
 "delay",
+"compressor",
 "modFXCurrentParam",
 "currentFilterType",
 "presetSlot",
@@ -178,6 +209,7 @@
 "lpfMode",
 "modFXType",
 "delay",
+"arpeggiator",
 "defaultParams",
 "midiKnobs",
 "modKnobs",
@@ -190,6 +222,7 @@
 "reversed",
 "timeStretchEnable",
 "timeStretchAmount",
+"linearInterpolation",
 "sampleRanges",
 "fileName",
 "zone",
@@ -355,6 +388,52 @@
 "cvChannel": [
 "channel",
 ],
+
+"audioTrack": [
+"name",
+"inputChannel",
+"isArmedForRecording",
+"lpfMode",
+"modFXType",
+"modFXCurrentParam",
+"currentFilterType",
+"delay",
+"compressor"
+],
+
+"audioClip": [
+"trackName",
+"filePath",
+"startSamplePos",
+"endSamplePos",
+"pitchSpeedIndependent",
+"attack",
+"priority",
+"isPlaying",
+"isSoloing",
+"isArmedForRecording",
+"length=",
+"colourOffset",
+"section",
+"params"
+],
+"params": [
+"reverbAmount",
+"volume",
+"pan",
+"sidechainCompressorShape",
+"modFXDepth",
+"modFXRate",
+"stutterRate",
+"sampleRateReduction",
+"bitCrush",
+"modFXOffset",
+"modFXFeedback",
+"delay",
+"lpf",
+"hpf",
+"equalizer"
+]
 };
 
 var genDict;
@@ -421,4 +500,8 @@ var heteroArrays = new Set();
 heteroArrays.add('instruments');
 heteroArrays.add('soundSources');
 heteroArrays.add('sessionClips');
-export {keyOrderTab, heteroArrays};
+
+var dontEncodeAsAttributes = new Set();
+dontEncodeAsAttributes.add("midiKnobs");
+
+export {keyOrderTab, heteroArrays, dontEncodeAsAttributes};

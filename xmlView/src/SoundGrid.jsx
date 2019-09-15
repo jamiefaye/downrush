@@ -1,8 +1,8 @@
 import React from 'react';
 import {SampleRange} from './SampleRange.jsx';
 import {binaryIndexOf, convertHexTo50, fixh, fixm50to50, fixpan, fixphase, fixpos50,
-	fixrev, fmtMidiCC, fmtmoddest, fmtonoff, fmtprior, fmtscattack, fmtscrelease,
-	fmtsync, fmttime, fmttransp, sample_path, tonotename} from './FmtSound.js';
+	fixrev, fmtMidiCC, fmtmoddest, fmtonoff, fmtprior, fmtscattack, fmtscrelease, fmtinterp,
+	fmtsync, fmttime, fmttime2, fmttransp, sample_path, tonotename} from './FmtSound.js';
 import {forceArray} from "./JsonXMLUtils.js";
 
 class ShrinkIfNeeded extends React.Component {
@@ -78,8 +78,8 @@ class SoundGrid extends React.Component {
 
 {/* Row 0 c1-16 */}
 <tr>
-<th className='zone start sample1'>Start 1</th>
-<th className='zone start sample2'>Start 2</th>
+<th className='waveform sample1'>Waveform 1</th>
+<th className='waveform sample2'>Waveform 2</th>
 <th className='unlab bbh'> </th>
 <th className='unlab bbh'> </th>
 
@@ -100,10 +100,10 @@ class SoundGrid extends React.Component {
 </tr>
 
 <tr>
-<td className='zone start sample1'>{s.osc1 && s.osc1.zone ? fmttime(s.osc1.zone.startMilliseconds) : null}</td>
-<td className='zone start sample2'>{s.osc2 && s.osc2.zone ? fmttime(s.osc2.zone.startMilliseconds) : null}</td>
-<td className='unlab'> </td>
-<td className='unlab'> </td>
+<td className='waveform sample1'> </td>
+<td className='waveform sample2'> </td>
+<td className='noise'>{fixh(s.noiseVolume)}</td>
+<td className='osc2'>{s.osc2 && fmtonoff(s.osc2.oscillatorSync)}</td>
 
 <td className='unlab'> </td>
 <td className='unlab'> </td>
@@ -125,10 +125,10 @@ class SoundGrid extends React.Component {
 
 
 <tr>
-<th className='zone end sample1'>End 1</th>
-<th className='zone end sample2'>End 2</th>
-<th className='noise'>Noise</th>
-<th className='osc2'>Osc Sync</th>
+<th className='interp sample1'>Interp 1</th>
+<th className='interp sample2'>Interp 2</th>
+<th className='wavetable osc1'>Wavetable 1</th>
+<th className='wavetable osc2'>Wavetable 2</th>
 
 <th className='destination fmmod1 hleftb'>Dest M 1</th>
 <th className='destination fmmod2'>Dest M 2</th>
@@ -147,10 +147,10 @@ class SoundGrid extends React.Component {
 </tr>
 
 <tr>
-<td className='zone end sample1'>{s.osc1 && s.osc1.zone ? fmttime(s.osc1.zone.endMilliseconds) : null}</td>
-<td className='zone end sample2'>{s.osc2 && s.osc2.zone ? fmttime(s.osc2.zone.endMilliseconds) : null}</td>
-<td className='noise'>{fixh(s.noiseVolume)}</td>
-<td className='osc2'>{s.osc2 && fmtonoff(s.osc2.oscillatorSync)}</td>
+<td className='interp sample1'>{s.osc1 ? fmtinterp(s.osc1.linearInterpolation) : null}</td>
+<td className='interp sample2'>{s.osc2 ? fmtinterp(s.osc2.linearInterpolation) : null}</td>
+<td className='wavetable osc1'> </td>
+<td className='wavetable osc2'> </td>
 
 <td className='destination fmmod1 hleftb'> </td>
 <td className='destination fmmod2'>{s.modulator2 ? fmtmoddest(s.modulator2.toModulator1) : null}</td>
@@ -241,17 +241,17 @@ class SoundGrid extends React.Component {
 <td className='audio record sample2'> </td>
 <td className='osc1 retrigphase'>{s.osc1 ? fixphase(s.osc1.retrigPhase) : null}</td>
 <td className='osc2 retrigphase'>{s.osc2 ? fixphase(s.osc2.retrigPhase) : null}</td>
-              
+
 <td className='fmmod1 retrigphase hleftb'>{s.modulator1 ? fixphase(s.modulator1.retrigPhase) : null}</td>
 <td className='fmmod2 retrigphase'>{s.modulator2 ? fixphase(s.modulator2.retrigPhase) : null}</td>
 <td className='master'><ShrinkIfNeeded str={s.mode}/></td>
 <td className='unison'>{s.unison ? s.unison.num : null}</td>
-              
+
 <td className='unlab hleftb'> </td>
 <td className='unlab'> </td>
 <td className='sidechain'>{fixh(s.compressorShape)}</td>
 <td className='arp'>{s.arpeggiator ? s.arpeggiator.mode : null}</td>
-              
+
 <td className='modfx hleftb'>{fixh(s.modFXOffset)}</td>
 <td className='reverb'>{s.reverb? fixrev(s.reverb.pan) : null}</td>
 <td className='delay'>{s.delay ? fmtonoff(s.delay.pingPong) : null}</td>
@@ -287,17 +287,17 @@ class SoundGrid extends React.Component {
 <td className='sample2 pitchtime'>{s.osc2 ? s.osc2.timeStretchEnable : null}</td>
 <td className='osc1 pw'>{fixpos50(s.oscAPulseWidth)}</td>
 <td className='osc2 pw'>{fixpos50(s.oscBPulseWidth)}</td>
-              
+
 <td className='fmmod1 pw hleftb'> </td>
 <td className='fmmod2 pw'> </td>
 <td className='master'>{fixpan(s.pan)}</td>
 <td className='unison'>{s.unison ? s.unison.detune : null}</td>
-              
+
 <td className='attack env1 hleftb'>{s.envelope1 ? fixh(s.envelope1.attack) : null}</td>
 <td className='attack env2'>{s.envelope2 ? fixh(s.envelope2.attack) : null}</td>
 <td className='attack sidechain'>{s.compressor ? fmtscattack(s.compressor.attack) : null}</td>
 <td className='arp'>{s.arpeggiator ? s.arpeggiator.numOctaves : null}</td>
-              
+
 <td className='modfx hleftb'>{s.modFXType}</td>
 <td className='reverb amount'>{fixh(s.reverbAmount)}</td>
 <td className='delay amount'>{fixh(s.delayFeedback)}</td>
@@ -332,17 +332,17 @@ class SoundGrid extends React.Component {
 <td className='sample2 speed'>{s.osc2 ? fixh(s.osc2.timeStretchAmount) : null}</td>
 <td className='osc1 type'>{s.osc1 ? s.osc1.type : null}</td>
 <td className='osc2 type'>{s.osc2 ? s.osc2.type : null}</td>
-              
+
 <td className='fmmod1 type hleftb'> </td>
 <td className='fmmod2 type'> </td>
 <td className='master'>{s.vibrato}</td>
 <td className='voice'>{fmtprior(s.voicePriority)}</td>
-              
+
 <td className='env1 decay hleftb'>{s.envelope1 ? fixh(s.envelope1.decay) : null}</td>
 <td className='env2 decay'>{s.envelope2 ? fixh(s.envelope2.decay) : null}</td>
 <td className='sidechain'>{s.compressor ? fixrev(s.compressor.volume) : null}</td>
 <td className='arp'>{fixh(s.arpeggiatorGate)}</td>
-              
+
 <td className='lfo1 shape hleftb'>{s.lfo1 ? s.lfo1.type : null}</td>
 <td className='lfo2 shape'>{s.lfo2 ? s.lfo2.type : null}</td>
 <td className='delay'>{fixh(s.delay.analog)}</td>
@@ -377,17 +377,17 @@ class SoundGrid extends React.Component {
 <td className='sample2 reverse'>{s.osc2 ? s.osc2.reversed : null}</td>
 <td className='osc1 transpose'>{fmttransp(s.osc1)}</td>
 <td className='osc2 transpose'>{fmttransp(s.osc2)}</td>
-              
+
 <td className='fmmod1 transpose hleftb'>{fmttransp(s.modulator1)}</td>
 <td className='fmmod2 transpose'>{fmttransp(s.modulator2)}</td>
 <td className='master transpose'>{s.transpose}</td>
 <td className='voice'>{s.polyphonic}</td>
-              
+
 <td className='env1 sustain hleftb'>{s.envelope1 ? fixh(s.envelope1.sustain) : null}</td>
 <td className='env2 sustain'>{s.envelope2 ? fixh(s.envelope2.sustain) : null}</td>
 <td className='sidechain'>{s.compressor ? fmtsync(s.compressor.syncLevel) : null}</td>
 <td className='arp sync'>{s.arpeggiator ? fmtsync(s.arpeggiator.syncLevel) : null}</td>
-              
+
 <td className='lfo1 sync hleftb'>{s.lfo1 ?fmtsync(s.lfo1.syncLevel) : null}</td>
 <td className='lfo2 sync'>{s.lfo2 ?fmtsync(s.lfo2.syncLevel) : null}</td>
 <td className='delay sync'>{s.delay ? fmtsync(s.delay.syncLevel) : null}</td>
