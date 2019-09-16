@@ -234,6 +234,7 @@ function addTrackToSong(pastedIn, songDoc) {
 			let ko = findKitInstrument(track0, song.instruments);
 			if (!ko) {
 				delete track0.kit.trackInstances;
+				delete track0.kit.clipInstances;
 				song.instruments.unshift(track0.kit);
 			}
 			delete track0.kit;
@@ -241,6 +242,7 @@ function addTrackToSong(pastedIn, songDoc) {
 			let so = findSoundInstrument(track0, song.instruments);
 			if (!so) {
 				delete track0.sound.trackInstances;
+				delete track0.sound.clipInstances;
 				song.instruments.unshift(track0.sound);
 			}
 			delete track0.sound;
@@ -405,7 +407,7 @@ function getTrackText(trackJ, songJ)
 	if (trackJ.instrument && trackJ.instrument.referToTrackId !== undefined) {
 		let fromID = Number(trackJ.instrument.referToTrackId);
 		delete trackD.instrument; // zonk reference
-		let trackA = forceArray(songJ.tracks.track);
+		let trackA = forceArray(song.tracks.track);
 		let sourceT = trackA[fromID];
 		// patch in data from source (depending on what type).
 		let kind = trackKind(sourceT);
@@ -428,6 +430,7 @@ function getTrackText(trackJ, songJ)
 			} else {
 				let kd = new Kit(kitI);
 				delete kd.trackInstances;
+				delete kd.clioInstances;
 				trackD['kit'] = kd;
 				
 			}
@@ -440,6 +443,7 @@ function getTrackText(trackJ, songJ)
 			} else {
 				let sd = new Sound(soundI);
 				delete sd.trackInstances;
+				delete sd.clipInstances;
 				trackD['sound'] = sd;
 			}
 		}

@@ -34,6 +34,9 @@ class Instrument extends React.Component {
   componentDidMount() {
 	let inst = this.props.inst;
 	let instString = inst.trackInstances;
+	if (!instString) {
+		instString = inst.clipInstances;
+	}
 	if (!instString) return;
 	let ypos = 2;
 
@@ -135,6 +138,11 @@ function showArranger(song, newSynthNames, where) {
 
 function bumpTracks(instrumentEntry) {
 	let instString = instrumentEntry.trackInstances;
+	let usingClip = false;
+	if (!instString) {
+		instString = instrumentEntry.clipInstances;
+		usingClip = true;
+	}
 	if (!instString) return;
 	for (var nx = 2; nx < instString.length; nx += 24) {
 		let trk = parseInt(instString.substring(nx + 16, nx + 24), 16);
@@ -142,7 +150,11 @@ function bumpTracks(instrumentEntry) {
 		let bumphex = trk.toString(16).substring(1).toUpperCase();
 		instString = instString.substring(0, nx + 16) + bumphex + instString.substring(nx + 24);
 	}
-	instrumentEntry.trackInstances = instString;
+	if (usingClip) {
+		instrumentEntry.clipInstances = instString;
+	} else {
+		instrumentEntry.trackInstances = instString;
+	}
 }
 
 
