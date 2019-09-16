@@ -312,7 +312,7 @@ class KitList extends React.Component {
 	let suggestion = suggestName(name);
 	let temp = empty_sound_temp.split('{{fileName}}');
 	let temp2 = temp.join(name);
-	let temp3 = temp.split('{{name}}');
+	let temp3 = temp2.split('{{name}}');
 	let filledSoundT = temp3.join(suggestion);
 	let newDrumX = getXmlDOMFromString(filledSoundT);
 	let newSound = xmlToJson(newDrumX).sound;
