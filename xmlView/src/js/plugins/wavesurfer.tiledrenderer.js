@@ -1007,10 +1007,6 @@ var TiledRenderer = function (_Drawer) {
         key: 'prepareDraw',
         value: function prepareDraw(peaks, channelIndex, start, end, fn, canvas) {
             var _this6 = this;
-
-            //      if (!peaks) {
-            //          let cat = 2;
-            //      }
             // Split channels and call this function with the channelIndex set
             if (!peaks) {
                 var cat = 3;
