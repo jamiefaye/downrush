@@ -238,11 +238,13 @@ class MidiConversion {
 	trout.midiChannel = chanNum;
 	trout.trackLength = clipMax;
 
+/* Until fixed someday:
 	// Control codes if present
 	let ccMap = track.controlChanges;
 	if (ccMap) {
 		this.convertTrackCCsToDeluge(trout, track, ccMap, (n)=>hexLZ32(Math.round(normTo32Fn(n.value))), context);
 	}
+*/
 
 	const bendList = track.channelEvents['pitchBend'];
 	if (bendList !== undefined && bendList.length > 0) {

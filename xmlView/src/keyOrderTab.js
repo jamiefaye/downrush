@@ -435,6 +435,10 @@
 "lpf",
 "hpf",
 "equalizer"
+],
+"param": [
+"cc",
+"value"
 ]
 };
 
@@ -502,6 +506,7 @@ var heteroArrays = new Set();
 heteroArrays.add('instruments');
 heteroArrays.add('soundSources');
 heteroArrays.add('sessionClips');
+heteroArrays.add('arrangementOnlyTracks');
 
 var dontEncodeAsAttributes = new Set();
 dontEncodeAsAttributes.add("midiKnobs");
