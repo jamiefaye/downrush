@@ -45,7 +45,7 @@ class Instrument extends React.Component {
 	let trackTab = getClipArray(song);
 	let arrangeOnlyTab = [];
 	if (song.arrangementOnlyTracks) {
-		arrangeOnlyTab = forceArray(song.arrangementOnlyTracks.track);
+		arrangeOnlyTab = forceArray(song.arrangementOnlyTracks);
 	}
 
 	let maxTrack = trackTab.length;
