@@ -63,7 +63,7 @@ Change the CONFIG line: `APPAUTOTIME=300000` to instead be: `APPAUTOTIME=0`
 
 If you are updating downrush from a previous version and things seem strange, you may have to clear the browsers cache. The time stamps on SD Card directory entries are not always valid and this can cause stale files to linger unwanted in the cache.
 
-Don't try and install Downrush by cloning the git depository and copying files over from that. You must use a downrush.zip file from over at https://github.com/jamiefaye/downrush/releases.
+Don't try and install Downrush by cloning the git repository and copying files over from that. You must use a downrush.zip file from over at https://github.com/jamiefaye/downrush/releases.
 
 ## ADVANCED FEATURE: Editing CONFIG.
 
