@@ -4,7 +4,9 @@ Downrush is a simple FlashAir file manager for SynthStrom Deluge music synthesiz
 ## Installation Instructions
 1. Make a backup copy of your Deluge SD card! You will need to use that backup later to populate the FlashAir card.
 1. Get a Toshiba FlashAir card. Make sure it is a  W-03 or W-04 (this code appears on the SD card label just below the FlashAir title on the right). W-04 cards are faster and are worth seeking out.
-1. Download the Downrush distribution. This is a .zip file that you downloaded from Github.
+1. Download the Downrush distribution. A "distribution" is a .zip file you can find on the https://github.com/jamiefaye/downrush/releases page. You will probably want to use the most recent release (at the top of the page).
+  2. There should be a list of "Assets" after the release description. You may have to click on the "Assets" wedgie to see it. 
+  3. Download the file named"downrush.zip". You can ignore the other two files.
 1. Unzip the 'downrush.zip' file creating a distribution folder. It will be called 'distribution'. I will refer to this place as the distribution directory.
 1. Insert the FlashAir card into a computer. You will be changing the contents of a hidden directory, so you may have
 to set an option that lets you view hidden files in order to find it. 
@@ -61,6 +63,7 @@ Change the CONFIG line: `APPAUTOTIME=300000` to instead be: `APPAUTOTIME=0`
 
 If you are updating downrush from a previous version and things seem strange, you may have to clear the browsers cache. The time stamps on SD Card directory entries are not always valid and this can cause stale files to linger unwanted in the cache.
 
+Don't try and install Downrush by cloning the git depository and copying files over from that. You must use a downrush.zip file from over at https://github.com/jamiefaye/downrush/releases.
 
 ## ADVANCED FEATURE: Editing CONFIG.
 
