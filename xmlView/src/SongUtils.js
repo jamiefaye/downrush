@@ -50,8 +50,12 @@ function patchInfo(track, newSynthNames) {
 
 	let patchStr = "";
 	let kind = trackKind(track);
-	let patch = Number(track.instrumentPresetSlot);
-
+	let patch;
+	if (track.instrumentPresetSlot !== undefined) {
+		patch = Number(track.instrumentPresetSlot);
+	} else {
+		patch = track.instrumentPresetName;
+	}
 	if (kind === 'kit' || kind === 'sound') {
 		patchStr = patch;
 		let subpatch = Number(track.instrumentPresetSubSlot);
