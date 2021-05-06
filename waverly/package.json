@@ -14,7 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "file-saver": "^1.3.8",
-    "handlebars": "^4.1.2",
+    "handlebars": "^4.7.7",
     "handlebars-loader": "^1.7.1",
     "jquery": "^3.4.1",
     "web-audio-oscillators": "^1.0.4",
