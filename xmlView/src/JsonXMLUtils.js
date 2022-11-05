@@ -451,7 +451,30 @@ function xml3ToJson(xml, fill) {
   return obj;
 }
 
-
+// Convert all the noteData values to noteDataWithLift values.
+function updateJSONfor4(json)
+{
+ for (let k in json) {
+ 	if(json.hasOwnProperty(k)) {
+ 		 if (k === "noteData")
+ 		 {
+ 		 	let noteData = json[k];
+ 		 	let nv = "0x";
+			for (var nx = 2; nx < noteData.length; nx += 20) {
+					let nh = noteData.substring(nx, nx + 20);
+					nv += 	nh.substring(0, 18);
+					nv += "40";
+					nv += nh.substring(18, 20);;
+				}
+ 		 	json["noteDataWithLift"] = nv;
+ 		 	delete json["noteData"];
+ 		 	return;
+ 		 } else if (isObject(json[k])) {
+ 			updateJSONfor4(json[k]);
+ 		}
+ 	}
+ }
+}
 
 
 function jsonToXML3(kv, j, d) {
@@ -572,5 +595,5 @@ function jsonToXML3String(root, json) {
 }
 
 
-export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, xml3ToJson, reviveClass, 
+export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, xml3ToJson, updateJSONfor4, reviveClass, 
 	jsonToXML3String, jsonToTable, forceArray, getClipArray, isArrayLike, nameToClassTab, classReplacer, zonkDNS};

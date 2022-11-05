@@ -6,7 +6,7 @@ import ReactDOM from "react-dom";
 import Clipboard from "./js/clipboard.min.js";
 import tippy from "./js/tippy.all.min.js";
 import {formatKit} from "./KitList.jsx";
-import {getXmlDOMFromString, jsonToXMLString, jsonToXML3String, xmlToJson, xml3ToJson, jsonToTable} from "./JsonXMLUtils.js";
+import {getXmlDOMFromString, jsonToXMLString, jsonToXML3String, xmlToJson, xml3ToJson, updateJSONfor4, jsonToTable} from "./JsonXMLUtils.js";
 import {showArranger, colorForGroup, bumpTracks} from "./Arranger.jsx";
 import {jsonequals, reviveClass, forceArray, getClipArray, classReplacer, zonkDNS} from "./JsonXMLUtils.js";
 import {fixm50to50, fmtsync} from './FmtSound.js';;
@@ -17,7 +17,7 @@ import {SoundTab} from './SoundTab.jsx';
 import {SampleList} from './SampleList.jsx';
 
 import {placeTrack, activateTippy, findKitList, findKitInstrument, findSoundInstrument, findMidiInstrument, findCVInstrument, findAudioTrack,
-	usesNewNoteFormat, encodeNoteInfo, findSoundData} from "./TrackView.jsx";
+	encodeNoteInfo, findSoundData} from "./TrackView.jsx";
 
 "use strict";
 
@@ -109,57 +109,6 @@ function formatModKnobsMidi(knobs, obj)
  *******************************************************************************
 */
 
-// Convert an old (pre 1.4) noteRow from the note array representation into the noteData representation.
-function oldToNewNotes(track)
-{
-	let rowList = forceArray(track.noteRows.noteRow);
-	track.noteRows.noteRow = rowList;
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx]; // make sure JSON is updated.
-		var noteList = forceArray(row.notes.note);
-		let noteData = '0x';
-		for (var nx = 0; nx < noteList.length; ++nx) {
-			let n = noteList[nx];
-			let x = Number(n.pos);
-			let dur = Number(n.length);
-			let vel = Number(n.velocity);
-
-			let noteInfo = encodeNoteInfo('', x, dur, vel, 0x14);
-			noteData += noteInfo;
-		}
-		row.noteData = noteData;
-		delete row.notes;
-	}
-}
-
-
-function newToOldNotes(track) {
-	let rowList = forceArray(track.noteRows.noteRow);
-	track.noteRows.noteRow = rowList;
-
-	for (var rx = 0; rx < rowList.length; ++rx) {
-		let row = rowList[rx];
-		var noteData = row.noteData;
-		let noteArray = [];
-
-		for (var nx = 2; nx < noteData.length; nx += 20) {
-			let notehex = noteData.substring(nx, nx + 20);
-			let t = parseInt(notehex.substring(0, 8), 16);
-			let dur =  parseInt(notehex.substring(8, 16), 16);
-			let vel = parseInt(notehex.substring(16, 18), 16);
-			// let cond = parseInt(notehex.substring(18, 20), 16);
-			let note = {
-				pos:		t,
-				length: 	dur,
-				velocity: 	vel,
-			};
-			noteArray.push(note);
-		}
-		delete row.noteData;
-		row.notes = {};
-		row.notes.note = noteArray;
-	}
-}
 
 function pasteTrackJson(pastedJSON, songDoc) {
 	// If we have a document with one empty track at the front, get rid of it.
@@ -193,17 +142,6 @@ function pasteTrackJson(pastedJSON, songDoc) {
 
 function addTrackToSong(pastedIn, songDoc) {
 	let song = songDoc.jsonDocument.song;
-	// If needed, convert the tracks note format
-	let clipUsingNewNotes = usesNewNoteFormat(pastedIn);
-	if (clipUsingNewNotes !== songDoc.newNoteFormat) {
-		if (songDoc.newNoteFormat) {
-			console.log('converting old note format to new');
-			oldToNewNotes(pastedIn);
-		} else {
-			console.log('converting new note format to old');
-			newToOldNotes(pastedIn);
-		}
-	}
 
 	let trackA;
 	if (song.tracks && song.tracks.track) {
@@ -557,15 +495,7 @@ class DelugeDoc {
 	$('#docspot').append(songhead);
 	this.docTopElement = $(this.idFor('docId'));
 
-	// Capture the current firmware version and then remove that from the string.
-	let firmHits = /<firmwareVersion>.*<.firmwareVersion>/i.exec(text);
-	if (firmHits && firmHits.length > 0) {
-		this.firmwareVersionFound = firmHits[0];
-	} else {
-		this.firmwareVersionFound='';
-	}
-
-	// Also look for the  earliestCompatibleFirmware element.
+	// Look for the  earliestCompatibleFirmware element.
 	let earliestHits = /<earliestCompatibleFirmware>.*<.earliestCompatibleFirmware>/i.exec(text);
 	if (earliestHits && earliestHits.length > 0) {
 		this.earliestCompatibleFirmware = earliestHits[0];
@@ -573,11 +503,26 @@ class DelugeDoc {
 		this.earliestCompatibleFirmware='';
 	}
 
+	// Capture the current firmware version and then remove that from the string.
+	let firmHits = /<firmwareVersion>.*<.firmwareVersion>/i.exec(text);
+	if (firmHits && firmHits.length > 0) {
+		this.firmwareVersionFound = firmHits[0];
+	} else {
+		this.firmwareVersionFound='';
+		let firmAtts =  /firmwareVersion=\".*\"/i.exec(text);
+		if (firmAtts && firmAtts.length > 0)
+		{
+			this.firmwareVersionFound = firmAtts[0].split('"')[1];
+			this.earliestCompatibleFirmware = "4.0.0";
+			this.version4Format = true;
+		}
+	}
+
 //	let str = this.firmwareVersionFound + "\n" + this.earliestCompatibleFirmware + "\n";
 //	alert(str);
 
 	this.newNoteFormat = !(this.firmwareVersionFound.indexOf('1.2.') >= 0 || this.firmwareVersionFound.indexOf('1.3.') >= 0);
-	this.version3Format = text.indexOf('earliestCompatibleFirmware="3') > 0;
+	this.version3Format = this.version4Format || text.indexOf('earliestCompatibleFirmware="3') > 0;
 	this.version2x = this.firmwareVersionFound.indexOf('>2.') >= 0;
 	this.newSynthNames = !!this.earliestCompatibleFirmware;
 	
@@ -601,10 +546,18 @@ class DelugeDoc {
 	// Uncomment following to generate ordering table based on a real-world example.
 	// enOrderTab(asDOM);
 	var asJSON = this.version3Format ? xml3ToJson(asDOM) : xmlToJson(asDOM);
+	this.jsonDocument = asJSON;
+	if (asJSON.song !== undefined && !this.newNoteFormat) {
+		 this.upConvertSong();
+	}
+	 else {
+  	updateJSONfor4(asJSON);
+	}
 	if (options.newKit) {
 		asJSON.kit.soundSources = [];
 	}
-	this.jsonDocument = asJSON;
+
+
 	let jtabid = this.idFor('jtab');
 	$(jtabid).empty();
 	this.jsonToTopTable(this, $(jtabid));
@@ -616,7 +569,7 @@ class DelugeDoc {
 
   formatSongSimple(jdoc, obj) {
 	let jsong = jdoc.jsonDocument.song;
-	let newNoteFormat = jdoc.newNoteFormat;
+
 	let fullFormat = this.options.viewer !== 'midian';
 	if (jsong.preview && fullFormat) {
 		let ctab = genColorTab(jsong.preview);
@@ -684,6 +637,77 @@ class DelugeDoc {
 	}
 }
 
+/*
+// Convert all the noteData values to noteDataWithLift values.
+function update2to3(json)
+{
+ for (let k in json) {
+ 	if(json.hasOwnProperty(k)) {
+ 		 if (k === "noteData")
+ 		 {
+ 		 	let noteData = json[k];
+ 		 	let nv = "0x";
+			for (var nx = 2; nx < noteData.length; nx += 20) {
+					let nh = noteData.substring(nx, nx + 20);
+					nv += 	nh.substring(0, 18);
+					nv += "40";
+					nv += nh.substring(18, 20);;
+				}
+ 		 	json["noteDataWithLift"] = nv;
+ 		 	delete json["noteData"];
+ 		 	return;
+ 		 } else if (isObject(json[k])) {
+ 			updateJSONfor4(json[k]);
+ 		}
+ 	}
+ }
+*/
+
+// Convert an old (pre 1.4) noteRow from the note array representation into the noteData representation.
+oldToNewNotes(track)
+{
+	let rowList = forceArray(track.noteRows.noteRow);
+	for (var rx = 0; rx < rowList.length; ++rx) {
+		let row = rowList[rx];
+		var noteList = forceArray(row.notes.note);
+		let noteData = '0x';
+		for (var nx = 0; nx < noteList.length; ++nx) {
+			let n = noteList[nx];
+			let x = Number(n.pos);
+			let dur = Number(n.length);
+			let vel = Number(n.velocity);
+			let noteInfo = encodeNoteInfo('', x, dur, vel, 0x40, 0x14);
+			noteData += noteInfo;
+		}
+		row.noteData = noteData;
+		row.noteDataWithLift = noteData;
+		delete row.notes;
+		delete row.noteData;
+	}
+}
+
+
+
+
+
+
+// Converts old school 1.3 format info to 4.0 format directly.
+upConvertSong()
+{
+	let song = this.jsonDocument.song;
+	let trackA;
+	if (song.tracks && song.tracks.track) {
+		trackA = forceArray(song.tracks.track);
+	} else {
+		trackA = forceArray(song.sessionClips);
+	}
+
+	for (let i = 0; i < trackA.length; ++i) {
+    let track = trackA[i];
+    this.oldToNewNotes(track);
+	}
+}
+
 
   saveFile(filepath, data)
 {
@@ -738,29 +762,8 @@ class DelugeDoc {
 	});
   }
 
+ 
  genDocXMLString() {
- 	if (this.version3Format) {
- 		return this.genDoc3XMLString();
- 	}
-
- 	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
-	if (this.firmwareVersionFound) {
-		headerStr += this.firmwareVersionFound + "\n";
-	}
-	if (this.earliestCompatibleFirmware) {
-		headerStr += this.earliestCompatibleFirmware + "\n";
-	}
-	let jsonDoc =  this.jsonDocument
-	let toMake;
-	if (jsonDoc['song']) toMake = 'song';
-	  else if (jsonDoc['sound']) toMake = 'sound';
-	   else if (jsonDoc['kit']) toMake = 'kit';
-	if (!toMake) return;
- 	let saveText = headerStr + jsonToXMLString(toMake, this.jsonDocument[toMake]);
- 	return saveText;
- }
-
- genDoc3XMLString() {
  	let headerStr = '<?xml version="1.0" encoding="UTF-8"?>\n';
 
 	let jsonDoc =  this.jsonDocument

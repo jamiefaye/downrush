@@ -169,6 +169,7 @@
 "soundParams",
 "notes",
 "noteData",
+"noteDataWithLift",
 ],
 "notes": ["note",
 ],

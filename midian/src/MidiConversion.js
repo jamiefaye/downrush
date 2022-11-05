@@ -17,8 +17,6 @@ function hexLZ32(v) {
 }
 
 
-
-
 // This function returns a function bound to the 
 // min/max source & target ranges given.
 // oMin, oMax = source
@@ -223,16 +221,18 @@ class MidiConversion {
 			// hex digits:	0-7		start
 //				8-15	duration
 //				16-17	velocity
-//				18-19	conditionCode, default = 0x14
+//				18-19 lift velocity
+//				20-21 conditionCode, default = 0x14
 			let hStart = hexLZ32(tDstart);
 			let hDur = hexLZ32(tDdur);
 			let hVel = (tDvel + 0x100).toString(16).substring(1);
+			let liftVal = "40";
 			let hCC = "14";
-			let h = hStart + hDur + hVel + hCC;
+			let h = hStart + hDur + hVel + liftVal + hCC;
 			// Deluge won't accept lower-case a-f in hex constants!
 			laneh += h.toUpperCase();
 		}
-		let noteData = {"y": i, "noteData": laneh}
+		let noteData = {"y": i, "noteDataWithLift": laneh}
 		trout.noteRows.noteRow.push(noteData);
 	}
 	trout.midiChannel = chanNum;
