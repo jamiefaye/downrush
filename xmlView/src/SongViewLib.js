@@ -772,7 +772,10 @@ upConvertSong()
 	  else if (jsonDoc['sound']) toMake = 'sound';
 	   else if (jsonDoc['kit']) toMake = 'kit';
 	if (!toMake) return;
- 	let saveText = headerStr + jsonToXML3String(toMake, this.jsonDocument[toMake]);
+	let makeDoc = jsonDoc[toMake];
+	makeDoc.firmwareVersion="4.0.1"
+	makeDoc.earliestCompatibleFirmware="4.0.0";
+ 	let saveText = headerStr + jsonToXML3String(toMake, makeDoc);
  	return saveText;
  }
 

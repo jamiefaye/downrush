@@ -593,7 +593,5 @@ function jsonToXML3String(root, json) {
 	let depth = 0;
 	return jsonToXML3(root, json, depth);
 }
-
-
 export {getXmlDOMFromString, jsonequals, jsonToXMLString, xmlToJson, xml3ToJson, updateJSONfor4, reviveClass, 
 	jsonToXML3String, jsonToTable, forceArray, getClipArray, isArrayLike, nameToClassTab, classReplacer, zonkDNS};

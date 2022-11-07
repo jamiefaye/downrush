@@ -166,8 +166,19 @@ class WaveThumb extends React.Component {
 
 	if (this.osc) {
 		this.wave.initialZone = {};
-		this.wave.initialZone.startMilliseconds = Number(this.osc.zone.startMilliseconds);
-		this.wave.initialZone.endMilliseconds = Number(this.osc.zone.endMilliseconds);
+		let startMS;
+		let endMS;
+		if (this.osc.zone.hasOwnProperty("startMilliseconds"))
+		{
+			startMS = Number(this.wave.initialZone.startMilliseconds);
+			endMS = Number(this.osc.zone.endMilliseconds);
+		}
+		 else {
+			 startMS = Number(this.osc.zone.startSamplePos) / 44.1;
+			 endMS = Number(this.osc.zone.endSamplePos) / 44.1;
+		}
+		this.wave.initialZone.startMilliseconds = startMS;
+		this.wave.initialZone.endMilliseconds = endMS;
 	}
 	// console.log("aft openWaveSurfer");
   }

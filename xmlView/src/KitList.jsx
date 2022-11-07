@@ -4,7 +4,7 @@ import Dropdown from 'react-dropdown';
 import {WaveView, SampleView} from './WaveView.jsx';
 import {openFileBrowser} from './FileBrowser.js';
 import {forceArray} from "./JsonXMLUtils.js";
-import {getXmlDOMFromString, xmlToJson, reviveClass} from './JsonXMLUtils.js';
+import {getXmlDOMFromString, xml3ToJson, reviveClass} from './JsonXMLUtils.js';
 import shortid from 'shortid';
 import {WedgeIndicator, IconPushButton, Icon2PushButton, PushButton, Checkbox, PlayerControl, CopyToClipButton, PasteTarget} from './GUIstuff.jsx';
 import {SortableContainer, SortableElement, SortableHandle, arrayMove} from 'react-sortable-hoc';
@@ -315,7 +315,7 @@ class KitList extends React.Component {
 	let temp3 = temp2.split('{{name}}');
 	let filledSoundT = temp3.join(suggestion);
 	let newDrumX = getXmlDOMFromString(filledSoundT);
-	let newSound = xmlToJson(newDrumX).sound;
+	let newSound = xml3ToJson(newDrumX).sound;
 	this.props.kitList.push(newSound);
 	this.forceUpdate();
   }

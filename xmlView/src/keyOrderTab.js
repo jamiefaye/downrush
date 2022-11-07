@@ -1,5 +1,3 @@
-
-
 // Javascript does not specify a key-oder for enumerating properties of an object.
 // This means that element ordering may have been altered by edits, or the mere
 // act of going from XML to JSON. We fix this by consulting a table showing the
@@ -187,6 +185,7 @@
 "presetSubSlot",
 "trackInstances",
 "clipInstances",
+"defaultParams",
 "soundSources",
 "selectedDrumIndex",
 ],
@@ -291,9 +290,12 @@
 "stutterRate",
 "sampleRateReduction",
 "bitCrush",
-"equalizer",
 "modFXOffset",
 "modFXFeedback",
+"delay",
+"lpf",
+"hpf",
+"equalizer",
 ],
 "envelope1": ["attack",
 "decay",
