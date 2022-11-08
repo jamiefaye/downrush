@@ -255,9 +255,20 @@ div.paramconst {
 }
 
 .midi_mod_knobs td {
-	background-color:  #FFFFE8;
-	font-size: 10pt;
+	background-color:  #CFFFE8;
+	font-size: 9pt;
+	border-width: 1pt;
+	border: solid 1px;
+	border-color: #000000;
 }
+
+.midi_mod_knobs th {
+	background-color:  #CFFFD8;
+	font-size: 9pt;
+	border: solid 1px;
+	border-color: #000000;
+}
+
 .clipbtn {
 	font-size: 9pt;
 	padding:0%;

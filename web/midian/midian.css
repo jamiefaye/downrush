@@ -103,19 +103,22 @@ margin-left: 8px;
  line-height: 18px;
 }
 
-table {
+table.miditrack {
 	border-collapse: collapse;
 	text-align: center;
 }
 
-td {
+#filegroup * button, #filegroup2 * button {
 	border: solid 1px;
-	//padding: 0.5em;
+	border-color: black,
 }
 
-th {
+.miditrack * td {
 	border: solid 1px;
-	//padding: 0.5em;
+}
+
+.midihead * button {
+	border: solid 1px;
 }
 
 td.midichan {
@@ -188,4 +191,108 @@ div.selbox {
 	background-color: gray;
 	position: absolute;
 	opacity: 0.2;
+}
+
+
+
+/* Root element */
+.json-document {
+  padding: 1em 2em;
+}
+
+/* Syntax highlighting for JSON objects */
+ul.json-dict, ol.json-array {
+  list-style-type: none;
+  margin: 0 0 0 1px;
+  border-left: 1px dotted #ccc;
+  padding-left: 2em;
+}
+.json-string {
+  color: #0B7500;
+}
+.json-literal {
+  color: #1A01CC;
+  font-weight: bold;
+}
+
+/* Toggle button */
+a.json-toggle {
+  position: relative;
+  color: inherit;
+  text-decoration: none;
+}
+a.json-toggle:focus {
+  outline: none;
+}
+a.json-toggle:before {
+  font-size: 1.1em;
+  color: #c0c0c0;
+  content: "\25BC"; /* down arrow */
+  position: absolute;
+  display: inline-block;
+  width: 1em;
+  text-align: center;
+  line-height: 1em;
+  left: -1.2em;
+}
+a.json-toggle:hover:before {
+  color: #aaa;
+}
+a.json-toggle.collapsed:before {
+  /* Use rotated down arrow, prevents right arrow appearing smaller than down arrow in some browsers */
+  transform: rotate(-90deg);
+}
+
+/* Collapsable placeholder links */
+a.json-placeholder {
+  color: #aaa;
+  padding: 0 1em;
+  text-decoration: none;
+}
+a.json-placeholder:hover {
+  text-decoration: underline;
+}
+
+td.xpjtd {
+	border-style: groove;
+	border-width: medium;
+	height: 64px;
+	width: 128px;
+	
+}
+
+td.xpjmt {
+	border-style: groove;
+	border-width: medium;
+	background-color: gray;
+	height: 64px;
+	width: 128px;
+}
+
+th.xpjth {
+	font-size: 9px;
+}
+
+th.xpjthdr {
+	font-size: 12px;
+}
+
+div.xpjaud {
+	height: 64px;
+	width: 128px;
+	font-size: 12px;
+}
+
+#uploader {
+	background-color: #FFFFE0;
+}
+
+.playbutns {
+	width:  92px;
+	height: 16px;
+}
+
+.plsybut {
+	width: 12px;
+	height: 12px;
 }

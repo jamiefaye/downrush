@@ -32,16 +32,52 @@
 body {
 	background-color:#f8f8f8;
 }
-table {
-	border-collapse: collapse;
-	text-align: center;
-}
-td {
+.xmltab  td  th  tr {
 	border: solid 1px;
 	padding: 0.2em;
 }
 
-th {
+.simplehead td th tr {
+	border: solid 1px;
+	padding: 0.2em;
+}
+
+th.mkhead, td.mkhdata {
+	border: solid 1px;
+	padding: 0.2em;
+}
+
+.sound_grid * th, .sound_grid * td {
+	border: solid 1px;
+	padding: 0.2em;
+}
+
+.samplelist * td {
+	border: solid 1px;
+	padding: 0.2em;
+}
+
+#filegroup * button {
+	border: solid 1px;
+	border-color: black,
+}
+
+table.xmltab {
+	border-collapse: collapse;
+	text-align: center;
+}
+
+.kit_tab * td {
+	border: solid 1px;
+	padding: 0.2em;
+}
+
+table.kit_tab {
+	border-collapse: collapse;
+	text-align: center;
+}
+
+td.coltab {
 	border: solid 1px;
 	padding: 0.2em;
 }
@@ -96,11 +132,13 @@ div.trnote {
 div.kitlab {
 	position: absolute;
 	font-size: 7pt;
+	user-select: none;
 }
 
 div.notelab {
 	position: absolute;
 	font-size: 9pt;
+	user-select: none;
 }
 
 div.notelabsimp {
@@ -115,6 +153,7 @@ div.parmlab {
 	top:  0px;
 	left: 2px;
 }
+
 
 div.trkitnote {
 	position: absolute;
@@ -171,6 +210,12 @@ div.paramrun {
 	position: absolute;
 	height: 1px;
 	background-color:#202020;
+}
+
+div.paramconst {
+	position: relative;
+	background-color:#fffff0;
+	font-size: 7pt;
 }
 
 .plotspot, .parmplot {
@@ -240,6 +285,9 @@ div.paramrun {
 	background-color:  #E8E8E8;
 }
 
+.bbh {
+	border-botoom: hidden;
+}
 .textsm {
 	font-size: 7pt;
 }
@@ -254,6 +302,10 @@ div.paramrun {
 
 .sample2 {
 	background-color: #F8C8B8;
+}
+
+.audhdr {
+	background-color: #e8e8c8;
 }
 
 .samplenb {
@@ -368,6 +420,10 @@ div.paramrun {
 	background-color: #EFEFd8;
 }
 
+.audiotrack {
+	background-color: #EFEFd8;
+}
+
 .tinyplayer {
 	width: 96px;
 }
@@ -472,6 +528,10 @@ height: 28px;
 min-height: 28px;
 }
 
+.tinybutn {
+	padding: 1px;
+}
+
 #hiddenfileopener
 {
     display:none;
@@ -497,7 +557,7 @@ min-height: 28px;
 
 
 td.simplechan {
-	width: 8px;
+	width: 40px;
 	text-align: left;
 	font-size: 18px;
 
@@ -517,6 +577,13 @@ table.simplehead {
   	border: 1px;
 }
 
+span.simplepatch {
+  text-align: left;
+  font-size: 14px;
+  border: none;
+  	border: 1px;
+}
+
 td.simpleplot {
 	border: none;
 	padding-left: 4px;
@@ -527,3 +594,15 @@ td.simpleplot {
 }
 
 
+div.selbox {
+	background-color: gray;
+	position: absolute;
+	opacity: 0.2;
+}
+
+
+.audiotrack {
+	border: none;
+	width: auto;
+	padding: 0px;
+}
