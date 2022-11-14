@@ -25,7 +25,7 @@ function scanSamples(json, sampMap) {
 class SampleListEntry extends React.Component {
   render() {
 	return <tr><td>{this.props.sample}</td>
-	<td><audio controls class='smallplayer' preload='none' ><source src={this.props.samplePath + this.props.sample} type='audio/wav'/></audio></td>
+	<td><audio controls className='smallplayer' preload='none' ><source src={this.props.samplePath + this.props.sample} type='audio/wav'/></audio></td>
 	</tr>;
   }
 }
@@ -41,14 +41,14 @@ class SampleList extends React.Component {
   let sampleList = this.getSampleList();
   let me = this;
   return (
-   <table class='samplelist xmltab'>
+   <table className='samplelist xmltab'><tbody>
 	<tr><th>Samples used in this song</th>
 	<th><input className='showdrums' onClick={this.toggle} type='checkbox' defaultChecked={this.state.checked }/>Show /SAMPLES/DRUMS</th>
 	</tr>
 	{sampleList.map((samp)=>{
-		return <SampleListEntry sample={samp} samplePath={me.props.samplePath} />;
+		return <SampleListEntry sample={samp} samplePath={me.props.samplePath} key={samp}/>;
 	})}
-   </table>);
+  </tbody></table>);
   }
 
   toggle() {

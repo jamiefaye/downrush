@@ -8,9 +8,9 @@ function ModKnobs(props) {
 
   let kd = forceArray(props.sound.modKnobs.modKnob).map((o)=>o.controlsParam);
  return (
-<table className='mod_knobs xmltab'>
+<table className='mod_knobs xmltab'><tbody>
 <tr>
-<th className='mkhead' colspan='8'>Parameter Knob Mapping</th>
+<th className='mkhead' colSpan='8'>Parameter Knob Mapping</th>
 </tr>
 <tr>
 <th className='mkhead'>Volume</th>
@@ -56,7 +56,7 @@ function ModKnobs(props) {
 <td className='mkhdata'>{kd[12]}</td>
 <td className='mkhdata'>{kd[14]}</td>
 </tr>
-</table>
+</tbody></table>
 );
 } // functional component.
 

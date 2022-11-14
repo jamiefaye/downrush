@@ -13,7 +13,7 @@ class ShrinkIfNeeded extends React.Component {
 	if (s.length <= 6) {
 		return s;
 	}
-	return <div class='textsm2'>{s}</div>;
+	return <div className='textsm2'>{s}</div>;
   }
 }
 
@@ -55,11 +55,12 @@ class SoundGrid extends React.Component {
 	let s = this.overlayRouting(this.props.sound);
 	return (
 <table className='sound_grid xmltab'>
+<tbody>
 <SampleRange sound={s} />
 <tr>
 <th className ='toph sample1'>Sample 1</th>
 <th className ='toph sample2'>Sample 2</th>
-<th className ='toph unlab' colspan='4'></th>
+<th className ='toph unlab' colSpan='4'></th>
 <th className ='toph distortion'>Distortion</th>
 <th className ='toph unlab'></th>
 
@@ -70,7 +71,7 @@ class SoundGrid extends React.Component {
 
 <th className ='toph modfx hleftb'>Mod FX</th>
 <th className ='toph reverb'>Reverb</th>
-<th className ='toph unlab' colspan='2'></th>
+<th className ='toph unlab' colSpan='2'></th>
 
 
 </tr>
@@ -80,8 +81,8 @@ class SoundGrid extends React.Component {
 <tr>
 <th className='waveform sample1'>Waveform 1</th>
 <th className='waveform sample2'>Waveform 2</th>
-<th className='unlab bbh'> </th>
-<th className='unlab bbh'> </th>
+<th className='wavetable bbh'>Noise</th>
+<th className='wavetable bbh'>Osc-Sync</th>
 
 <th className='unlab bbh'> </th>
 <th className='unlab bbh'> </th>
@@ -102,8 +103,8 @@ class SoundGrid extends React.Component {
 <tr>
 <td className='waveform sample1'> </td>
 <td className='waveform sample2'> </td>
-<td className='noise'>{fixh(s.noiseVolume)}</td>
-<td className='osc2'>{s.osc2 && fmtonoff(s.osc2.oscillatorSync)}</td>
+<td className='wavetable noise'>{fixh(s.noiseVolume)}</td>
+<td className='wavetable osc2'>{s.osc2 && fmtonoff(s.osc2.oscillatorSync)}</td>
 
 <td className='unlab'> </td>
 <td className='unlab'> </td>
@@ -459,7 +460,7 @@ class SoundGrid extends React.Component {
 <th className ='toph modsources'>Mod Source</th>
 
 </tr>
-
+</tbody>
 </table>)
 } // End of render
 

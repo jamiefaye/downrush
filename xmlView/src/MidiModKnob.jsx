@@ -5,20 +5,20 @@ function MidiModKnob(props) {
 	if (!props.sound.modKnobs || !props.sound.modKnobs.modKnob) return null;
 	let mka = props.sound.modKnobs.modKnob, obj;
 
-  return (<table className='midi_mod_knobs xmltab'>
+  return (<table className='midi_mod_knobs xmltab'><tbody>
 	<tr>
-	<th className='midimh' colspan='16'>Knob to Midi CC Parameter Mapping</th>
+	<th className='midimh' colSpan='16'>Knob to Midi CC Parameter Mapping</th>
 	</tr>
 	<tr>
-	<th className='midimh' colspan = '2'>Volume</th>
-	<th className='midimh' colspan = '2'>Cutoff/FM</th>
-	<th className='midimh' colspan = '2'>Attack</th>
-	<th className='midimh' colspan = '2'>Delay Time</th>
+	<th className='midimh' colSpan = '2'>Volume</th>
+	<th className='midimh' colSpan = '2'>Cutoff/FM</th>
+	<th className='midimh' colSpan = '2'>Attack</th>
+	<th className='midimh' colSpan = '2'>Delay Time</th>
 	
-	<th className='midimh' colspan = '2'>Sidechain</th>
-	<th className='midimh' colspan = '2'>Mod Rate</th>
-	<th className='midimh' colspan = '2'colspan = '2'>Stutter</th>
-	<th className='midimh' colspan = '2'>Custom 2</th>
+	<th className='midimh' colSpan = '2'>Sidechain</th>
+	<th className='midimh' colSpan = '2'>Mod Rate</th>
+	<th className='midimh' colSpan = '2'colSpan = '2'>Stutter</th>
+	<th className='midimh' colSpan = '2'>Custom 2</th>
 	</tr>
 	
 	<tr>
@@ -44,15 +44,15 @@ function MidiModKnob(props) {
 	<td>{mka[15].cc}</td><td>{fmtMidiCC(mka[15].value)}</td>
 	</tr>
 	<tr>
-	<th className='midimh' colspan = '2'>Pan</th>
-	<th className='midimh' colspan = '2'>Res/FM</th>
-	<th className='midimh' colspan = '2'>Release</th>
-	<th className='midimh' colspan = '2'>Amount</th>
+	<th className='midimh' colSpan = '2'>Pan</th>
+	<th className='midimh' colSpan = '2'>Res/FM</th>
+	<th className='midimh' colSpan = '2'>Release</th>
+	<th className='midimh' colSpan = '2'>Amount</th>
 	
-	<th className='midimh' colspan = '2'>Reverb</th>
-	<th className='midimh' colspan = '2'>Depth</th>
-	<th className='midimh' colspan = '2'>Custom 1</th>
-	<th className='midimh' colspan = '2'>Custom 3</th>
+	<th className='midimh' colSpan = '2'>Reverb</th>
+	<th className='midimh' colSpan = '2'>Depth</th>
+	<th className='midimh' colSpan = '2'>Custom 1</th>
+	<th className='midimh' colSpan = '2'>Custom 3</th>
 	</tr>
 	<tr>
 	<th className='midismh'>CC</th><th className='midismh'>Value</th>
@@ -75,7 +75,7 @@ function MidiModKnob(props) {
 	<td>{mka[12].cc}</td><td>{fmtMidiCC(mka[12].value)}</td>
 	<td>{mka[14].cc}</td><td>{fmtMidiCC(mka[14].value)}</td>
 	</tr>
-	</table>);
+	</tbody></table>);
 }
 
 export {MidiModKnob}

@@ -5,8 +5,8 @@ function MidiKnob(props) {
 	if (!props.sound || !props.sound.midiKnobs || !props.sound.midiKnobs.midiKnob) return null;
 	let mka = forceArray(props.sound.midiKnobs.midiKnob);
 
-	return (<table className='midi_mod_knobs xmltab'>
-	<tr><th colspan='4'>Midi Parameter Mapping</th></tr>
+	return (<table className='midi_mod_knobs xmltab'><tbody>
+	<tr><th colSpan='4'>Midi Parameter Mapping</th></tr>
 	<tr><th>Channel</th><th>CC #</th><th>Rel</th><th>Controls</th></tr>
 	{mka.map((k)=>{
 		return (<tr>
@@ -16,7 +16,7 @@ function MidiKnob(props) {
 		<td>{k.controlsParam}</td>
 		</tr>)
 	})}
-	</table>);
+	</tbody></table>);
 }
 
 export {MidiKnob};
